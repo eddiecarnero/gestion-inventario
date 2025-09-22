@@ -11,7 +11,7 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 
 ## Lenguaje y frameworks
 - **Lenguaje:** Java (JDK 17 recomendado)
-- **Framework principal:** Spring Boot con Spring MVC
+- **Framework principal:**Java Swing para la interfaz y JDBC para la persistencia
 - **Persistencia:** Spring Data JPA (con MySQL)
 - **Control de versiones:** Git + GitHub
 
@@ -22,7 +22,7 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 
 ## Roles del equipo
 - Eddie Carnero : Jefe de Proyecto
-- Yesenia Angeles : Programadora de Interfaz (Vista)
+- Yesenia Angeles : Programadora de Interfaz
 - Xiomara Coronado : Programadora de Controladores
 - Cristhian Gonzales : Programador de Persistencia
 - Romel Ortiz : Tester
