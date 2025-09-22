@@ -11,4 +11,4 @@
 ### Removed
 - Cosas eliminadas en esta version
 
-## (0.0.1) Version inicial
+## (0.0.2) Version inicial, prueba 22 - 09 - 2025
