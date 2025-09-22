@@ -21,7 +21,7 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 - Issues: usar GitHub Issues para tareas y bugs.
 
 ## Roles del equipo
-- Ángeles Reyes, Yesenia Alessandra – Facilitadora de Organización
+- Angeles Reyes, Yesenia Alessandra – Facilitadora de Organización
 - Coronado Lucano, Xiomara Elizabeth – Encargada de Requerimientos
 - Ortiz Villegas, Romel – Responsable de Diseño y Arquitectura
 - Carnero Olivares, Eddie Carlos Daniel – Encargado de Comunicación y Control de Versiones
