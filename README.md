@@ -21,9 +21,9 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 - Issues: usar GitHub Issues para tareas y bugs.
 
 ## Roles del equipo
-- Angeles Reyes, Yesenia Alessandra – Facilitadora de Organización
-- Coronado Lucano, Xiomara Elizabeth – Encargada de Requerimientos
-- Ortiz Villegas, Romel – Responsable de Diseño y Arquitectura
-- Carnero Olivares, Eddie Carlos Daniel – Encargado de Comunicación y Control de Versiones
-- Gonzales Flores, Cristhian Fabián – Responsable de Documentación
-- Sinche Vega, Moisés Pedro – Encargado de Calidad y Pruebas
+- Eddie Carnero : Jefe de Proyecto
+- Yesenia Angeles : Programadora de Interfaz (Vista)
+- Xiomara Coronado : Programadora de Controladores
+- Cristhian Gonzales : Programador de Persistencia
+- Romel Ortiz : Tester
+- Moises Sinche : Documentador
