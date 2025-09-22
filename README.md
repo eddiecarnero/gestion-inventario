@@ -1,6 +1,7 @@
 # Proyecto de Gestion de Inventario para MamaTania
 ## Descripción
 Sistema de gestión de inventario para una heladería/cafetería. Gestiona insumos, lotes, fechas de caducidad, preparación de productos intermedios y finales, control de stock, alertas por stock mínimo y registro de mermas. No incluye registro de ventas.
+
 ![Logo de MamaTania](https://linktr.ee/og/image/mamatania.pe.jpg)
 
 ## Decisiones de diseño
