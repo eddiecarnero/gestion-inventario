@@ -10,3 +10,5 @@
 - Funcionalidades que se mantendran por compatibilidad pero eliminaran en un futuro
 ### Removed
 - Cosas eliminadas en esta version
+
+## (0.0.1) Version inicial
