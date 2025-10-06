@@ -137,7 +137,7 @@ Llama a la ventana principal (LoginPage o MainDashboard).
 
 ### 💾 8. resource
 
-**Propósito: **archivos externos necesarios para la aplicación.
+**Propósito:** archivos externos necesarios para la aplicación.
 
 **schema.sql** → Script para crear las tablas de la base de datos.
 
