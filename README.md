@@ -27,3 +27,6 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 - Cristhian Gonzales : Programador de Persistencia
 - Romel Ortiz : Tester
 - Moises Sinche : Documentador
+
+## Fases de Desarrollo
+![Fase 1](https://imgur.com/a/ncM35DL)
