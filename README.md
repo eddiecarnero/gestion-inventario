@@ -39,106 +39,94 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 ### Fase 3
 <img src="https://github.com/eddiecarnero/gestion-inventario/blob/main/imagenes-readme/fase3.jpg?" width="50%" height="50%">
 
-## Estructura del codigo
-### 🧩 1. com.inventario.config
-Propósito: configuración general del sistema.
+## 🧱 Estructura del Código
 
-ConexionBD → Clase encargada de crear la conexión a la base de datos MySQL (usando JDBC).
+### 🧩 1. `com.inventario.config`
+**Propósito:** configuración general del sistema.  
 
-Ejemplo: define la URL, usuario y contraseña, y retorna un Connection.
+- **ConexionBD** → Clase encargada de crear la conexión a la base de datos **MySQL** (usando JDBC).  
+  - Define la URL, usuario y contraseña.  
+  - Retorna un objeto `Connection` para ser usado en los DAO.
 
-### 🗂️ 2. com.inventario.dao (Data Access Object)
+---
 
-**Propósito:** comunicación directa con la base de datos.
+### 🗂️ 2. `com.inventario.dao` *(Data Access Object)*
+**Propósito:** comunicación directa con la base de datos.  
 
-Cada DAO ejecuta consultas SQL específicas (SELECT, INSERT, UPDATE, DELETE).
+Cada DAO ejecuta consultas **SQL** específicas (`SELECT`, `INSERT`, `UPDATE`, `DELETE`).  
 
-**KardexDAO** → Maneja los movimientos de inventario (entradas y salidas).
+- **KardexDAO** → Maneja los movimientos del inventario (entradas y salidas).  
+- **OrdenCompraDAO** → Registra y obtiene las órdenes de compra a proveedores.  
+- **ProductoDAO** → Administra productos e insumos.  
+- **UsuarioDAO** → Valida login y gestiona usuarios.  
+- **VentaDAO** → Registra y consulta las ventas cargadas desde Excel.
 
-**OrdenCompraDAO** → Registra y obtiene las órdenes de compra a proveedores.
+---
 
-**ProductoDAO** → Administra productos e insumos.
+### 🧱 3. `com.inventario.model`
+**Propósito:** representa las **entidades del sistema** (tablas de la base de datos).  
 
-**UsuarioDAO** → Valida login, registra usuarios, etc.
+Estas clases definen los **objetos del dominio** que se manipulan en la aplicación.  
 
-**VentaDAO** → Registra y consulta las ventas cargadas desde el Excel.
+- **DetalleCompra** → Detalle de cada producto en una orden de compra.  
+- **Kardex** → Registro de movimientos del inventario.  
+- **OrdenCompra** → Datos de una orden (proveedor, fecha, estado).  
+- **Producto** → Información de productos e insumos.  
+- **Usuario** → Datos del usuario (nombre, rol, contraseña, etc).
 
-### 🧱 3. com.inventario.model
+---
 
-**Propósito:** contiene las clases que representan las entidades del sistema (tablas de la base de datos).
+### ⚙️ 4. `com.inventario.service`
+**Propósito:** capa intermedia entre el **DAO** y la **interfaz gráfica**.  
 
-Son los objetos que se manipulan en el programa.
+Contiene la **lógica de negocio**, como:  
+- Validaciones.  
+- Cálculos de stock.  
+- Reglas antes de insertar o actualizar datos.  
 
-**DetalleCompra** → Detalle de cada producto en una orden de compra.
+**Clases principales:**  
+- **KardexService** → Controla entradas y salidas del inventario.  
+- **OrdenCompraService** → Procesa las órdenes antes de guardarlas.  
+- **ProductoService** → Gestiona actualizaciones y búsquedas de productos.  
+- **UsuarioService** → Controla el login, roles y registro de usuarios.  
+- **VentaService** → Calcula y descuenta stock al cargar ventas desde Excel.
 
-**Kardex **→ Registro de movimientos de inventario.
+---
 
-**OrdenCompra** → Datos de una orden de compra (proveedor, fecha, estado).
+### 🖥️ 5. `com.inventario.ui` *(User Interface)*
+**Propósito:** interfaz gráfica con la que interactúa el usuario.  
 
-**Producto** → Datos de los productos e insumos.
+Implementada con **Swing** o **JavaFX**.  
 
-**Usuario** → Información de los usuarios (nombre, rol, contraseña, etc).
+- **LoginPage** → Pantalla de inicio de sesión.  
+- **RegisterPage** → Registro de nuevos usuarios.  
+- **MainDashboard** → Ventana principal o panel de control.  
+- **KardexPage** → Vista del kardex (entradas/salidas).  
+- **OrdenesPage** → Gestión de órdenes de compra.  
+- **ProductosPage** → Administración de productos e insumos.  
+- **ReportesPage** → Generación de reportes y consultas.
 
-### ⚙️ 4. com.inventario.service
+---
 
-**Propósito:** capa intermedia entre el DAO y la interfaz.
+### 🔧 6. `com.inventario.util`
+**Propósito:** clases de **utilidades generales** o herramientas auxiliares.  
 
-Contiene la lógica de negocio, por ejemplo:
+- **ConexionDB** → Métodos reutilizables para abrir y cerrar conexiones *(posiblemente duplicado de `ConexionBD`; se recomienda unificarlos)*.
 
-- Validaciones.
+---
 
-- Cálculos de stock.
+### 🚀 7. `Main.java`
+**Propósito:** punto de entrada del programa.  
 
-- Reglas antes de insertar datos.
+Contiene el método `main()`, que inicia la aplicación:  
+- Llama a la ventana principal (**LoginPage** o **MainDashboard**).  
 
-**KardexService** → Controla entradas/salidas del inventario.
+---
 
-**OrdenCompraService** → Procesa las órdenes antes de guardarlas.
+### 💾 8. `resources/`
+**Propósito:** archivos externos necesarios para la aplicación.  
 
-**ProductoService** → Maneja actualizaciones de productos, búsquedas, etc.
+- **schema.sql** → Script para crear las tablas de la base de datos.  
+- **data.sql** → Script con datos iniciales (usuarios, productos, etc).
 
-**UsuarioService** → Controla login, roles, y registro.
-
-**VentaService** → Calcula y descuenta stock al subir el Excel de ventas.
-
-### 🖥️ 5. com.inventario.ui (User Interface)
-
-**Propósito:** Interfaz gráfica (pantallas) con las que el usuario interactúa.
-
-Se implementa normalmente con Swing o JavaFX.
-
-**LoginPage** → Pantalla de inicio de sesión.
-
-**RegisterPage** → Registro de nuevos usuarios.
-
-**MainDashboard** → Ventana principal (menú o panel central).
-
-**KardexPage** → Vista del kardex (entradas/salidas).
-
-**OrdenesPage** → Manejo de órdenes de compra.
-
-**ProductosPage** → Gestión de productos e insumos.
-
-**ReportesPage** → Generación de reportes o consultas.
-
-### 🔧 6. com.inventario.util
-
-**Propósito:** Clases de utilidades generales o herramientas.
-
-**ConexionDB (posiblemente duplicado de ConexionBD, puedes unificarlo)** → métodos reutilizables para abrir/cerrar conexiones.
-
-### 🚀 7. Main.java
-
-**Propósito:** Punto de entrada del programa.
-
-Aquí se ejecuta el método main().
-
-Llama a la ventana principal (LoginPage o MainDashboard).
-
-### 💾 8. resource
-
-**Propósito:** archivos externos necesarios para la aplicación.
-
-**schema.sql** → Script para crear las tablas de la base de datos.
-
-**data.sql**→ Script con datos iniciales (usuarios, productos, etc).
+---
