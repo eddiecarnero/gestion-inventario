@@ -30,8 +30,8 @@ Sistema de gestión de inventario para una heladería/cafetería. Gestiona insum
 
 ## Fases de Desarrollo
 ### Fase 1
-<img src="https://github.com/eddiecarnero/gestion-inventario/blob/main/imagenes-readme/fase1.jpg?" width=50% height=50%>
-<h3 Fase 2 </h3>
+![Fase 1](https://github.com/eddiecarnero/gestion-inventario/blob/main/imagenes-readme/fase2.jpg?){:height="50%" width="50%"}
+### Fase 2
 <img src="https://github.com/eddiecarnero/gestion-inventario/blob/main/imagenes-readme/fase2.jpg?" width=50% height=50%>
-<h3 Fase 3 </h3>
+### Fase 3
 <img src="https://github.com/eddiecarnero/gestion-inventario/blob/main/imagenes-readme/fase3.jpg?" width=50% height=50%>
