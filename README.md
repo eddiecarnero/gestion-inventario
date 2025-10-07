@@ -98,7 +98,6 @@ Contiene la **lógica de negocio**, como:
 
 Implementada con **Swing** o **JavaFX**.  
 
-- **LoginPage** → Pantalla de inicio de sesión.  
 - **RegisterPage** → Registro de nuevos usuarios.  
 - **MainDashboard** → Ventana principal o panel de control.  
 - **KardexPage** → Vista del kardex (entradas/salidas).  
