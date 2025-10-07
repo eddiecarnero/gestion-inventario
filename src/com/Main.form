@@ -27,15 +27,6 @@
         </properties>
         <border type="none"/>
         <children>
-          <component id="aaa2a" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <icon value="com/images/logo.jpeg"/>
-              <text value=""/>
-            </properties>
-          </component>
           <component id="c5733" class="javax.swing.JLabel">
             <constraints>
               <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
@@ -148,6 +139,15 @@
               <grid row="9" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
+          <component id="eb2e9" class="javax.swing.JLabel" binding="logotexto">
+            <constraints>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <foreground color="-14641790"/>
+              <text value="Mamatania"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>
