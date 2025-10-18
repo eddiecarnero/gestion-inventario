@@ -1,4 +1,4 @@
-package cristhian_UI_BD;
+package com.inventario.ui;
 /*
 CRISTHIAN NOTE:
 Deben instalar el mysql-connector para poder conectar la base de datos a JAVA
