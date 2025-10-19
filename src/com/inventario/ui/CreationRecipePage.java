@@ -23,6 +23,7 @@ public class CreationRecipePage extends BorderPane {
 
     private final ObservableList<Receta> recetas = FXCollections.observableArrayList();
     private VBox mainContent;
+    private com.inventario.dao.RecetaDAO recetaDAO;
 
     public CreationRecipePage() {
         // Fondo blanco para integrarse con el dashboard
@@ -31,8 +32,23 @@ public class CreationRecipePage extends BorderPane {
         mainContent = new VBox(30);
         mainContent.setPadding(new Insets(30, 40, 30, 40));
 
+        // Inicializar DAO y cargar recetas desde la base de datos
+        recetaDAO = new com.inventario.dao.RecetaDAO();
+        cargarRecetasDesdeBD();
+
         setCenter(mainContent);
         mostrarVistaInicial();
+    }
+
+    private void cargarRecetasDesdeBD() {
+        // Primero verificar la conexión
+        if (recetaDAO.verificarConexion()) {
+            List<Receta> recetasCargadas = recetaDAO.cargarTodasLasRecetas();
+            recetas.addAll(recetasCargadas);
+            System.out.println("📊 Total de recetas en memoria: " + recetas.size());
+        } else {
+            System.err.println("❌ No se pudieron cargar las recetas - sin conexión a BD");
+        }
     }
 
     private void mostrarVistaInicial() {
@@ -188,8 +204,13 @@ public class CreationRecipePage extends BorderPane {
         Button eliminarBtn = new Button("🗑️");
         eliminarBtn.setStyle("-fx-background-color: transparent; -fx-font-size: 16; -fx-text-fill: #EF4444;");
         eliminarBtn.setOnAction(e -> {
-            recetas.remove(receta);
-            mostrarVistaInicial();
+            // Eliminar de la base de datos
+            if (recetaDAO.eliminarReceta(receta.getNombre())) {
+                recetas.remove(receta);
+                mostrarVistaInicial();
+            } else {
+                mostrarAlerta("Error", "No se pudo eliminar la receta de la base de datos.");
+            }
         });
 
         item.getChildren().addAll(info, verBtn, eliminarBtn);
@@ -346,10 +367,15 @@ public class CreationRecipePage extends BorderPane {
 
                 List<Ingrediente> listaIngredientes = new ArrayList<>(ingredientes);
                 Receta nuevaReceta = new Receta(nombre, cantidad, unidad, listaIngredientes);
-                recetas.add(nuevaReceta);
 
-                mostrarAlerta("Éxito", "Receta creada exitosamente.");
-                mostrarVistaInicial();
+                // Guardar en la base de datos
+                if (recetaDAO.guardarReceta(nuevaReceta)) {
+                    recetas.add(nuevaReceta);
+                    mostrarAlerta("Éxito", "Receta creada y guardada exitosamente.");
+                    mostrarVistaInicial();
+                } else {
+                    mostrarAlerta("Error", "No se pudo guardar la receta en la base de datos.");
+                }
 
             } catch (NumberFormatException ex) {
                 mostrarAlerta("Error", "La cantidad debe ser un valor numérico.");
