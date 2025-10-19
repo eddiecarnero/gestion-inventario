@@ -38,7 +38,7 @@ public class MainDashboard extends JFrame {
 
         // === Botones del Dashboard... ===
         Inventario.addActionListener(e -> {
-            mainFrame.mostrarInventario();
+            mainFrame.mostrarProductos();
         });
         dashboardButton.addActionListener(e -> {
             mainFrame.mostrarDashboard();

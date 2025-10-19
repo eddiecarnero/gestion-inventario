@@ -15,6 +15,9 @@ import java.awt.event.FocusEvent;
 import java.io.File;
 import java.util.Locale;
 
+import com.inventario.ui.ProductosPage;
+import com.inventario.ui.InventarioPanelBase;
+
 public class Main extends JFrame {
    private JPanel mainPanel;
 
@@ -62,5 +65,13 @@ public class Main extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Main::new);
+    }
+
+    public void mostrarProductos() {
+        InventarioPanelBase inventarioBase = new InventarioPanelBase(this); // Creamos la nueva base con menú
+        mainPanel.removeAll();
+        mainPanel.add(inventarioBase, BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 }
