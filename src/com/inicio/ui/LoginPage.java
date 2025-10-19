@@ -1,4 +1,5 @@
 package com.inicio.ui;
+import com.inventario.config.AuthService;
 
 import com.inventario.ui.DashboardPage;
 import javafx.geometry.Pos;
@@ -110,8 +111,40 @@ public class LoginPage {
         scene = new Scene(root, 1100, 700);
         stage.setTitle("Mamatania - Login");
 
+        btnLogin.setOnAction(e -> {
+            String usuario = campoUsuario.getText().trim();
+            String contrasena = campoContrasena.getText().trim();
+
+            if (usuario.isEmpty() || contrasena.isEmpty()) {
+                mostrarAlerta("Por favor, complete todos los campos.");
+                return;
+            }
+
+            boolean valido = AuthService.validarUsuario(usuario, contrasena);
+
+            if (valido) {
+                DashboardPage dashboard = new DashboardPage(stage);
+                stage.setScene(dashboard.getScene());
+            } else {
+                mostrarAlerta("Usuario o contraseña incorrectos.");
+            }
+        });
+
+
     }
     public Scene getScene() {
         return scene;
     }
+
+    private void mostrarAlerta(String mensaje) {
+        Alert alerta = new Alert(Alert.AlertType.ERROR);
+        alerta.setTitle("Error de autenticación");
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensaje);
+        alerta.showAndWait();
+    }
+
 }
+
+
+
