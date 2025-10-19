@@ -296,4 +296,5 @@ public class OrdenesPage extends BorderPane {
             stage.show();
         }
     }
+
 }

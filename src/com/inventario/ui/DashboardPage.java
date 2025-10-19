@@ -21,6 +21,7 @@ public class DashboardPage {
     private Scene scene;
 
     public DashboardPage(Stage stage) {
+
         // ----- Colores principales -----
         Color crema = Color.web("#FFF8E7");
         Color cafe = Color.web("#6F4E37");
@@ -154,6 +155,7 @@ public class DashboardPage {
                 (int) (c.getGreen() * 255),
                 (int) (c.getBlue() * 255));
     }
+
 
     public Scene getScene() {
         return scene;

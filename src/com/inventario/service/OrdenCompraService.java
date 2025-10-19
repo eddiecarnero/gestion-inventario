@@ -28,4 +28,5 @@ public class OrdenCompraService {
     public List<OrdenCompra> listarOrdenes() {
         return ordenDAO.listarOrdenes();
     }
+
 }
