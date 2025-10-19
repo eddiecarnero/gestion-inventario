@@ -40,7 +40,7 @@ public class InterfazProveedores extends JFrame {
 
     private static final String URL = "jdbc:mysql://localhost:3306/sistema_inventario";
     private static final String USUARIO = "root";
-    private static final String PASSWORD = "root"; // EL PASSWORD Y USUARIO DEBEN SER EL MISMO QUE EL DE US BASE DE DATOS LOCAL
+    private static final String PASSWORD = "Admin"; // EL PASSWORD Y USUARIO DEBEN SER EL MISMO QUE EL DE US BASE DE DATOS LOCAL
 
     // ==========================================
     // CONSTRUCTOR - Aquí se construye la ventana

@@ -1,730 +1,276 @@
 package com.inventario.ui;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.*;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
 
-public class OrdenesPage extends JPanel {
-    private static final Color PRIMARY = new Color(74, 144, 226);
-    private static final Color BG_LIGHT = new Color(253, 248, 240);
-    private static final Color SIDEBAR_LIGHT = new Color(234, 224, 209);
-    private static final Color TEXT_LIGHT = new Color(51, 51, 51);
-    private static final Color BORDER_LIGHT = new Color(204, 204, 204);
+public class OrdenesPage extends BorderPane {
 
-    private DefaultTableModel tableModel;
-    private JLabel totalLabel;
-    private JTextField insumoField, cantidadField, precioField;
-    private JComboBox<String> unidadCombo;
+    // Colores equivalentes
+    private static final String PRIMARY = "#4A90E2";
+    private static final String BG_LIGHT = "#FDF8F0";
+    private static final String SIDEBAR_LIGHT = "#EAE0D1";
+    private static final String TEXT_LIGHT = "#333333";
+    private static final String BORDER_LIGHT = "#CCCCCC";
+
+    private final TableView<ItemOrden> tabla;
+    private final Label totalLabel;
+    private final TextField insumoField;
+    private final TextField cantidadField;
+    private final ComboBox<String> unidadCombo;
+    private final TextField precioField;
+    private final ObservableList<ItemOrden> items = FXCollections.observableArrayList();
 
     public OrdenesPage() {
-        setLayout(new BorderLayout());
-        setBackground(BG_LIGHT);
+        setBackground(new Background(new BackgroundFill(Color.web(BG_LIGHT), CornerRadii.EMPTY, Insets.EMPTY)));
 
-        // Sidebar
-        add(createSidebar(), BorderLayout.WEST);
+        // --- Contenido principal ---
+        VBox content = new VBox(30);
+        content.setPadding(new Insets(30, 40, 30, 40));
 
-        // Contenido principal
-        add(createMainContent(), BorderLayout.CENTER);
-    }
+        Label header = new Label("Crear Nueva Orden de Compra");
+        header.setFont(Font.font("Segoe UI", 32));
+        header.setTextFill(Color.web(TEXT_LIGHT));
 
-    private JPanel createSidebar() {
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(SIDEBAR_LIGHT);
-        sidebar.setPreferredSize(new Dimension(260, 0));
-        sidebar.setBorder(new EmptyBorder(20, 15, 20, 15));
+        VBox formContainer = new VBox(30);
+        formContainer.setPadding(new Insets(30));
+        formContainer.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(5), Insets.EMPTY)));
+        formContainer.setBorder(new Border(new BorderStroke(Color.web(BORDER_LIGHT),
+                BorderStrokeStyle.SOLID, new CornerRadii(5), BorderWidths.DEFAULT)));
 
-        // Logo y título
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBackground(SIDEBAR_LIGHT);
-        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // --- Campos superiores ---
+        HBox camposSuperiores = new HBox(20);
+        camposSuperiores.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel titleLabel = new JLabel("Heladería & Cafetería");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(TEXT_LIGHT);
+        ComboBox<String> proveedorCombo = new ComboBox<>();
+        proveedorCombo.getItems().addAll(
+                "Seleccionar Proveedor",
+                "Proveedor Lácteos del Sur",
+                "Distribuidora de Frutas S.A.",
+                "Insumos de Café 'El Grano Dorado'"
+        );
+        proveedorCombo.getSelectionModel().selectFirst();
 
-        JLabel subtitleLabel = new JLabel("Administrador");
-        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        subtitleLabel.setForeground(TEXT_LIGHT);
+        DatePicker fechaPicker = new DatePicker();
+        fechaPicker.setPromptText("Fecha de la Orden");
 
-        headerPanel.add(titleLabel);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 3)));
-        headerPanel.add(subtitleLabel);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+        VBox proveedorBox = crearCampo("Proveedor", proveedorCombo);
+        VBox fechaBox = crearCampo("Fecha de la Orden", fechaPicker);
+        camposSuperiores.getChildren().addAll(proveedorBox, fechaBox);
 
-        sidebar.add(headerPanel);
+        // --- Tabla ---
+        Label detalleLabel = new Label("Detalle de la Orden");
+        detalleLabel.setFont(Font.font("Segoe UI", 22));
+        detalleLabel.setTextFill(Color.web(TEXT_LIGHT));
 
-        // Menú de navegación
-        String[] menuItems = {"Dashboard", "Inventario", "Proveedores", "Kardex", "Recetas", "Ventas"};
-        String[] menuIcons = {"📊", "📦", "👥", "📜", "📖", "📈"};
+        tabla = new TableView<>();
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        for (int i = 0; i < menuItems.length; i++) {
-            JButton menuButton = createMenuButton(menuIcons[i] + "  " + menuItems[i], i == 1);
-            sidebar.add(menuButton);
-            sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        TableColumn<ItemOrden, String> insumoCol = new TableColumn<>("Insumo");
+        insumoCol.setCellValueFactory(new PropertyValueFactory<>("insumo"));
+
+        TableColumn<ItemOrden, Double> cantidadCol = new TableColumn<>("Cantidad");
+        cantidadCol.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+
+        TableColumn<ItemOrden, String> unidadCol = new TableColumn<>("Unidad");
+        unidadCol.setCellValueFactory(new PropertyValueFactory<>("unidad"));
+
+        TableColumn<ItemOrden, Double> precioCol = new TableColumn<>("Precio Unitario");
+        precioCol.setCellValueFactory(new PropertyValueFactory<>("precio"));
+
+        TableColumn<ItemOrden, Double> totalCol = new TableColumn<>("Total");
+        totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
+
+        TableColumn<ItemOrden, Void> eliminarCol = new TableColumn<>("Acción");
+        eliminarCol.setCellFactory(col -> new TableCell<>() {
+            private final Button btn = new Button("🗑️");
+
+            {
+                btn.setStyle("-fx-background-color: transparent; -fx-font-size: 16; -fx-text-fill: #EF4444;");
+                btn.setOnAction(e -> {
+                    ItemOrden item = getTableView().getItems().get(getIndex());
+                    items.remove(item);
+                    actualizarTotal();
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+            }
+        });
+
+        tabla.getColumns().addAll(insumoCol, cantidadCol, unidadCol, precioCol, totalCol, eliminarCol);
+
+        // Datos iniciales
+        items.addAll(
+                new ItemOrden("Leche Entera", 10, "Litros", 20),
+                new ItemOrden("Azúcar Refinada", 5, "Kilos", 15)
+        );
+        tabla.setItems(items);
+
+        // --- Fila de entrada ---
+        GridPane inputGrid = new GridPane();
+        inputGrid.setHgap(10);
+        inputGrid.setVgap(10);
+        inputGrid.setPadding(new Insets(15));
+        inputGrid.setBackground(new Background(new BackgroundFill(Color.web("#FAFAFA"), new CornerRadii(5), Insets.EMPTY)));
+        inputGrid.setBorder(new Border(new BorderStroke(Color.web(BORDER_LIGHT),
+                BorderStrokeStyle.SOLID, new CornerRadii(5), BorderWidths.DEFAULT)));
+
+        insumoField = new TextField();
+        insumoField.setPromptText("Buscar insumo...");
+
+        cantidadField = new TextField();
+        cantidadField.setPromptText("0");
+
+        unidadCombo = new ComboBox<>();
+        unidadCombo.getItems().addAll("Unidad", "Litro", "Kilo", "Gramo");
+        unidadCombo.getSelectionModel().selectFirst();
+
+        precioField = new TextField();
+        precioField.setPromptText("0.00");
+
+        Button addButton = new Button("➕ Agregar");
+        addButton.setStyle("-fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold;");
+        addButton.setOnMouseEntered(e -> addButton.setStyle("-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold;"));
+        addButton.setOnMouseExited(e -> addButton.setStyle("-fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold;"));
+        addButton.setOnAction(e -> agregarItem());
+
+        inputGrid.add(insumoField, 0, 0);
+        inputGrid.add(cantidadField, 1, 0);
+        inputGrid.add(unidadCombo, 2, 0);
+        inputGrid.add(precioField, 3, 0);
+        inputGrid.add(addButton, 4, 0);
+
+        ColumnConstraints[] cols = new ColumnConstraints[5];
+        for (int i = 0; i < 5; i++) {
+            cols[i] = new ColumnConstraints();
+            cols[i].setPercentWidth(20);
+            inputGrid.getColumnConstraints().add(cols[i]);
         }
 
-        // Espaciador
-        sidebar.add(Box.createVerticalGlue());
+        // --- Total ---
+        HBox totalBox = new HBox();
+        totalBox.setAlignment(Pos.CENTER_RIGHT);
+        totalBox.setPadding(new Insets(10, 0, 0, 0));
 
-        // Botón de cerrar sesión
-        JButton logoutButton = createMenuButton("🚪  Cerrar Sesión", false);
-        sidebar.add(logoutButton);
+        VBox totalInner = new VBox(5);
+        Label totalText = new Label("Total de la Orden:");
+        totalText.setFont(Font.font("Segoe UI", 16));
+        totalLabel = new Label("$0.00");
+        totalLabel.setFont(Font.font("Segoe UI", 28));
+        totalLabel.setTextFill(Color.web(PRIMARY));
+        totalInner.getChildren().addAll(totalText, totalLabel);
+        totalBox.getChildren().add(totalInner);
 
-        return sidebar;
+        // --- Botones finales ---
+        HBox buttons = new HBox(10);
+        buttons.setAlignment(Pos.CENTER_RIGHT);
+        Button guardarBtn = new Button("Guardar");
+        guardarBtn.setStyle("-fx-background-color: white; -fx-text-fill: " + PRIMARY + "; -fx-border-color: " + PRIMARY + "; -fx-font-weight: bold;");
+        Button enviarBtn = new Button("Enviar para Aprobación");
+        enviarBtn.setStyle("-fx-background-color: " + PRIMARY + "; -fx-text-fill: white; -fx-font-weight: bold;");
+        buttons.getChildren().addAll(guardarBtn, enviarBtn);
+
+        // --- Ensamblar todo ---
+        formContainer.getChildren().addAll(camposSuperiores, detalleLabel, tabla, inputGrid, totalBox, buttons);
+        content.getChildren().addAll(header, formContainer);
+
+        setCenter(content);
+        actualizarTotal();
     }
 
-    private JButton createMenuButton(String text, boolean selected) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        button.setForeground(TEXT_LIGHT);
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        button.setAlignmentX(Component.LEFT_ALIGNMENT);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        if (selected) {
-            button.setBackground(new Color(74, 144, 226, 50));
-            button.setForeground(PRIMARY);
-            button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        } else {
-            button.setBackground(SIDEBAR_LIGHT);
-        }
-
-        button.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                if (!selected) {
-                    button.setBackground(new Color(74, 144, 226, 30));
-                }
-            }
-            public void mouseExited(MouseEvent e) {
-                if (!selected) {
-                    button.setBackground(SIDEBAR_LIGHT);
-                }
-            }
-        });
-
-        return button;
+    private VBox crearCampo(String labelText, Control input) {
+        VBox vbox = new VBox(5);
+        Label label = new Label(labelText);
+        label.setFont(Font.font("Segoe UI", 13));
+        label.setTextFill(Color.web(TEXT_LIGHT));
+        input.setMaxWidth(Double.MAX_VALUE);
+        vbox.getChildren().addAll(label, input);
+        VBox.setVgrow(input, Priority.NEVER);
+        return vbox;
     }
 
-    private JPanel createMainContent() {
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(BG_LIGHT);
-        contentPanel.setBorder(new EmptyBorder(30, 40, 30, 40));
-
-        // Header
-        JLabel headerLabel = new JLabel("Crear Nueva Orden de Compra");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        headerLabel.setForeground(TEXT_LIGHT);
-        headerLabel.setBorder(new EmptyBorder(0, 0, 25, 0));
-
-        contentPanel.add(headerLabel, BorderLayout.NORTH);
-
-        // Formulario principal
-        JPanel formPanel = new JPanel(new BorderLayout());
-        formPanel.setBackground(Color.WHITE);
-        formPanel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_LIGHT, 1),
-                new EmptyBorder(25, 30, 30, 30)
-        ));
-
-        // Panel de campos superiores
-        JPanel topFieldsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        topFieldsPanel.setBackground(Color.WHITE);
-        topFieldsPanel.setBorder(new EmptyBorder(0, 0, 30, 0));
-
-        // Proveedor
-        JPanel proveedorPanel = createFieldPanel("Proveedor",
-                new JComboBox<>(new String[]{"Seleccionar Proveedor", "Proveedor Lácteos del Sur",
-                        "Distribuidora de Frutas S.A.", "Insumos de Café \"El Grano Dorado\""}));
-
-        // Fecha
-        JTextField fechaField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-        JPanel fechaPanel = createFieldPanel("Fecha de la Orden", fechaField);
-
-        topFieldsPanel.add(proveedorPanel);
-        topFieldsPanel.add(fechaPanel);
-
-        formPanel.add(topFieldsPanel, BorderLayout.NORTH);
-
-        // Tabla de detalles
-        formPanel.add(createTablePanel(), BorderLayout.CENTER);
-
-        // Panel de botones
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
-
-        JButton saveButton = createStyledButton("Guardar", false);
-        JButton submitButton = createStyledButton("Enviar para Aprobación", true);
-
-        buttonPanel.add(saveButton);
-        buttonPanel.add(submitButton);
-
-        formPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        contentPanel.add(formPanel, BorderLayout.CENTER);
-
-        return contentPanel;
-    }
-
-    private JPanel createFieldPanel(String label, JComponent component) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        labelComp.setForeground(TEXT_LIGHT);
-        labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        component.setPreferredSize(new Dimension(0, 40));
-        component.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        component.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        panel.add(labelComp);
-        panel.add(Box.createRigidArea(new Dimension(0, 8)));
-        panel.add(component);
-
-        return panel;
-    }
-
-    private JPanel createTablePanel() {
-        JPanel tablePanel = new JPanel(new BorderLayout());
-        tablePanel.setBackground(Color.WHITE);
-
-        // Título de sección
-        JLabel sectionTitle = new JLabel("Detalle de la Orden");
-        sectionTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        sectionTitle.setForeground(TEXT_LIGHT);
-        sectionTitle.setBorder(new EmptyBorder(20, 0, 15, 0));
-        tablePanel.add(sectionTitle, BorderLayout.NORTH);
-
-        // Tabla
-        String[] columns = {"Insumo", "Cantidad", "Unidad", "Precio Unitario", "Total", "Acción"};
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 5;
-            }
-        };
-
-        // Datos de ejemplo
-        tableModel.addRow(new Object[]{"Leche Entera", "10", "Litros", "$20,00", "$200,00", "Eliminar"});
-        tableModel.addRow(new Object[]{"Azúcar Refinada", "5", "Kilos", "$15,00", "$75,00", "Eliminar"});
-
-        JTable table = new JTable(tableModel);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        table.setRowHeight(40);
-        table.setShowGrid(true);
-        table.setGridColor(BORDER_LIGHT);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        table.getTableHeader().setBackground(Color.WHITE);
-        table.getTableHeader().setForeground(TEXT_LIGHT);
-
-        // Renderizador para el botón de eliminar
-        table.getColumn("Acción").setCellRenderer(new ButtonRenderer());
-        table.getColumn("Acción").setCellEditor(new ButtonEditor(new JCheckBox()));
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(new LineBorder(BORDER_LIGHT, 1));
-
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(Color.WHITE);
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Panel de entrada de nuevos items - ASEGURAR QUE SE VEA
-        JPanel inputRowWrapper = new JPanel(new BorderLayout());
-        inputRowWrapper.setBackground(Color.WHITE);
-        inputRowWrapper.setBorder(new EmptyBorder(10, 0, 0, 0));
-        inputRowWrapper.add(createInputRow(), BorderLayout.CENTER);
-        centerPanel.add(inputRowWrapper, BorderLayout.SOUTH);
-
-        // Panel de total
-        JPanel totalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        totalPanel.setBackground(Color.WHITE);
-        totalPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
-
-        JPanel totalBox = new JPanel();
-        totalBox.setLayout(new BoxLayout(totalBox, BoxLayout.Y_AXIS));
-        totalBox.setBackground(Color.WHITE);
-
-        JLabel totalTextLabel = new JLabel("Total de la Orden:");
-        totalTextLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        totalTextLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        totalLabel = new JLabel("$275,00");
-        totalLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        totalLabel.setForeground(PRIMARY);
-        totalLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-
-        totalBox.add(totalTextLabel);
-        totalBox.add(totalLabel);
-
-        totalPanel.add(totalBox);
-
-        // Contenedor para input y total
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBackground(Color.WHITE);
-        bottomPanel.add(inputRowWrapper, BorderLayout.NORTH);
-        bottomPanel.add(totalPanel, BorderLayout.SOUTH);
-
-        centerPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        tablePanel.add(centerPanel, BorderLayout.CENTER);
-
-        return tablePanel;
-    }
-
-    private JPanel createInputRow() {
-        JPanel inputPanel = new JPanel(new GridBagLayout());
-        inputPanel.setBackground(new Color(250, 250, 250));
-        inputPanel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(229, 231, 235), 1),
-                new EmptyBorder(12, 12, 12, 12)
-        ));
-        inputPanel.setPreferredSize(new Dimension(0, 70)); // Altura fija para asegurar visibilidad
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(0, 5, 0, 5);
-        gbc.gridy = 0;
-
-        // Campo Insumo con placeholder
-        insumoField = new JTextField();
-        insumoField.setPreferredSize(new Dimension(200, 38));
-        insumoField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        insumoField.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_LIGHT, 1, true),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
-        addPlaceholder(insumoField, "Buscar insumo...");
-
-        // Campo Cantidad
-        cantidadField = new JTextField();
-        cantidadField.setPreferredSize(new Dimension(80, 38));
-        cantidadField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cantidadField.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_LIGHT, 1, true),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
-        addPlaceholder(cantidadField, "0");
-
-        // ComboBox Unidad
-        unidadCombo = new JComboBox<>(new String[]{"Unidad", "Litro", "Kilo", "Gramo"});
-        unidadCombo.setPreferredSize(new Dimension(100, 38));
-        unidadCombo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-
-        // Campo Precio
-        precioField = new JTextField();
-        precioField.setPreferredSize(new Dimension(100, 38));
-        precioField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        precioField.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_LIGHT, 1, true),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
-        addPlaceholder(precioField, "0.00");
-
-        // Label Total dinámico
-        JLabel totalNewLabel = new JLabel("$0.00", SwingConstants.RIGHT);
-        totalNewLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        totalNewLabel.setForeground(new Color(107, 114, 128));
-        totalNewLabel.setPreferredSize(new Dimension(100, 38));
-
-        // Listener para calcular total en tiempo real
-        KeyAdapter calcListener = new KeyAdapter() {
-            public void keyReleased(KeyEvent e) {
-                calculateNewItemTotal(totalNewLabel);
-            }
-        };
-        cantidadField.addKeyListener(calcListener);
-        precioField.addKeyListener(calcListener);
-
-        gbc.gridx = 0;
-        gbc.weightx = 0.3;
-        inputPanel.add(insumoField, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 0.12;
-        inputPanel.add(cantidadField, gbc);
-
-        gbc.gridx = 2;
-        gbc.weightx = 0.12;
-        inputPanel.add(unidadCombo, gbc);
-
-        gbc.gridx = 3;
-        gbc.weightx = 0.12;
-        inputPanel.add(precioField, gbc);
-
-        gbc.gridx = 4;
-        gbc.weightx = 0.12;
-        inputPanel.add(totalNewLabel, gbc);
-
-        gbc.gridx = 5;
-        gbc.weightx = 0.15;
-        JButton addButton = createAddButton();
-        inputPanel.add(addButton, gbc);
-
-        return inputPanel;
-    }
-
-    private JButton createAddButton() {
-        JButton addButton = new JButton("➕ Agregar");
-        addButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        addButton.setBackground(new Color(34, 197, 94));
-        addButton.setForeground(Color.WHITE);
-        addButton.setBorderPainted(false);
-        addButton.setFocusPainted(false);
-        addButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        addButton.setPreferredSize(new Dimension(110, 38));
-        addButton.setMinimumSize(new Dimension(110, 38));
-        addButton.setMaximumSize(new Dimension(110, 38));
-
-        // Efecto hover mejorado
-        addButton.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                addButton.setBackground(new Color(22, 163, 74));
-            }
-            public void mouseExited(MouseEvent e) {
-                addButton.setBackground(new Color(34, 197, 94));
-            }
-            public void mousePressed(MouseEvent e) {
-                addButton.setBackground(new Color(21, 128, 61));
-            }
-            public void mouseReleased(MouseEvent e) {
-                addButton.setBackground(new Color(22, 163, 74));
-            }
-        });
-
-        addButton.addActionListener(e -> addNewItem());
-
-        // Enter key en los campos también agrega el item
-        KeyAdapter enterListener = new KeyAdapter() {
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    addNewItem();
-                }
-            }
-        };
-        insumoField.addKeyListener(enterListener);
-        cantidadField.addKeyListener(enterListener);
-        precioField.addKeyListener(enterListener);
-
-        return addButton;
-    }
-
-    private void addPlaceholder(JTextField textField, String placeholder) {
-        textField.setForeground(Color.GRAY);
-        textField.setText(placeholder);
-
-        textField.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (textField.getText().equals(placeholder)) {
-                    textField.setText("");
-                    textField.setForeground(TEXT_LIGHT);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (textField.getText().isEmpty()) {
-                    textField.setForeground(Color.GRAY);
-                    textField.setText(placeholder);
-                }
-            }
-        });
-    }
-
-    private void calculateNewItemTotal(JLabel totalLabel) {
+    private void agregarItem() {
         try {
-            String cantidadText = cantidadField.getText().trim();
-            String precioText = precioField.getText().trim();
+            String insumo = insumoField.getText().trim();
+            double cantidad = Double.parseDouble(cantidadField.getText().trim());
+            String unidad = unidadCombo.getValue();
+            double precio = Double.parseDouble(precioField.getText().trim());
 
-            // Verificar que no sean placeholders ni vacíos
-            boolean cantidadValida = !cantidadText.isEmpty() &&
-                    !cantidadText.equals("0") &&
-                    !cantidadText.equals("Buscar insumo...");
-            boolean precioValido = !precioText.isEmpty() &&
-                    !precioText.equals("0.00") &&
-                    !precioText.equals("Buscar insumo...");
-
-            if (cantidadValida && precioValido) {
-                double cantidad = Double.parseDouble(cantidadText);
-                double precio = Double.parseDouble(precioText);
-
-                if (cantidad > 0 && precio > 0) {
-                    double total = cantidad * precio;
-                    totalLabel.setText("$" + String.format("%.2f", total));
-                    totalLabel.setForeground(PRIMARY);
-                } else {
-                    totalLabel.setText("$0.00");
-                    totalLabel.setForeground(new Color(107, 114, 128));
-                }
-            } else {
-                totalLabel.setText("$0.00");
-                totalLabel.setForeground(new Color(107, 114, 128));
+            if (insumo.isEmpty() || cantidad <= 0 || precio <= 0) {
+                mostrarAlerta("Error", "Por favor, completa todos los campos correctamente.");
+                return;
             }
+
+            items.add(new ItemOrden(insumo, cantidad, unidad, precio));
+            insumoField.clear();
+            cantidadField.clear();
+            precioField.clear();
+            unidadCombo.getSelectionModel().selectFirst();
+            actualizarTotal();
+
         } catch (NumberFormatException e) {
-            totalLabel.setText("$0.00");
-            totalLabel.setForeground(new Color(107, 114, 128));
+            mostrarAlerta("Error", "Cantidad y precio deben ser valores numéricos.");
         }
     }
 
-    private void addNewItem() {
-        String insumo = insumoField.getText().trim();
-        String cantidad = cantidadField.getText().trim();
-        String unidad = (String) unidadCombo.getSelectedItem();
-        String precio = precioField.getText().trim();
-
-        // Validar que no sean los placeholders ni estén vacíos
-        boolean insumoValido = !insumo.isEmpty() && !insumo.equals("Buscar insumo...");
-        boolean cantidadValida = !cantidad.isEmpty() && !cantidad.equals("0");
-        boolean precioValido = !precio.isEmpty() && !precio.equals("0.00");
-
-        // Validación de campos
-        if (!insumoValido) {
-            JOptionPane.showMessageDialog(this,
-                    "Por favor, ingrese el nombre del insumo.",
-                    "Campo requerido",
-                    JOptionPane.WARNING_MESSAGE);
-            insumoField.requestFocus();
-            insumoField.selectAll();
-            return;
-        }
-
-        if (!cantidadValida) {
-            JOptionPane.showMessageDialog(this,
-                    "Por favor, ingrese la cantidad.",
-                    "Campo requerido",
-                    JOptionPane.WARNING_MESSAGE);
-            cantidadField.requestFocus();
-            cantidadField.selectAll();
-            return;
-        }
-
-        if (!precioValido) {
-            JOptionPane.showMessageDialog(this,
-                    "Por favor, ingrese el precio unitario.",
-                    "Campo requerido",
-                    JOptionPane.WARNING_MESSAGE);
-            precioField.requestFocus();
-            precioField.selectAll();
-            return;
-        }
-
-        try {
-            double cantidadNum = Double.parseDouble(cantidad);
-            double precioNum = Double.parseDouble(precio);
-
-            if (cantidadNum <= 0) {
-                JOptionPane.showMessageDialog(this,
-                        "La cantidad debe ser mayor a 0.",
-                        "Valor inválido",
-                        JOptionPane.WARNING_MESSAGE);
-                cantidadField.requestFocus();
-                cantidadField.selectAll();
-                return;
-            }
-
-            if (precioNum <= 0) {
-                JOptionPane.showMessageDialog(this,
-                        "El precio debe ser mayor a 0.",
-                        "Valor inválido",
-                        JOptionPane.WARNING_MESSAGE);
-                precioField.requestFocus();
-                precioField.selectAll();
-                return;
-            }
-
-            double total = cantidadNum * precioNum;
-
-            // Agregar fila a la tabla
-            tableModel.addRow(new Object[]{
-                    insumo,
-                    cantidad,
-                    unidad,
-                    "$" + String.format("%.2f", precioNum),
-                    "$" + String.format("%.2f", total),
-                    "Eliminar"
-            });
-
-            // Limpiar campos y restaurar placeholders
-            clearFieldWithPlaceholder(insumoField, "Buscar insumo...");
-            clearFieldWithPlaceholder(cantidadField, "0");
-            clearFieldWithPlaceholder(precioField, "0.00");
-            unidadCombo.setSelectedIndex(0);
-
-            // Actualizar total
-            updateTotal();
-
-            // Focus al campo de insumo para seguir agregando
-            SwingUtilities.invokeLater(() -> {
-                insumoField.requestFocus();
-                insumoField.selectAll();
-            });
-
-            System.out.println("✓ Producto agregado: " + insumo + " - Total actualizado");
-
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Por favor, ingrese valores numéricos válidos para cantidad y precio.\n" +
-                            "Cantidad ingresada: '" + cantidad + "'\n" +
-                            "Precio ingresado: '" + precio + "'",
-                    "Error de formato",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+    private void actualizarTotal() {
+        double total = items.stream().mapToDouble(ItemOrden::getTotal).sum();
+        totalLabel.setText(String.format("$%.2f", total));
     }
 
-    private void clearFieldWithPlaceholder(JTextField field, String placeholder) {
-        field.setText(placeholder);
-        field.setForeground(Color.GRAY);
+    private void mostrarAlerta(String titulo, String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 
-    private void updateTotal() {
-        double total = 0;
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            try {
-                String totalStr = tableModel.getValueAt(i, 4).toString();
-                // Remover el símbolo $ y espacios antes de parsear
-                totalStr = totalStr.replace("$", "").replace(",", ".").trim();
-                double valor = Double.parseDouble(totalStr);
-                total += valor;
-                System.out.println("Fila " + i + ": $" + valor + " - Total acumulado: $" + total);
-            } catch (NumberFormatException e) {
-                System.err.println("Error al parsear fila " + i + ": " + tableModel.getValueAt(i, 4));
-            }
+    // --- Clase auxiliar para los items ---
+    public static class ItemOrden {
+        private final String insumo;
+        private final double cantidad;
+        private final String unidad;
+        private final double precio;
+        private final double total;
+
+        public ItemOrden(String insumo, double cantidad, String unidad, double precio) {
+            this.insumo = insumo;
+            this.cantidad = cantidad;
+            this.unidad = unidad;
+            this.precio = precio;
+            this.total = cantidad * precio;
         }
-        totalLabel.setText("$" + String.format("%.2f", total));
-        System.out.println("Total final actualizado: $" + String.format("%.2f", total));
+
+        public String getInsumo() { return insumo; }
+        public double getCantidad() { return cantidad; }
+        public String getUnidad() { return unidad; }
+        public double getPrecio() { return precio; }
+        public double getTotal() { return total; }
     }
 
-    private JButton createStyledButton(String text, boolean primary) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setPreferredSize(new Dimension(200, 40));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setFocusPainted(false);
-
-        if (primary) {
-            button.setBackground(PRIMARY);
-            button.setForeground(Color.WHITE);
-            button.setBorderPainted(false);
-
-            button.addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) {
-                    button.setBackground(PRIMARY.darker());
-                }
-                public void mouseExited(MouseEvent e) {
-                    button.setBackground(PRIMARY);
-                }
-            });
-        } else {
-            button.setBackground(Color.WHITE);
-            button.setForeground(PRIMARY);
-            button.setBorder(new LineBorder(PRIMARY, 2));
-
-            button.addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) {
-                    button.setBackground(new Color(74, 144, 226, 20));
-                }
-                public void mouseExited(MouseEvent e) {
-                    button.setBackground(Color.WHITE);
-                }
-            });
-        }
-
-        return button;
-    }
-
-    // Clases auxiliares para el botón de eliminar en la tabla
-    class ButtonRenderer extends JButton implements TableCellRenderer {
-        public ButtonRenderer() {
-            setOpaque(true);
-            setText("🗑️");
-            setFont(new Font("Segoe UI", Font.PLAIN, 16));
-            setForeground(new Color(239, 68, 68));
-            setBorderPainted(false);
-            setFocusPainted(false);
-            setBackground(Color.WHITE);
-            setCursor(new Cursor(Cursor.HAND_CURSOR));
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int column) {
-            return this;
-        }
-    }
-
-    class ButtonEditor extends DefaultCellEditor {
-        private JButton button;
-        private String label;
-        private boolean isPushed;
-        private int editingRow;
-
-        public ButtonEditor(JCheckBox checkBox) {
-            super(checkBox);
-            button = new JButton();
-            button.setOpaque(true);
-            button.setText("🗑️");
-            button.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-            button.setForeground(new Color(239, 68, 68));
-            button.setBorderPainted(false);
-            button.setFocusPainted(false);
-            button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            button.addActionListener(e -> fireEditingStopped());
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int row, int column) {
-            label = (value == null) ? "" : value.toString();
-            button.setText("🗑️");
-            isPushed = true;
-            editingRow = row;
-            return button;
-        }
-
-        public Object getCellEditorValue() {
-            if (isPushed) {
-                int confirm = JOptionPane.showConfirmDialog(
-                        null,
-                        "¿Está seguro de eliminar este producto?",
-                        "Confirmar eliminación",
-                        JOptionPane.YES_NO_OPTION
-                );
-
-                if (confirm == JOptionPane.YES_OPTION) {
-                    tableModel.removeRow(editingRow);
-                    updateTotal();
-                }
-            }
-            isPushed = false;
-            return label;
-        }
-    }
-
+    // --- Test local ---
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        javafx.application.Application.launch(TestApp.class);
+    }
 
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Sistema de Orden de Compra - Heladería & Cafetería");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1400, 850);
-            frame.setLocationRelativeTo(null);
-            frame.add(new OrdenesPage());
-            frame.setVisible(true);
-        });
+    public static class TestApp extends javafx.application.Application {
+        @Override
+        public void start(Stage stage) {
+            stage.setTitle("Orden de Compra - JavaFX");
+            stage.setScene(new Scene(new OrdenesPage(), 1400, 850));
+            stage.show();
+        }
     }
 }
