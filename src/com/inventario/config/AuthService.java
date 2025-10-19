@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class AuthService {
     public static boolean validarUsuario(String usuario, String contrasena) {
-        String sql = "SELECT * FROM sistema_inventario.empleado WHERE user = ? AND password = ?";
+        String sql = "SELECT * FROM railway.empleado WHERE user = ? AND password = ?";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
