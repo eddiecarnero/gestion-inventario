@@ -1,5 +1,7 @@
 package com.inventario.ui;
 
+import com.inventario.config.ConexionBD;
+import com.inventario.service.OrdenCompraService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.*;
@@ -11,14 +13,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.sql.*;
+import java.time.LocalDate;
+
 public class OrdenesPage extends BorderPane {
 
-    // Colores equivalentes
     private static final String PRIMARY = "#4A90E2";
     private static final String BG_LIGHT = "#FDF8F0";
-    private static final String SIDEBAR_LIGHT = "#EAE0D1";
-    private static final String TEXT_LIGHT = "#333333";
     private static final String BORDER_LIGHT = "#CCCCCC";
+    private static final String TEXT_LIGHT = "#333333";
 
     private final TableView<ItemOrden> tabla;
     private final Label totalLabel;
@@ -31,7 +34,6 @@ public class OrdenesPage extends BorderPane {
     public OrdenesPage() {
         setBackground(new Background(new BackgroundFill(Color.web(BG_LIGHT), CornerRadii.EMPTY, Insets.EMPTY)));
 
-        // --- Contenido principal ---
         VBox content = new VBox(30);
         content.setPadding(new Insets(30, 40, 30, 40));
 
@@ -45,31 +47,22 @@ public class OrdenesPage extends BorderPane {
         formContainer.setBorder(new Border(new BorderStroke(Color.web(BORDER_LIGHT),
                 BorderStrokeStyle.SOLID, new CornerRadii(5), BorderWidths.DEFAULT)));
 
-        // --- Campos superiores ---
+        // Campos superiores
         HBox camposSuperiores = new HBox(20);
         camposSuperiores.setAlignment(Pos.CENTER_LEFT);
 
         ComboBox<String> proveedorCombo = new ComboBox<>();
-        proveedorCombo.getItems().addAll(
-                "Seleccionar Proveedor",
-                "Proveedor Lácteos del Sur",
-                "Distribuidora de Frutas S.A.",
-                "Insumos de Café 'El Grano Dorado'"
-        );
-        proveedorCombo.getSelectionModel().selectFirst();
+        proveedorCombo.setPromptText("Seleccionar Proveedor");
+        cargarProveedores(proveedorCombo);
 
-        DatePicker fechaPicker = new DatePicker();
+        DatePicker fechaPicker = new DatePicker(LocalDate.now());
         fechaPicker.setPromptText("Fecha de la Orden");
 
         VBox proveedorBox = crearCampo("Proveedor", proveedorCombo);
         VBox fechaBox = crearCampo("Fecha de la Orden", fechaPicker);
         camposSuperiores.getChildren().addAll(proveedorBox, fechaBox);
 
-        // --- Tabla ---
-        Label detalleLabel = new Label("Detalle de la Orden");
-        detalleLabel.setFont(Font.font("Segoe UI", 22));
-        detalleLabel.setTextFill(Color.web(TEXT_LIGHT));
-
+        // Tabla
         tabla = new TableView<>();
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
@@ -88,46 +81,17 @@ public class OrdenesPage extends BorderPane {
         TableColumn<ItemOrden, Double> totalCol = new TableColumn<>("Total");
         totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
 
-        TableColumn<ItemOrden, Void> eliminarCol = new TableColumn<>("Acción");
-        eliminarCol.setCellFactory(col -> new TableCell<>() {
-            private final Button btn = new Button("🗑️");
-
-            {
-                btn.setStyle("-fx-background-color: transparent; -fx-font-size: 16; -fx-text-fill: #EF4444;");
-                btn.setOnAction(e -> {
-                    ItemOrden item = getTableView().getItems().get(getIndex());
-                    items.remove(item);
-                    actualizarTotal();
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : btn);
-            }
-        });
-
-        tabla.getColumns().addAll(insumoCol, cantidadCol, unidadCol, precioCol, totalCol, eliminarCol);
-
-        // Datos iniciales
-        items.addAll(
-                new ItemOrden("Leche Entera", 10, "Litros", 20),
-                new ItemOrden("Azúcar Refinada", 5, "Kilos", 15)
-        );
+        tabla.getColumns().addAll(insumoCol, cantidadCol, unidadCol, precioCol, totalCol);
         tabla.setItems(items);
 
-        // --- Fila de entrada ---
+        // Fila de entrada
         GridPane inputGrid = new GridPane();
         inputGrid.setHgap(10);
         inputGrid.setVgap(10);
         inputGrid.setPadding(new Insets(15));
-        inputGrid.setBackground(new Background(new BackgroundFill(Color.web("#FAFAFA"), new CornerRadii(5), Insets.EMPTY)));
-        inputGrid.setBorder(new Border(new BorderStroke(Color.web(BORDER_LIGHT),
-                BorderStrokeStyle.SOLID, new CornerRadii(5), BorderWidths.DEFAULT)));
 
         insumoField = new TextField();
-        insumoField.setPromptText("Buscar insumo...");
+        insumoField.setPromptText("Insumo");
 
         cantidadField = new TextField();
         cantidadField.setPromptText("0");
@@ -141,28 +105,20 @@ public class OrdenesPage extends BorderPane {
 
         Button addButton = new Button("➕ Agregar");
         addButton.setStyle("-fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold;");
-        addButton.setOnMouseEntered(e -> addButton.setStyle("-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold;"));
-        addButton.setOnMouseExited(e -> addButton.setStyle("-fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold;"));
         addButton.setOnAction(e -> agregarItem());
 
-        inputGrid.add(insumoField, 0, 0);
-        inputGrid.add(cantidadField, 1, 0);
-        inputGrid.add(unidadCombo, 2, 0);
-        inputGrid.add(precioField, 3, 0);
-        inputGrid.add(addButton, 4, 0);
+        inputGrid.addRow(0, insumoField, cantidadField, unidadCombo, precioField, addButton);
 
-        ColumnConstraints[] cols = new ColumnConstraints[5];
         for (int i = 0; i < 5; i++) {
-            cols[i] = new ColumnConstraints();
-            cols[i].setPercentWidth(20);
-            inputGrid.getColumnConstraints().add(cols[i]);
+            ColumnConstraints col = new ColumnConstraints();
+            col.setPercentWidth(20);
+            inputGrid.getColumnConstraints().add(col);
         }
 
-        // --- Total ---
+        // Total
         HBox totalBox = new HBox();
         totalBox.setAlignment(Pos.CENTER_RIGHT);
         totalBox.setPadding(new Insets(10, 0, 0, 0));
-
         VBox totalInner = new VBox(5);
         Label totalText = new Label("Total de la Orden:");
         totalText.setFont(Font.font("Segoe UI", 16));
@@ -172,21 +128,92 @@ public class OrdenesPage extends BorderPane {
         totalInner.getChildren().addAll(totalText, totalLabel);
         totalBox.getChildren().add(totalInner);
 
-        // --- Botones finales ---
+        // Botones
         HBox buttons = new HBox(10);
         buttons.setAlignment(Pos.CENTER_RIGHT);
         Button guardarBtn = new Button("Guardar");
         guardarBtn.setStyle("-fx-background-color: white; -fx-text-fill: " + PRIMARY + "; -fx-border-color: " + PRIMARY + "; -fx-font-weight: bold;");
-        Button enviarBtn = new Button("Enviar para Aprobación");
-        enviarBtn.setStyle("-fx-background-color: " + PRIMARY + "; -fx-text-fill: white; -fx-font-weight: bold;");
-        buttons.getChildren().addAll(guardarBtn, enviarBtn);
+        buttons.getChildren().addAll(guardarBtn);
 
-        // --- Ensamblar todo ---
-        formContainer.getChildren().addAll(camposSuperiores, detalleLabel, tabla, inputGrid, totalBox, buttons);
+        // ✅ Acción del botón "Guardar"
+        guardarBtn.setOnAction(e -> {
+            try {
+                String proveedorNombre = proveedorCombo.getValue();
+                if (proveedorNombre == null || proveedorNombre.isEmpty() || proveedorNombre.equals("Seleccionar Proveedor")) {
+                    mostrarAlerta("Error", "Selecciona un proveedor válido.");
+                    return;
+                }
+
+                if (fechaPicker.getValue() == null) {
+                    mostrarAlerta("Error", "Selecciona la fecha de la orden.");
+                    return;
+                }
+
+                double total = items.stream().mapToDouble(ItemOrden::getTotal).sum();
+                if (total <= 0) {
+                    mostrarAlerta("Error", "Agrega al menos un ítem válido.");
+                    return;
+                }
+
+                int idProveedor = obtenerIdProveedor(proveedorNombre);
+                if (idProveedor == 0) {
+                    mostrarAlerta("Error", "No se encontró el proveedor en la base de datos.");
+                    return;
+                }
+
+                OrdenCompraService service = new OrdenCompraService();
+                service.crearOrden(
+                        idProveedor,
+                        1, // IdEmpleado fijo o tomado de sesión
+                        "Compra local",
+                        total,
+                        java.sql.Date.valueOf(fechaPicker.getValue()),
+                        java.sql.Date.valueOf(fechaPicker.getValue()),
+                        "Orden creada desde interfaz JavaFX"
+                );
+
+                mostrarAlerta("Éxito", "✅ Orden registrada correctamente en MySQL.");
+
+                items.clear();
+                actualizarTotal();
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                mostrarAlerta("Error", "Ocurrió un problema: " + ex.getMessage());
+            }
+        });
+
+        // Ensamblar
+        formContainer.getChildren().addAll(camposSuperiores, tabla, inputGrid, totalBox, buttons);
         content.getChildren().addAll(header, formContainer);
-
         setCenter(content);
-        actualizarTotal();
+    }
+
+    private void cargarProveedores(ComboBox<String> combo) {
+        try (Connection conn = ConexionBD.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT Nombre_comercial FROM proveedores")) {
+
+            while (rs.next()) {
+                combo.getItems().add(rs.getString("Nombre_comercial"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int obtenerIdProveedor(String nombre) {
+        String sql = "SELECT IdProveedor FROM proveedores WHERE Nombre_comercial = ?";
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, nombre);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return rs.getInt("IdProveedor");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private VBox crearCampo(String labelText, Control input) {
@@ -194,9 +221,7 @@ public class OrdenesPage extends BorderPane {
         Label label = new Label(labelText);
         label.setFont(Font.font("Segoe UI", 13));
         label.setTextFill(Color.web(TEXT_LIGHT));
-        input.setMaxWidth(Double.MAX_VALUE);
         vbox.getChildren().addAll(label, input);
-        VBox.setVgrow(input, Priority.NEVER);
         return vbox;
     }
 
@@ -208,7 +233,7 @@ public class OrdenesPage extends BorderPane {
             double precio = Double.parseDouble(precioField.getText().trim());
 
             if (insumo.isEmpty() || cantidad <= 0 || precio <= 0) {
-                mostrarAlerta("Error", "Por favor, completa todos los campos correctamente.");
+                mostrarAlerta("Error", "Completa todos los campos correctamente.");
                 return;
             }
 
@@ -220,7 +245,7 @@ public class OrdenesPage extends BorderPane {
             actualizarTotal();
 
         } catch (NumberFormatException e) {
-            mostrarAlerta("Error", "Cantidad y precio deben ser valores numéricos.");
+            mostrarAlerta("Error", "Cantidad y precio deben ser numéricos.");
         }
     }
 
@@ -230,14 +255,13 @@ public class OrdenesPage extends BorderPane {
     }
 
     private void mostrarAlerta(String titulo, String mensaje) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
 
-    // --- Clase auxiliar para los items ---
     public static class ItemOrden {
         private final String insumo;
         private final double cantidad;
@@ -260,7 +284,6 @@ public class OrdenesPage extends BorderPane {
         public double getTotal() { return total; }
     }
 
-    // --- Test local ---
     public static void main(String[] args) {
         javafx.application.Application.launch(TestApp.class);
     }
@@ -269,7 +292,7 @@ public class OrdenesPage extends BorderPane {
         @Override
         public void start(Stage stage) {
             stage.setTitle("Orden de Compra - JavaFX");
-            stage.setScene(new Scene(new OrdenesPage(), 1400, 850));
+            stage.setScene(new Scene(new OrdenesPage(), 1300, 800));
             stage.show();
         }
     }

@@ -77,6 +77,7 @@ public class DashboardPage {
         Button ordenesBtn = crearBotonMenu("🧾 Órdenes", turquesa);
 
         ordenesBtn.setOnAction(e -> root.setCenter(new OrdenesPage()));
+        proveedoresBtn.setOnAction(e -> root.setCenter(new ProveedoresPage()));
         recetasBtn.setOnAction(e -> root.setCenter(new CreationRecipePage())); // 👈 AGREGAR ESTA LÍNEA
 
 // (Aquí podrías hacer lo mismo para los otros botones si quieres más vistas)
