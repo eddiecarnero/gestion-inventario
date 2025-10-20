@@ -12,47 +12,58 @@ public class ProductoService {
         this.productoDAO = new ProductoDAO();
     }
 
-    // 🔴 1. MÉTODO FALTANTE: agregarNuevoProducto
+    // 1. Método agregarNuevoProducto (Corregido)
     public boolean agregarNuevoProducto(Producto producto) {
-        // Validación básica
-        if (producto.getNombre() == null || producto.getNombre().trim().isEmpty()) {
+        // Validación básica (Corregida: usa getTipoDeProducto)
+        if (producto.getTipoDeProducto() == null || producto.getTipoDeProducto().trim().isEmpty()) {
             return false;
         }
+        // Este producto ya debe venir con el 'EstadoStock' calculado desde la UI
         return productoDAO.agregarProducto(producto);
     }
 
-    // 🔴 2. MÉTODO FALTANTE: obtenerTodosLosProductos
+    // 2. Método obtenerTodosLosProductos (Estaba bien)
     public List<Producto> obtenerTodosLosProductos() {
         return productoDAO.obtenerTodosLosProductos();
     }
 
-    // 🔴 3. MÉTODO FALTANTE: aumentarStockProducto
+    // 3. Método aumentarStockProducto (Corregido y Optimizado)
     public boolean aumentarStockProducto(int idProducto, int cantidadAAgregar) {
         if (cantidadAAgregar <= 0) {
-            return false;
+            return false; // No se puede agregar 0 o menos
         }
 
-        // Obtener el producto actual para saber su stock anterior
-        List<Producto> productos = obtenerTodosLosProductos();
-        Producto productoEncontrado = null;
-        for (Producto p : productos) {
-            if (p.getId() == idProducto) {
-                productoEncontrado = p;
-                break;
+        // --- OPTIMIZACIÓN ---
+        // Ya no cargamos la lista entera. Buscamos solo el que necesitamos.
+        // (Usa el método 5 que agregamos al DAO)
+        Producto productoActual = productoDAO.obtenerProductoPorId(idProducto);
+
+        if (productoActual != null) {
+            // Corregido: usa getStock()
+            int nuevoStock = productoActual.getStock() + cantidadAAgregar;
+
+            // --- LÓGICA DE NEGOCIO (NUEVA) ---
+            // Recalculamos el estado basado en el nuevo stock
+            String nuevoEstado;
+            if (nuevoStock <= productoActual.getStockMinimo()) {
+                nuevoEstado = "BAJO_STOCK";
+            } else {
+                nuevoEstado = "EN_STOCK";
             }
-        }
+            // (Puedes añadir lógica para "SOBRE_STOCK" si comparas con getStockMaximo)
 
-        if (productoEncontrado != null) {
-            int nuevoStock = productoEncontrado.getStockActual() + cantidadAAgregar;
-            return productoDAO.actualizarStock(idProducto, nuevoStock);
+            // Usamos el nuevo método del DAO (método 6) para actualizar AMBAS columnas
+            return productoDAO.actualizarStockYEstado(idProducto, nuevoStock, nuevoEstado);
+
         } else {
-            return false; // Producto no encontrado en la base de datos
+            return false; // Producto no encontrado
         }
     }
 
+    // 4. Método eliminarProducto (Estaba bien)
     public boolean eliminarProducto(int idProducto) {
-        // Aquí puedes agregar lógica de negocio (ej: no permitir eliminar si el stock es > 0)
-        // Por ahora, solo llamamos al DAO
+        // Lógica de negocio (ej: no eliminar si stock > 0) podría ir aquí.
+        // Por ahora, solo llamamos al DAO.
         return productoDAO.eliminarProducto(idProducto);
     }
 }
