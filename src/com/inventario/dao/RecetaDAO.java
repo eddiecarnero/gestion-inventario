@@ -3,6 +3,7 @@ package com.inventario.dao;
 import com.inventario.ui.CreationRecipePage.Receta;
 import com.inventario.ui.CreationRecipePage.Ingrediente;
 
+import com.inventario.config.ConexionBD;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ public class RecetaDAO {
         PreparedStatement stmtIngrediente = null;
 
         try {
-            conn = DatabaseConnection.getConnection();
+            conn = ConexionBD.getConnection();
 
             if (conn == null) {
                 System.err.println("❌ No hay conexión a la base de datos");
@@ -107,7 +108,7 @@ public class RecetaDAO {
         PreparedStatement stmtIng = null;
 
         try {
-            conn = DatabaseConnection.getConnection();
+            conn = ConexionBD.getConnection();
 
             if (conn == null) {
                 System.err.println("❌ No hay conexión a la base de datos");
@@ -180,7 +181,7 @@ public class RecetaDAO {
         PreparedStatement stmt = null;
 
         try {
-            conn = DatabaseConnection.getConnection();
+            conn = ConexionBD.getConnection();
 
             if (conn == null) {
                 System.err.println("❌ No hay conexión a la base de datos");
@@ -218,18 +219,18 @@ public class RecetaDAO {
 
     // Método para verificar la conexión
     public boolean verificarConexion() {
-        Connection conn = DatabaseConnection.getConnection();
-        if (conn != null) {
-            try {
-                System.out.println("✅ Conexión a la base de datos verificada");
-                System.out.println("   Base de datos: " + conn.getCatalog());
+        try (Connection conn = ConexionBD.getConnection()) {
+            if (conn != null) {
+                System.out.println("✅ Conexión verificada con " + conn.getCatalog());
                 return true;
-            } catch (SQLException e) {
-                System.err.println("❌ Error al verificar conexión: " + e.getMessage());
+            } else {
+                System.err.println("❌ getConnection devolvió null. Revisa credenciales o URL en ConexionBD.");
                 return false;
             }
+        } catch (SQLException e) {
+            System.err.println("❌ Error al usar la conexión:");
+            e.printStackTrace();
+            return false;
         }
-        System.err.println("❌ No se pudo conectar a la base de datos");
-        return false;
     }
 }
