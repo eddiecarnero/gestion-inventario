@@ -11,6 +11,8 @@ import javafx.scene.paint.Color;
 import java.sql.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import com.inventario.config.ConexionBD;
+
 
 public class ProveedoresPage extends BorderPane  {
     // ==========================================
@@ -25,13 +27,6 @@ public class ProveedoresPage extends BorderPane  {
 
     private TableView<Proveedor> tabla;
     private ObservableList<Proveedor> listaProveedores;
-
-    // ==========================================
-    // CONFIGURACIÓN BASE DE DATOS
-    // ==========================================
-    private static final String URL = "jdbc:mysql://localhost:3306/sistema_inventario";
-    private static final String USUARIO = "root";
-    private static final String PASSWORD = "Admin";
 
     // ==========================================
     // CONSTRUCTOR
@@ -154,12 +149,7 @@ public class ProveedoresPage extends BorderPane  {
     // CONEXIÓN BASE DE DATOS
     // ==========================================
     private Connection conectar() throws SQLException {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(URL, USUARIO, PASSWORD);
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("Driver MySQL no encontrado: " + e.getMessage());
-        }
+        return ConexionBD.getConnection();
     }
 
     // ==========================================
@@ -178,7 +168,7 @@ public class ProveedoresPage extends BorderPane  {
             return;
         }
 
-        String sql = "INSERT INTO PROVEEDORES (Nombre_comercial, RUC, Tipo_de_proveedor, Telefono, Email, Direccion) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO proveedores (Nombre_comercial, RUC, Tipo_de_proveedor, Telefono, Email, Direccion) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -212,7 +202,7 @@ public class ProveedoresPage extends BorderPane  {
     private void cargarProveedores() {
         listaProveedores.clear();
 
-        String sql = "SELECT * FROM PROVEEDORES ORDER BY IdProveedor DESC";
+        String sql = "SELECT * FROM proveedores ORDER BY IdProveedor DESC";
         try (Connection conn = conectar();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

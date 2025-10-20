@@ -77,6 +77,7 @@ public class DashboardPage {
         Button proveedoresBtn = crearBotonMenu("🚚 Proveedores", turquesa);
         Button ordenesBtn = crearBotonMenu("🧾 Órdenes", turquesa);
 
+        inventarioBtn.setOnAction(e -> root.setCenter(new ProductosPage()));
         ordenesBtn.setOnAction(e -> root.setCenter(new OrdenesPage()));
         proveedoresBtn.setOnAction(e -> root.setCenter(new ProveedoresPage()));
         recetasBtn.setOnAction(e -> root.setCenter(new CreationRecipePage())); // 👈 AGREGAR ESTA LÍNEA
