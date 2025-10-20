@@ -1,6 +1,7 @@
 package com.inventario.ui;
 
 import com.inicio.ui.LoginPage;
+import com.inventario.config.AuthService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -32,7 +33,7 @@ public class DashboardPage {
         root.setBackground(new Background(new BackgroundFill(crema, CornerRadii.EMPTY, Insets.EMPTY)));
 
         // ----- Sidebar -----
-        sidebar = crearSidebar(cafe, turquesa);
+        sidebar = crearSidebar(cafe, turquesa, nombreUsuario);
 
         // ----- Encabezado superior -----
         HBox topBar = crearTopBar(cafe, turquesa, stage, nombreUsuario);
@@ -56,7 +57,7 @@ public class DashboardPage {
         scene = new Scene(root, 1000, 600);
     }
 
-    private VBox crearSidebar(Color cafe, Color turquesa) {
+    private VBox crearSidebar(Color cafe, Color turquesa, String nombreUsuario) {
         VBox side = new VBox(10);
         side.setPadding(new Insets(15));
         side.setPrefWidth(220);
@@ -80,9 +81,19 @@ public class DashboardPage {
         inventarioBtn.setOnAction(e -> root.setCenter(new ProductosPage()));
         ordenesBtn.setOnAction(e -> root.setCenter(new OrdenesPage()));
         proveedoresBtn.setOnAction(e -> root.setCenter(new ProveedoresPage()));
-        recetasBtn.setOnAction(e -> root.setCenter(new CreationRecipePage())); // 👈 AGREGAR ESTA LÍNEA
+        recetasBtn.setOnAction(e -> root.setCenter(new CreationRecipePage()));
 
-// (Aquí podrías hacer lo mismo para los otros botones si quieres más vistas)
+        String tipoempleado = AuthService.obtenerTipoEmpleado(nombreUsuario);
+
+        if (tipoempleado.equals("Empleado")) {
+            usuariosBtn.setVisible(false);
+            usuariosBtn.setManaged(false);
+            reportesBtn.setVisible(false);
+            reportesBtn.setManaged(false);
+            proveedoresBtn.setVisible(false);
+            proveedoresBtn.setManaged(false);
+        }
+
         side.getChildren().addAll(
                 toggle, title,
                 inventarioBtn,
@@ -103,7 +114,8 @@ public class DashboardPage {
         top.setAlignment(Pos.CENTER_RIGHT);
         top.setSpacing(10);
 
-        titleLabel = new Label("Bienvenido, " + nombreUsuario);
+        String nombreReal = AuthService.obtenerNombre(nombreUsuario);
+        titleLabel = new Label("Bienvenido, " + nombreReal);
         titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
 
         Button logout = new Button("Cerrar sesión");

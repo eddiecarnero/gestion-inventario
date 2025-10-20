@@ -49,6 +49,30 @@ public class AuthService {
         return "Invitado";
     }
 
+    public static String obtenerTipoEmpleado(String usuario) {
+        String sql = "SELECT Tipo_de_empleado FROM empleado WHERE user = ?";
+
+        try (Connection con = ConexionBD.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, usuario);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String rango = rs.getString("tipo_de_empleado");
+                System.out.println("Tipo encontrado en BD: " + rango);
+                return rango.equalsIgnoreCase("Administrador") ? "Administrador" : "Empleado";
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Si no encuentra el usuario o ocurre error, devuelve "Empleado" por defecto
+        return "Empleado";
+    }
+
+
 
 
 

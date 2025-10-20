@@ -92,8 +92,7 @@ public class LoginPage {
             boolean valido = AuthService.validarUsuario(usuario, contrasena);
 
             if (valido) {
-                String nombre = AuthService.obtenerNombre(usuario);
-                DashboardPage dashboard = new DashboardPage(stage, nombre);
+                DashboardPage dashboard = new DashboardPage(stage, usuario);
                 stage.setScene(dashboard.getScene());
             } else {
                 mostrarAlerta("Usuario o contraseña incorrectos.");
