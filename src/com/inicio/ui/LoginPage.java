@@ -130,6 +130,9 @@ public class LoginPage {
             }
         });
 
+        System.out.println(getClass().getResource("/com/images/cafe_1.jpg"));
+        System.out.println(getClass().getResource("/com/images/fontlogo.ttf"));
+
 
     }
     public Scene getScene() {
