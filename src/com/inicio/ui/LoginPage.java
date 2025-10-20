@@ -12,6 +12,7 @@ import javafx.scene.text.*;
 import javafx.scene.paint.Color;
 import javafx.scene.effect.DropShadow;
 
+import java.sql.*;
 
 public class LoginPage {
     private Scene scene;
@@ -80,8 +81,23 @@ public class LoginPage {
         btnLogin.setFont(Font.font("Arial", FontWeight.BOLD, 16));
 
         btnLogin.setOnAction(e -> {
-            DashboardPage dashboard = new DashboardPage(stage);
-            stage.setScene(dashboard.getScene());
+            String usuario = campoUsuario.getText().trim();
+            String contrasena = campoContrasena.getText().trim();
+
+            if (usuario.isEmpty() || contrasena.isEmpty()) {
+                mostrarAlerta("Por favor, complete todos los campos.");
+                return;
+            }
+
+            boolean valido = AuthService.validarUsuario(usuario, contrasena);
+
+            if (valido) {
+                String nombre = AuthService.obtenerNombre(usuario);
+                DashboardPage dashboard = new DashboardPage(stage, nombre);
+                stage.setScene(dashboard.getScene());
+            } else {
+                mostrarAlerta("Usuario o contraseña incorrectos.");
+            }
         });
 
         Label olvidaste = new Label("¿Olvidaste Contraseña?");
@@ -111,24 +127,6 @@ public class LoginPage {
         scene = new Scene(root, 1100, 700);
         stage.setTitle("Mamatania - Login");
 
-        btnLogin.setOnAction(e -> {
-            String usuario = campoUsuario.getText().trim();
-            String contrasena = campoContrasena.getText().trim();
-
-            if (usuario.isEmpty() || contrasena.isEmpty()) {
-                mostrarAlerta("Por favor, complete todos los campos.");
-                return;
-            }
-
-            boolean valido = AuthService.validarUsuario(usuario, contrasena);
-
-            if (valido) {
-                DashboardPage dashboard = new DashboardPage(stage);
-                stage.setScene(dashboard.getScene());
-            } else {
-                mostrarAlerta("Usuario o contraseña incorrectos.");
-            }
-        });
 
         System.out.println(getClass().getResource("/com/images/cafe_1.jpg"));
         System.out.println(getClass().getResource("/com/images/fontlogo.ttf"));

@@ -24,6 +24,33 @@ public class AuthService {
         }
     }
 
+    public static String obtenerNombre(String usuario) {
+        String sql = "SELECT Nombre_y_Apellido FROM railway.empleado WHERE user = ?";
+
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, usuario);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String nombre = rs.getString("Nombre_y_Apellido");
+                System.out.println("🔹 Nombre obtenido desde BD: " + nombre);
+                return nombre;
+            } else {
+                System.out.println("⚠️ No se encontró registro para el usuario: " + usuario);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return "Invitado";
+    }
+
+
+
 
 }
 

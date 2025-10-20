@@ -20,7 +20,7 @@ public class DashboardPage {
     private Label titleLabel;
     private Scene scene;
 
-    public DashboardPage(Stage stage) {
+    public DashboardPage(Stage stage, String nombreUsuario) {
 
         // ----- Colores principales -----
         Color crema = Color.web("#FFF8E7");
@@ -35,7 +35,7 @@ public class DashboardPage {
         sidebar = crearSidebar(cafe, turquesa);
 
         // ----- Encabezado superior -----
-        HBox topBar = crearTopBar(cafe, turquesa, stage);
+        HBox topBar = crearTopBar(cafe, turquesa, stage, nombreUsuario);
 
         // ----- Área central -----
         content = new StackPane();
@@ -95,14 +95,14 @@ public class DashboardPage {
         return side;
     }
 
-    private HBox crearTopBar(Color cafe, Color turquesa, Stage stage) {
+    private HBox crearTopBar(Color cafe, Color turquesa, Stage stage, String nombreUsuario) {
         HBox top = new HBox();
         top.setPadding(new Insets(10, 20, 10, 20));
         top.setBackground(new Background(new BackgroundFill(turquesa, CornerRadii.EMPTY, Insets.EMPTY)));
         top.setAlignment(Pos.CENTER_RIGHT);
         top.setSpacing(10);
 
-        titleLabel = new Label("Bienvenido, Usuario");
+        titleLabel = new Label("Bienvenido, " + nombreUsuario);
         titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
 
         Button logout = new Button("Cerrar sesión");
