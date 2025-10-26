@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class AuthService {
     public static boolean validarUsuario(String usuario, String contrasena) {
-        String sql = "SELECT * FROM railway.empleado WHERE user = ? AND password = ?";
+        String sql = "SELECT * FROM sql5804315.empleado WHERE user = ? AND password = ?";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -25,7 +25,7 @@ public class AuthService {
     }
 
     public static String obtenerNombre(String usuario) {
-        String sql = "SELECT Nombre_y_Apellido FROM railway.empleado WHERE user = ?";
+        String sql = "SELECT Nombre_y_Apellido FROM sql5804315.empleado WHERE user = ?";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
