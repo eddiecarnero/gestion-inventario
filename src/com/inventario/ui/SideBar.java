@@ -1,6 +1,5 @@
 package com.inventario.ui;
 
-import com.inicio.ui.LoginPage;
 import com.inventario.config.AuthService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -117,15 +116,7 @@ public class SideBar {
             LoginPage login = new LoginPage(stage);
             stage.setScene(login.getScene());
         });
-        //btnCerrarSesion.setStyle("-fx-border-width: 3px;-fx-border-color: white");
-        btnCerrarSesion.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-border-color: #ff4d4d;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-border-radius: 6px;" +
-                        "-fx-text-fill: #ff4d4d;" +
-                        "-fx-padding: 8 14;"
-        );
+
 
         VBox sidebarcontent = new VBox(2);
         for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnKardex, btnOrdenCompra, btnSubirVenta, btnPerfilUsuario}) {
