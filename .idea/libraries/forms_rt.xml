@@ -2,8 +2,10 @@
   <library name="forms_rt">
     <CLASSES>
       <root url="jar://$APPLICATION_HOME_DIR$/lib/forms_rt.jar!/" />
+      <root url="file://$PROJECT_DIR$/lib/javafx-sdk-25/lib" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/javafx-sdk-25/lib" recursive="false" />
   </library>
 </component>

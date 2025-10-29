@@ -2,6 +2,7 @@ package com.inicio.ui;
 import com.inventario.config.AuthService;
 
 import com.inventario.ui.DashboardPage;
+import com.inventario.ui.SideBar;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -92,7 +93,7 @@ public class LoginPage {
             boolean valido = AuthService.validarUsuario(usuario, contrasena);
 
             if (valido) {
-                DashboardPage dashboard = new DashboardPage(stage, usuario);
+                SideBar dashboard = new SideBar(stage, usuario);
                 stage.setScene(dashboard.getScene());
             } else {
                 mostrarAlerta("Usuario o contraseña incorrectos.");

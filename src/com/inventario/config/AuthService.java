@@ -46,7 +46,7 @@ public class AuthService {
             e.printStackTrace();
         }
 
-        return "Invitado";
+        return "Error";
     }
 
     public static String obtenerTipoEmpleado(String usuario) {
