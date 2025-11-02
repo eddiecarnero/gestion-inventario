@@ -1,19 +1,15 @@
 package com.inicio.ui;
 import com.inventario.config.AuthService;
 
-import com.inventario.ui.DashboardPage;
 import com.inventario.ui.SideBar;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.control.*;
-import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.scene.paint.Color;
 import javafx.scene.effect.DropShadow;
-
-import java.sql.*;
 
 public class LoginPage {
     private Scene scene;

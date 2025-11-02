@@ -13,10 +13,12 @@ import javafx.stage.Stage;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
 
+import java.util.function.Consumer; // <-- IMPORTANTE: Añadir esta importación
+
 public class SideBar {
     private BorderPane root;
     private VBox sidebar;
-    private StackPane mainContent;
+    private StackPane mainContent; // <-- Este es el panel donde irá el contenido
     private Scene scene;
 
     public SideBar(Stage stage, String usuario) {
@@ -28,6 +30,9 @@ public class SideBar {
                 getClass().getResourceAsStream("/com/images/global.ttf"), 14
         );
 
+        // --- Advertencia: Asegúrate de que estas rutas sean correctas ---
+        // Si alguna ruta es incorrecta, getResourceAsStream devolverá null
+        // y el programa fallará con un NullPointerException.
         ImageView iconDashboard = crearIcono("/com/images/iconos/monitor.png");
         ImageView iconAlmacen1 = crearIcono("/com/images/iconos/paquete.png");
         ImageView iconAlmacen2 = crearIcono("/com/images/iconos/nivel-intermedio.png");
@@ -36,6 +41,7 @@ public class SideBar {
         ImageView iconOrdenCompra = crearIcono("/com/images/iconos/carrito-de-compras.png");
         ImageView iconVentas = crearIcono("/com/images/iconos/subir.png");
         ImageView iconUsuarios = crearIcono("/com/images/iconos/usuario.png");
+        // --- Fin de la Advertencia ---
 
         sidebar = new VBox(0);
         sidebar.setPrefWidth(250);
@@ -81,9 +87,31 @@ public class SideBar {
         Button btnSubirVenta = new Button("Subir Venta", iconVentas);
         Button btnPerfilUsuario = new Button("Perfil de Usuario", iconUsuarios);
 
-        btnDashboard.setOnAction(e -> root.setCenter(new ProductosPage()));
-        btnOrdenCompra.setOnAction(e -> root.setCenter(new OrdenesPage()));
 
+        // 1. Definimos el panel de contenido principal
+        mainContent = new StackPane();
+        mainContent.setStyle("-fx-background-color: #F9F1E6;"); // Fondo crema
+
+        // 2. Definimos el "manejador de navegación" que Almacen1Page necesita
+        Consumer<String> navigationHandler = pageName -> {
+            if ("orden-compra".equals(pageName)) {
+                // Si se hace clic en el botón de Almacen1Page,
+                // cambiamos el contenido a OrdenesPage
+                mainContent.getChildren().setAll(new OrdenesPage());
+            }
+            // Aquí puedes añadir más casos 'else if' para otras páginas
+        };
+
+        // 3. Asignamos las acciones a los botones para que carguen el contenido
+        //    DENTRO de 'mainContent', no en lugar de él.
+
+        btnAlmacen1.setOnAction(e -> mainContent.getChildren().setAll(new Almacen1Page(navigationHandler)));
+        btnOrdenCompra.setOnAction(e -> mainContent.getChildren().setAll(new OrdenesPage()));
+
+        // Cargar una página por defecto al iniciar
+        mainContent.getChildren().setAll(new Almacen1Page(navigationHandler));
+
+        // --- FIN DE LA CORRECCIÓN ---
 
 
         String nombreUsuario = AuthService.obtenerNombre(usuario);
@@ -119,6 +147,8 @@ public class SideBar {
 
 
         VBox sidebarcontent = new VBox(2);
+        // Botones que aún no tienen acción:
+        // btnAlmacen2, btnAlmacen3, btnKardex, btnSubirVenta, btnPerfilUsuario
         for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnKardex, btnOrdenCompra, btnSubirVenta, btnPerfilUsuario}) {
             aplicarEstiloBoton(btn);
             sidebarcontent.getChildren().add(btn);
@@ -141,13 +171,9 @@ public class SideBar {
         sidebar.getChildren().addAll(header, sidebarcontent, spacer, footer);
         aplicarEstiloBoton(btnCerrarSesion);
 
-
-        mainContent = new StackPane();
-        mainContent.setStyle("-fx-background-color: #F9F1E6;");
-
         root = new BorderPane();
         root.setLeft(scrollSidebar);
-        root.setCenter(mainContent);
+        root.setCenter(mainContent); // <-- CORRECCIÓN: El centro siempre es mainContent
 
         scene = new Scene(root, 1551, 862);
         stage.setScene(scene);
@@ -155,7 +181,12 @@ public class SideBar {
     }
 
     private ImageView crearIcono(String ruta) {
-        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream(ruta)));
+        // --- Advertencia de NullPointerException ---
+        // Si la ruta es incorrecta, la línea de abajo fallará.
+        // Asegúrate de que tu estructura de carpetas sea:
+        // src/main/resources/com/images/iconos/monitor.png
+        Image img = new Image(getClass().getResourceAsStream(ruta));
+        ImageView icon = new ImageView(img);
         icon.setFitWidth(18);
         icon.setFitHeight(18);
         icon.setPreserveRatio(true);
