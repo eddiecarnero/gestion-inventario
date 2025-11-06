@@ -1,0 +1,41 @@
+# === IntelliJ IDEA ===
+# Directorio de salida de compilación (Tu solicitud)
+out/
+
+# Archivos del proyecto IntelliJ
+.idea/
+*.iml
+
+# === Java / Compilación ===
+# Archivos compilados de Java
+*.class
+
+# Archivos de paquete
+*.jar
+*.war
+*.ear
+
+# === Build Tools (Maven/Gradle) ===
+# Maven
+target/
+
+# Gradle
+build/
+.gradle/
+bin/
+
+# === Archivos de Log ===
+*.log
+*.log.*
+
+# === Sistema Operativo ===
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# === Archivos de Entorno ===
+.env
+local.properties

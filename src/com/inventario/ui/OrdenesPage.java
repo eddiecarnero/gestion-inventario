@@ -21,6 +21,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrdenesPage extends BorderPane {
 
@@ -30,17 +31,18 @@ public class OrdenesPage extends BorderPane {
     private final ComboBox<String> proveedorCombo;
     private final ComboBox<Insumo> insumoCombo;
     private final TextField cantidadField;
-    private final TextField precioField; // <-- RE-INTRODUCIDO
+    // private final TextField precioField; // <-- ELIMINADO
     private final DatePicker fechaPicker;
 
     // --- Listas de Datos ---
     private final ObservableList<ItemOrden> items = FXCollections.observableArrayList();
     private final ObservableList<Insumo> todosLosInsumos = FXCollections.observableArrayList();
 
-    // --- Estilos (Inspirados en shadcn/ui y tu código React) ---
+    // --- Estilos ---
+    // (CSS_STYLES sin cambios... puedes mantener el que ya tenías)
     private static final String CSS_STYLES = """
         .root {
-            -fx-background-color: #FDF8F0; /* BG_LIGHT */
+            -fx-background-color: #FDF8F0;
             -fx-font-family: 'Segoe UI';
         }
         .header-title {
@@ -137,7 +139,6 @@ public class OrdenesPage extends BorderPane {
             -fx-font-weight: bold;
             -fx-font-size: 1.05em;
         }
-        /* Estilos de Badge eliminados ya que no hay columna Estado */
     """;
 
     public OrdenesPage() {
@@ -149,14 +150,14 @@ public class OrdenesPage extends BorderPane {
         proveedorCombo = new ComboBox<>();
         insumoCombo = new ComboBox<>();
         cantidadField = new TextField();
-        precioField = new TextField(); // <-- INICIALIZADO
+        // precioField ELIMINADO
         tablaItems = new TableView<>();
         totalLabel = new Label("$0.00");
         fechaPicker = new DatePicker(LocalDate.now());
 
         // --- Cargar Datos Iniciales ---
         cargarProveedores(proveedorCombo);
-        cargarTodosLosInsumos(); // Ahora carga todos los 'producto'
+        cargarTodosLosInsumos(); // Carga todos los 'producto'
 
         // --- Estructura Principal ---
         VBox mainContent = new VBox(20);
@@ -198,7 +199,7 @@ public class OrdenesPage extends BorderPane {
         // Título de la Card
         HBox cardHeader = new HBox(10);
         cardHeader.setAlignment(Pos.CENTER_LEFT);
-        Text icon = new Text("🛒"); // Emoji para ShoppingCart
+        Text icon = new Text("🛒");
         icon.setFont(Font.font(20));
         Label cardTitle = new Label("Nueva Orden de Compra");
         cardTitle.getStyleClass().add("card-title");
@@ -212,14 +213,11 @@ public class OrdenesPage extends BorderPane {
         GridPane gridSup = new GridPane();
         gridSup.setHgap(20);
         gridSup.setVgap(10);
-
         proveedorCombo.setPromptText("Seleccionar proveedor");
         proveedorCombo.setMaxWidth(Double.MAX_VALUE);
         gridSup.add(crearCampo("Proveedor", proveedorCombo), 0, 0);
-
         fechaPicker.setMaxWidth(Double.MAX_VALUE);
         gridSup.add(crearCampo("Fecha", fechaPicker), 1, 0);
-
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(50);
         ColumnConstraints col2 = new ColumnConstraints();
@@ -236,20 +234,19 @@ public class OrdenesPage extends BorderPane {
         GridPane addItemsGrid = new GridPane();
         addItemsGrid.setHgap(15);
         addItemsGrid.setVgap(10);
+        // --- LAYOUT DE 3 COLUMNAS ---
         ColumnConstraints colInsumo = new ColumnConstraints();
-        colInsumo.setPercentWidth(50);
+        colInsumo.setPercentWidth(60);
         ColumnConstraints colCant = new ColumnConstraints();
-        colCant.setPercentWidth(15);
-        ColumnConstraints colPrecio = new ColumnConstraints(); // <-- NUEVA COLUMNA
-        colPrecio.setPercentWidth(15);
+        colCant.setPercentWidth(20);
         ColumnConstraints colBtn = new ColumnConstraints();
         colBtn.setPercentWidth(20);
-        addItemsGrid.getColumnConstraints().addAll(colInsumo, colCant, colPrecio, colBtn);
+        addItemsGrid.getColumnConstraints().addAll(colInsumo, colCant, colBtn);
 
         // ComboBox de Insumos (Productos)
         insumoCombo.setPromptText("Seleccionar producto");
         insumoCombo.setMaxWidth(Double.MAX_VALUE);
-        insumoCombo.setItems(todosLosInsumos); // Carga todos los productos
+        insumoCombo.setDisable(true); // Deshabilitado hasta seleccionar proveedor
         insumoCombo.setCellFactory(lv -> new InsumoListCell());
         insumoCombo.setButtonCell(new InsumoListCell());
         addItemsGrid.add(crearCampo("Producto", insumoCombo), 0, 0);
@@ -259,32 +256,36 @@ public class OrdenesPage extends BorderPane {
         cantidadField.setMaxWidth(Double.MAX_VALUE);
         addItemsGrid.add(crearCampo("Cantidad", cantidadField), 1, 0);
 
-        // Campo Precio
-        precioField.setPromptText("0.00"); // <-- NUEVO CAMPO
-        precioField.setMaxWidth(Double.MAX_VALUE);
-        addItemsGrid.add(crearCampo("Precio Unit.", precioField), 2, 0);
-
+        // Campo Precio ELIMINADO
 
         // Botón Agregar
         Button addButton = new Button("➕ Agregar");
         addButton.getStyleClass().add("button-add");
         addButton.setMaxWidth(Double.MAX_VALUE);
         addButton.setOnAction(e -> agregarItem());
-        // Alinear botón al fondo
         VBox btnBox = new VBox(addButton);
         btnBox.setAlignment(Pos.BOTTOM_CENTER);
-        btnBox.setPadding(new Insets(19, 0, 0, 0)); // Padding superior para alinear
-        addItemsGrid.add(btnBox, 3, 0);
+        btnBox.setPadding(new Insets(19, 0, 0, 0));
+        addItemsGrid.add(btnBox, 2, 0); // <-- Posición 2
 
         addItemsBox.getChildren().addAll(addItemsTitle, addItemsGrid);
 
-        // --- Lógica de filtrado ELIMINADA ---
-        // La lógica de proveedorCombo.setOnAction() se eliminó porque
-        // la tabla 'producto' no está vinculada a 'proveedores'.
+        // --- LÓGICA DE FILTRADO (RE-INTRODUCIDA) ---
+        proveedorCombo.setOnAction(e -> {
+            String proveedorNombre = proveedorCombo.getValue();
+            if (proveedorNombre != null && !proveedorNombre.isEmpty()) {
+                int idProveedor = obtenerIdProveedor(proveedorNombre);
+                filtrarInsumosPorProveedor(idProveedor);
+                insumoCombo.setDisable(false);
+            } else {
+                insumoCombo.getItems().clear();
+                insumoCombo.setDisable(true);
+            }
+        });
 
         // --- Tabla de Items ---
         configurarTabla();
-        VBox tablaYTotal = new VBox(); // Contenedor para tabla y total
+        VBox tablaYTotal = new VBox();
 
         // --- Total ---
         HBox totalBox = new HBox(10);
@@ -317,7 +318,7 @@ public class OrdenesPage extends BorderPane {
     private void configurarTabla() {
         tablaItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<ItemOrden, String> insumoCol = new TableColumn<>("Producto"); // <-- Texto cambiado
+        TableColumn<ItemOrden, String> insumoCol = new TableColumn<>("Producto");
         insumoCol.setCellValueFactory(new PropertyValueFactory<>("nombre"));
 
         TableColumn<ItemOrden, Double> cantidadCol = new TableColumn<>("Cantidad");
@@ -345,8 +346,7 @@ public class OrdenesPage extends BorderPane {
 
         TableColumn<ItemOrden, Void> accionCol = new TableColumn<>("Acción");
         accionCol.setCellFactory(param -> new TableCell<>() {
-            private final Button deleteButton = new Button("🗑️"); // Emoji para Trash2
-
+            private final Button deleteButton = new Button("🗑️");
             {
                 deleteButton.getStyleClass().add("button-danger");
                 deleteButton.setOnAction(event -> {
@@ -354,16 +354,11 @@ public class OrdenesPage extends BorderPane {
                     eliminarItem(item);
                 });
             }
-
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(deleteButton);
-                    setAlignment(Pos.CENTER);
-                }
+                setGraphic(empty ? null : deleteButton);
+                setAlignment(Pos.CENTER);
             }
         });
 
@@ -412,13 +407,11 @@ public class OrdenesPage extends BorderPane {
      */
     private void cargarHistorial(VBox container) {
         container.getChildren().clear();
-        // === SQL CORREGIDO ===
         String sql = "SELECT o.IdCompra, p.Nombre_comercial, o.Fecha_de_Compra, o.Precio_total " +
                 "FROM orden_compra o " +
                 "JOIN proveedores p ON o.IdProveedor = p.IdProveedor " +
                 "ORDER BY o.Fecha_de_Compra DESC";
 
-        // === SQL CORREGIDO ===
         String sqlDetalle = "SELECT i.Tipo_de_Producto, d.Cantidad, d.PrecioUnitario " +
                 "FROM detalle_compra d " +
                 "JOIN producto i ON d.IdProducto = i.IdProducto " +
@@ -429,27 +422,24 @@ public class OrdenesPage extends BorderPane {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                int idOrden = rs.getInt("IdCompra"); // <-- CORREGIDO
+                int idOrden = rs.getInt("IdCompra");
                 String proveedor = rs.getString("Nombre_comercial");
-                Date fecha = rs.getDate("Fecha_de_Compra"); // <-- CORREGIDO
-                double total = rs.getDouble("Precio_total"); // <-- CORREGIDO
-                // La columna 'Estado' no existe, se omite
+                Date fecha = rs.getDate("Fecha_de_Compra");
+                double total = rs.getDouble("Precio_total");
 
-                // Cargar detalles de esta orden
                 List<ItemHistorial> itemsHistorial = new ArrayList<>();
                 try (PreparedStatement stmtDet = conn.prepareStatement(sqlDetalle)) {
                     stmtDet.setInt(1, idOrden);
                     ResultSet rsDet = stmtDet.executeQuery();
                     while (rsDet.next()) {
                         itemsHistorial.add(new ItemHistorial(
-                                rsDet.getString("Tipo_de_Producto"), // <-- CORREGIDO
+                                rsDet.getString("Tipo_de_Producto"),
                                 rsDet.getDouble("Cantidad"),
                                 rsDet.getDouble("PrecioUnitario")
                         ));
                     }
                 }
 
-                // Constructor actualizado sin 'Estado'
                 OrdenHistorial orden = new OrdenHistorial(idOrden, proveedor, fecha, total, itemsHistorial);
                 container.getChildren().add(crearCardOrden(orden));
             }
@@ -468,7 +458,7 @@ public class OrdenesPage extends BorderPane {
         card.getStyleClass().add("card");
         card.setStyle("-fx-border-color: #E0E0E0;");
 
-        // Header (ID, Proveedor, Fecha)
+        // Header
         BorderPane header = new BorderPane();
         VBox tituloFecha = new VBox(2);
         Label titulo = new Label(String.format("Orden #%d - %s", orden.getId(), orden.getProveedor()));
@@ -478,9 +468,7 @@ public class OrdenesPage extends BorderPane {
         tituloFecha.getChildren().addAll(titulo, fecha);
         header.setLeft(tituloFecha);
 
-        // --- Lógica de Badge eliminada ---
-
-        // Content (Items)
+        // Content
         VBox itemsBox = new VBox(5);
         itemsBox.setPadding(new Insets(10, 0, 10, 0));
         for (ItemHistorial item : orden.getItems()) {
@@ -494,7 +482,7 @@ public class OrdenesPage extends BorderPane {
             itemsBox.getChildren().add(itemPane);
         }
 
-        // Footer (Total)
+        // Footer
         BorderPane footer = new BorderPane();
         footer.setPadding(new Insets(10, 0, 0, 0));
         footer.setStyle("-fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;");
@@ -512,7 +500,6 @@ public class OrdenesPage extends BorderPane {
     // --- Métodos de Carga de Datos ---
 
     private void cargarProveedores(ComboBox<String> combo) {
-        // Esta consulta estaba bien
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT Nombre_comercial FROM proveedores")) {
@@ -525,7 +512,6 @@ public class OrdenesPage extends BorderPane {
     }
 
     private int obtenerIdProveedor(String nombre) {
-        // Esta consulta estaba bien
         String sql = "SELECT IdProveedor FROM proveedores WHERE Nombre_comercial = ?";
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -540,16 +526,17 @@ public class OrdenesPage extends BorderPane {
 
     private void cargarTodosLosInsumos() {
         todosLosInsumos.clear();
-        // === SQL CORREGIDO ===
-        String sql = "SELECT IdProducto, Tipo_de_Producto, Unidad_de_medida FROM producto";
+        // --- SQL ACTUALIZADO ---
+        String sql = "SELECT IdProducto, IdProveedor, Tipo_de_Producto, PrecioUnitario, Unidad_de_medida FROM producto";
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                // Constructor actualizado
                 todosLosInsumos.add(new Insumo(
                         rs.getInt("IdProducto"),
+                        rs.getInt("IdProveedor"), // <-- NUEVO
                         rs.getString("Tipo_de_Producto"),
+                        rs.getDouble("PrecioUnitario"), // <-- NUEVO
                         rs.getString("Unidad_de_medida")
                 ));
             }
@@ -558,7 +545,13 @@ public class OrdenesPage extends BorderPane {
         }
     }
 
-    // --- Método 'filtrarInsumosPorProveedor' ELIMINADO ---
+    // --- MÉTODO DE FILTRADO (RE-INTRODUCIDO) ---
+    private void filtrarInsumosPorProveedor(int idProveedor) {
+        List<Insumo> filtrados = todosLosInsumos.stream()
+                .filter(insumo -> insumo.getIdProveedor() == idProveedor)
+                .collect(Collectors.toList());
+        insumoCombo.setItems(FXCollections.observableArrayList(filtrados));
+    }
 
 
     // --- Métodos de Lógica de UI ---
@@ -575,12 +568,16 @@ public class OrdenesPage extends BorderPane {
         try {
             Insumo insumo = insumoCombo.getValue();
             double cantidad = Double.parseDouble(cantidadField.getText().trim());
-            double precio = Double.parseDouble(precioField.getText().trim()); // <-- PRECIO LEÍDO
+            // double precio = ... <-- ELIMINADO
 
-            if (insumo == null || cantidad <= 0 || precio <= 0) {
-                mostrarAlerta("Error", "Seleccione un producto e ingrese cantidad y precio válidos.");
+            if (insumo == null || cantidad <= 0) {
+                mostrarAlerta("Error", "Seleccione un producto y una cantidad válida.");
                 return;
             }
+
+            // --- LÓGICA DE PRECIO ACTUALIZADA ---
+            // El precio se obtiene del insumo, no de un campo de texto
+            double precio = insumo.getPrecioUnitario();
 
             // Verificar si el item ya existe para actualizar cantidad
             boolean existe = false;
@@ -594,7 +591,7 @@ public class OrdenesPage extends BorderPane {
 
             if (!existe) {
                 // Constructor actualizado
-                items.add(new ItemOrden(insumo, cantidad, precio));
+                items.add(new ItemOrden(insumo, cantidad));
             }
 
             tablaItems.refresh();
@@ -602,7 +599,7 @@ public class OrdenesPage extends BorderPane {
             actualizarTotal();
 
         } catch (NumberFormatException e) {
-            mostrarAlerta("Error", "Cantidad y Precio deben ser números válidos.");
+            mostrarAlerta("Error", "Cantidad debe ser un número válido.");
         }
     }
 
@@ -614,7 +611,7 @@ public class OrdenesPage extends BorderPane {
     private void limpiarCamposItem() {
         insumoCombo.getSelectionModel().clearSelection();
         cantidadField.clear();
-        precioField.clear(); // <-- Limpiar campo de precio
+        // precioField.clear(); // <-- ELIMINADO
     }
 
     private void actualizarTotal() {
@@ -623,6 +620,8 @@ public class OrdenesPage extends BorderPane {
     }
 
     private void guardarOrden() {
+        // (Esta función ya estaba bien y coincidía con tu BD)
+        // (No necesita cambios)
         String proveedorNombre = proveedorCombo.getValue();
         LocalDate fecha = fechaPicker.getValue();
 
@@ -634,31 +633,27 @@ public class OrdenesPage extends BorderPane {
             mostrarAlerta("Error", "Agregue al menos un ítem a la orden.");
             return;
         }
-
         int idProveedor = obtenerIdProveedor(proveedorNombre);
         if (idProveedor == 0) {
             mostrarAlerta("Error", "Proveedor no encontrado.");
             return;
         }
-
         double total = items.stream().mapToDouble(ItemOrden::getTotal).sum();
 
         Connection conn = null;
         try {
             conn = ConexionBD.getConnection();
-            conn.setAutoCommit(false); // Iniciar transacción
+            conn.setAutoCommit(false);
 
-            // 1. Insertar la Orden de Compra (Header)
-            // === SQL CORREGIDO ===
+            // 1. Insertar Orden
             String sqlOrden = "INSERT INTO orden_compra (IdProveedor, IdEmpleado, Fecha_de_Compra, Precio_total) " +
                     "VALUES (?, ?, ?, ?)";
             int idOrdenGenerada;
             try (PreparedStatement stmtOrden = conn.prepareStatement(sqlOrden, Statement.RETURN_GENERATED_KEYS)) {
                 stmtOrden.setInt(1, idProveedor);
-                stmtOrden.setInt(2, 1); // ID Empleado (debes obtenerlo de la sesión)
-                stmtOrden.setDate(3, java.sql.Date.valueOf(fecha)); // <-- CORREGIDO
-                stmtOrden.setDouble(4, total); // <-- CORREGIDO
-                // Se omite el 'Estado'
+                stmtOrden.setInt(2, 1); // TODO: Cambiar por ID de sesión
+                stmtOrden.setDate(3, java.sql.Date.valueOf(fecha));
+                stmtOrden.setDouble(4, total);
 
                 stmtOrden.executeUpdate();
                 ResultSet rsKeys = stmtOrden.getGeneratedKeys();
@@ -669,54 +664,38 @@ public class OrdenesPage extends BorderPane {
                 }
             }
 
-            // 2. Insertar los Detalles de la Orden
-            // === SQL CORREGIDO ===
+            // 2. Insertar Detalles
             String sqlDetalle = "INSERT INTO detalle_compra (IdCompra, IdProducto, Cantidad, PrecioUnitario, SubTotal) " +
                     "VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement stmtDetalle = conn.prepareStatement(sqlDetalle)) {
                 for (ItemOrden item : items) {
-                    stmtDetalle.setInt(1, idOrdenGenerada); // <-- IdCompra
-                    stmtDetalle.setInt(2, item.getInsumoId()); // <-- IdProducto
+                    stmtDetalle.setInt(1, idOrdenGenerada);
+                    stmtDetalle.setInt(2, item.getInsumoId());
                     stmtDetalle.setDouble(3, item.getCantidad());
                     stmtDetalle.setDouble(4, item.getPrecioUnitario());
-                    stmtDetalle.setDouble(5, item.getTotal()); // <-- SubTotal
+                    stmtDetalle.setDouble(5, item.getTotal());
                     stmtDetalle.addBatch();
                 }
                 stmtDetalle.executeBatch();
             }
 
-            conn.commit(); // Confirmar transacción
+            conn.commit();
             mostrarAlerta("Éxito", "✅ Orden registrada correctamente.");
 
             // Limpiar UI
             items.clear();
             actualizarTotal();
             proveedorCombo.getSelectionModel().clearSelection();
-            insumoCombo.getSelectionModel().clearSelection();
+            insumoCombo.getItems().clear();
+            insumoCombo.setDisable(true);
             fechaPicker.setValue(LocalDate.now());
 
-            // Opcional: Recargar el historial
-            // (Necesitarías una referencia al VBox del historial para llamar a cargarHistorial())
-
         } catch (SQLException ex) {
-            if (conn != null) {
-                try {
-                    conn.rollback(); // Revertir en caso de error
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+            if (conn != null) try { conn.rollback(); } catch (SQLException e) { e.printStackTrace(); }
             ex.printStackTrace();
             mostrarAlerta("Error", "Ocurrió un problema: " + ex.getMessage());
         } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true); // Restaurar auto-commit
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
     }
 
@@ -732,32 +711,39 @@ public class OrdenesPage extends BorderPane {
 
     /**
      * Representa un Insumo (Producto) cargado desde la base de datos.
-     * === CLASE CORREGIDA ===
+     * === CLASE ACTUALIZADA ===
      */
     public static class Insumo {
         private final int id;
+        private final int idProveedor; // <-- NUEVO
         private final String nombre;
+        private final double precioUnitario; // <-- NUEVO
         private final String unidad;
 
-        public Insumo(int id, String nombre, String unidad) {
+        public Insumo(int id, int idProveedor, String nombre, double precio, String unidad) {
             this.id = id;
+            this.idProveedor = idProveedor;
             this.nombre = nombre;
+            this.precioUnitario = precio;
             this.unidad = (unidad != null) ? unidad : "Unidad";
         }
 
         public int getId() { return id; }
+        public int getIdProveedor() { return idProveedor; }
         public String getNombre() { return nombre; }
+        public double getPrecioUnitario() { return precioUnitario; }
         public String getUnidad() { return unidad; }
 
+        // Esto es lo que se muestra en el ComboBox
         @Override
         public String toString() {
-            return String.format("%s (%s)", nombre, unidad);
+            return String.format("%s - $%.2f (%s)", nombre, precioUnitario, unidad);
         }
     }
 
     /**
      * Personaliza cómo se muestra un Insumo en el ComboBox.
-     * === CLASE CORREGIDA ===
+     * === CLASE ACTUALIZADA ===
      */
     private static class InsumoListCell extends ListCell<Insumo> {
         @Override
@@ -766,14 +752,14 @@ public class OrdenesPage extends BorderPane {
             if (empty || item == null) {
                 setText(null);
             } else {
-                setText(String.format("%s (%s)", item.getNombre(), item.getUnidad()));
+                setText(String.format("%s - $%.2f (%s)", item.getNombre(), item.getPrecioUnitario(), item.getUnidad()));
             }
         }
     }
 
     /**
      * Representa un ítem en la tabla de la nueva orden.
-     * === CLASE CORREGIDA ===
+     * === CLASE ACTUALIZADA ===
      */
     public static class ItemOrden {
         private final int insumoId;
@@ -782,13 +768,13 @@ public class OrdenesPage extends BorderPane {
         private final double precioUnitario;
         private double total;
 
-        // Constructor actualizado para recibir el precio
-        public ItemOrden(Insumo insumo, double cantidad, double precioUnitario) {
+        // Constructor actualizado (ya no recibe precio manual)
+        public ItemOrden(Insumo insumo, double cantidad) {
             this.insumoId = insumo.getId();
             this.nombre = insumo.getNombre();
             this.cantidad = cantidad;
-            this.precioUnitario = precioUnitario;
-            this.total = cantidad * precioUnitario;
+            this.precioUnitario = insumo.getPrecioUnitario(); // <-- Obtiene precio del insumo
+            this.total = cantidad * this.precioUnitario;
         }
 
         public int getInsumoId() { return insumoId; }
@@ -805,7 +791,6 @@ public class OrdenesPage extends BorderPane {
 
     /**
      * Representa una orden para la pestaña de Historial.
-     * === CLASE CORREGIDA ===
      */
     public static class OrdenHistorial {
         private final int id;
@@ -814,7 +799,6 @@ public class OrdenesPage extends BorderPane {
         private final double total;
         private final List<ItemHistorial> items;
 
-        // Constructor actualizado (sin 'estado')
         public OrdenHistorial(int id, String proveedor, Date fecha, double total, List<ItemHistorial> items) {
             this.id = id;
             this.proveedor = proveedor;
@@ -828,12 +812,10 @@ public class OrdenesPage extends BorderPane {
         public Date getFecha() { return fecha; }
         public double getTotal() { return total; }
         public List<ItemHistorial> getItems() { return items; }
-        // Se quitó getEstado()
     }
 
     /**
      * Representa un ítem dentro de una OrdenHistorial.
-     * (Esta clase estaba bien)
      */
     public static class ItemHistorial {
         private final String nombre;
@@ -850,5 +832,19 @@ public class OrdenesPage extends BorderPane {
         public double getCantidad() { return cantidad; }
         public double getPrecioUnitario() { return precioUnitario; }
         public double getSubtotal() { return cantidad * precioUnitario; }
+    }
+
+    // --- Clase de Test para Ejecutar ---
+    public static class TestApp extends Application {
+        @Override
+        public void start(Stage stage) {
+            stage.setTitle("Orden de Compra - JavaFX");
+            stage.setScene(new Scene(new OrdenesPage(), 1300, 900));
+            stage.show();
+        }
+    }
+
+    public static void main(String[] args) {
+        Application.launch(TestApp.class, args);
     }
 }

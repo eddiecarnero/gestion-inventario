@@ -37,10 +37,11 @@ public class SideBar {
         ImageView iconAlmacen1 = crearIcono("/com/images/iconos/paquete.png");
         ImageView iconAlmacen2 = crearIcono("/com/images/iconos/nivel-intermedio.png");
         ImageView iconAlmacen3 = crearIcono("/com/images/iconos/taza-de-cafe.png");
-        ImageView iconKardex = crearIcono("/com/images/iconos/portapapeles.png");
+        ImageView iconIngrediente = crearIcono("/com/images/iconos/ingrediente.png");
         ImageView iconOrdenCompra = crearIcono("/com/images/iconos/carrito-de-compras.png");
         ImageView iconVentas = crearIcono("/com/images/iconos/subir.png");
         ImageView iconUsuarios = crearIcono("/com/images/iconos/usuario.png");
+        ImageView iconRecetas = crearIcono("/com/images/iconos/receta.png");
         // --- Fin de la Advertencia ---
 
         sidebar = new VBox(0);
@@ -82,13 +83,13 @@ public class SideBar {
         Button btnAlmacen1 = new Button("Almacen 1 - Insumos", iconAlmacen1);
         Button btnAlmacen2 = new Button("Almacen 2 - Intermedios", iconAlmacen2);
         Button btnAlmacen3 = new Button("Almacen 3 - Terminados", iconAlmacen3);
-        Button btnKardex = new Button("Kardex General", iconKardex);
+        Button btnIngrediente = new Button("Ingrediente", iconIngrediente);
+        Button btnRecetas = new Button("Recetas", iconRecetas);
         Button btnOrdenCompra = new Button("Orden de Compra", iconOrdenCompra);
         Button btnSubirVenta = new Button("Subir Venta", iconVentas);
         Button btnPerfilUsuario = new Button("Perfil de Usuario", iconUsuarios);
 
 
-        // 1. Definimos el panel de contenido principal
         mainContent = new StackPane();
         mainContent.setStyle("-fx-background-color: #F9F1E6;"); // Fondo crema
 
@@ -107,6 +108,8 @@ public class SideBar {
 
         btnAlmacen1.setOnAction(e -> mainContent.getChildren().setAll(new Almacen1Page(navigationHandler)));
         btnOrdenCompra.setOnAction(e -> mainContent.getChildren().setAll(new OrdenesPage()));
+        btnRecetas.setOnAction(e -> mainContent.getChildren().setAll(new RecetasPage()));
+        btnIngrediente.setOnAction(e-> mainContent.getChildren().setAll(new ProductosPage()));
 
         // Cargar una página por defecto al iniciar
         mainContent.getChildren().setAll(new Almacen1Page(navigationHandler));
@@ -149,7 +152,7 @@ public class SideBar {
         VBox sidebarcontent = new VBox(2);
         // Botones que aún no tienen acción:
         // btnAlmacen2, btnAlmacen3, btnKardex, btnSubirVenta, btnPerfilUsuario
-        for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnKardex, btnOrdenCompra, btnSubirVenta, btnPerfilUsuario}) {
+        for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnIngrediente, btnRecetas, btnOrdenCompra, btnSubirVenta, btnPerfilUsuario}) {
             aplicarEstiloBoton(btn);
             sidebarcontent.getChildren().add(btn);
             VBox.setMargin(btn, new Insets(0,0,8,0));

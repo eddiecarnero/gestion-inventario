@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 public class Almacen1Page extends BorderPane {
 
     // --- Estilos ---
+    // (CSS_STYLES sin cambios... puedes mantener el que ya tenías)
     private static final String CSS_STYLES = """
         .root {
             -fx-background-color: #FDF8F0;
@@ -76,9 +77,6 @@ public class Almacen1Page extends BorderPane {
             -fx-font-weight: bold;
             -fx-font-size: 1.05em;
         }
-        
-        /* Nuevos estilos para esta página */
-        
         .alert-box {
             -fx-background-color: #FEF2F2;
             -fx-border-color: #FEE2E2;
@@ -91,7 +89,6 @@ public class Almacen1Page extends BorderPane {
             -fx-fill: #991B1B;
             -fx-font-weight: bold;
         }
-        
         .search-field-stack {
             -fx-padding: 0;
         }
@@ -103,7 +100,6 @@ public class Almacen1Page extends BorderPane {
             -fx-background-radius: 5;
             -fx-padding: 5 5 5 35px; /* Padding izquierdo para el icono */
         }
-        
         .stats-grid {
              -fx-padding: 0;
         }
@@ -128,7 +124,6 @@ public class Almacen1Page extends BorderPane {
         .stats-card-content-danger {
             -fx-text-fill: #DC2626;
         }
-        
         .badge {
             -fx-padding: 4 10 4 10;
             -fx-background-radius: 12;
@@ -153,11 +148,13 @@ public class Almacen1Page extends BorderPane {
 
     // --- Variables de UI ---
     private final VBox mainContent;
-    private final HBox alertBoxContainer; // Contenedor para la alerta
+    private final HBox alertBoxContainer;
     private Label totalInsumosLabel;
     private Label stockBajoLabel;
+    private Label valorTotalLabel; // <-- NUEVO
+    private Label totalProveedoresLabel; // <-- NUEVO
     private TableView<InsumoAlmacen> tablaInsumos;
-    private TextField searchField; // <-- CORRECCIÓN: Declarado como variable de clase
+    private TextField searchField;
 
     // --- Listas de Datos ---
     private final ObservableList<InsumoAlmacen> todosLosInsumos = FXCollections.observableArrayList();
@@ -175,22 +172,22 @@ public class Almacen1Page extends BorderPane {
 
         mainContent = new VBox(20);
 
-        // --- CORRECCIÓN: Inicializar variables de clase ---
+        // Inicializar variables de clase
         this.tablaInsumos = new TableView<>();
         this.searchField = new TextField();
+        this.totalInsumosLabel = new Label("0");
+        this.stockBajoLabel = new Label("0");
+        this.valorTotalLabel = new Label("$0.00"); // <-- NUEVO
+        this.totalProveedoresLabel = new Label("0"); // <-- NUEVO
 
-        // Contenedor vacío para la alerta, se llenará si es necesario
         alertBoxContainer = new HBox();
 
         // 1. Header
         Node header = crearHeader();
-
         // 2. Barra de Acciones (Búsqueda y Botón)
         Node actionsBar = crearActionsBar();
-
         // 3. Rejilla de Estadísticas
         Node statsGrid = crearStatsGrid();
-
         // 4. Tabla de Insumos
         Node tableCard = crearTablaInsumos();
 
@@ -233,22 +230,18 @@ public class Almacen1Page extends BorderPane {
         HBox actionsBar = new HBox(15);
         actionsBar.setAlignment(Pos.CENTER_LEFT);
 
-        // --- Barra de Búsqueda con Icono ---
+        // Barra de Búsqueda
         StackPane searchStack = new StackPane();
         searchStack.getStyleClass().add("search-field-stack");
-
-        // --- CORRECCIÓN: Usar la variable de clase ---
         searchField.setPromptText("Buscar insumos...");
         searchField.getStyleClass().add("search-field");
-
-        Text searchIcon = new Text("🔍"); // Emoji para Search
-        searchIcon.setFill(Color.web("#9CA3AF")); // gray-400
+        Text searchIcon = new Text("🔍");
+        searchIcon.setFill(Color.web("#9CA3AF"));
         StackPane.setAlignment(searchIcon, Pos.CENTER_LEFT);
         StackPane.setMargin(searchIcon, new Insets(0, 0, 0, 12));
-
         searchStack.getChildren().addAll(searchField, searchIcon);
 
-        // --- Botón ---
+        // Botón
         Button nuevaOrdenBtn = new Button("🛒 Nueva Orden de Compra");
         nuevaOrdenBtn.getStyleClass().add("button-primary");
         nuevaOrdenBtn.setOnAction(e -> onNavigate.accept("orden-compra"));
@@ -265,22 +258,22 @@ public class Almacen1Page extends BorderPane {
         grid.setHgap(20);
         grid.setVgap(20);
 
-        // Columnas (2 en lugar de 4)
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(50);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(50);
-        grid.getColumnConstraints().addAll(col1, col2);
+        // --- AHORA 4 COLUMNAS ---
+        ColumnConstraints col = new ColumnConstraints();
+        col.setPercentWidth(25);
+        grid.getColumnConstraints().addAll(col, col, col, col);
 
         // --- Stat 1: Total Insumos ---
-        totalInsumosLabel = new Label("0");
-        Node statCard1 = createStatCard("Total Insumos", totalInsumosLabel, null);
-        grid.add(statCard1, 0, 0);
+        grid.add(createStatCard("Total Insumos", totalInsumosLabel, null), 0, 0);
 
-        // --- Stat 2: Stock Bajo ---
-        stockBajoLabel = new Label("0");
-        Node statCard2 = createStatCard("Stock Bajo", stockBajoLabel, "stats-card-content-danger");
-        grid.add(statCard2, 1, 0);
+        // --- Stat 2: Valor Total ---
+        grid.add(createStatCard("Valor Total", valorTotalLabel, null), 1, 0); // <-- NUEVO
+
+        // --- Stat 3: Stock Bajo ---
+        grid.add(createStatCard("Stock Bajo", stockBajoLabel, "stats-card-content-danger"), 2, 0);
+
+        // --- Stat 4: Proveedores ---
+        grid.add(createStatCard("Proveedores", totalProveedoresLabel, null), 3, 0); // <-- NUEVO
 
         return grid;
     }
@@ -328,7 +321,6 @@ public class Almacen1Page extends BorderPane {
 
         TableColumn<InsumoAlmacen, Integer> cantidadCol = new TableColumn<>("Cantidad");
         cantidadCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
-        // --- Formato condicional para Cantidad ---
         cantidadCol.setCellFactory(column -> new TableCell<InsumoAlmacen, Integer>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
@@ -338,7 +330,6 @@ public class Almacen1Page extends BorderPane {
                     setText(null);
                 } else {
                     setText(item.toString());
-                    // Asegurarse de no obtener IndexOutOfBounds
                     if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
                         InsumoAlmacen insumo = getTableView().getItems().get(getIndex());
                         if (insumo.esStockBajo()) {
@@ -349,16 +340,29 @@ public class Almacen1Page extends BorderPane {
             }
         });
 
-
         TableColumn<InsumoAlmacen, String> unidadCol = new TableColumn<>("Unidad");
         unidadCol.setCellValueFactory(new PropertyValueFactory<>("unidad"));
+
+        // --- NUEVA COLUMNA ---
+        TableColumn<InsumoAlmacen, Double> precioCol = new TableColumn<>("Precio Unit.");
+        precioCol.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
+        precioCol.setCellFactory(tc -> new TableCell<InsumoAlmacen, Double>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                setText(empty ? null : String.format("$%.2f", price));
+            }
+        });
 
         TableColumn<InsumoAlmacen, Integer> stockMinCol = new TableColumn<>("Stock Mín.");
         stockMinCol.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
 
+        // --- NUEVA COLUMNA ---
+        TableColumn<InsumoAlmacen, String> proveedorCol = new TableColumn<>("Proveedor");
+        proveedorCol.setCellValueFactory(new PropertyValueFactory<>("proveedorNombre"));
+
         TableColumn<InsumoAlmacen, String> estadoCol = new TableColumn<>("Estado");
         estadoCol.setCellValueFactory(new PropertyValueFactory<>("estado"));
-        // --- Formato condicional para Estado (Badge) ---
         estadoCol.setCellFactory(column -> new TableCell<InsumoAlmacen, String>() {
             private final Label badge = new Label();
             @Override
@@ -371,15 +375,9 @@ public class Almacen1Page extends BorderPane {
                     badge.getStyleClass().clear();
                     badge.getStyleClass().add("badge");
                     switch (item) {
-                        case "Bajo Stock":
-                            badge.getStyleClass().add("badge-stock-low");
-                            break;
-                        case "Medio":
-                            badge.getStyleClass().add("badge-stock-medium");
-                            break;
-                        case "Normal":
-                            badge.getStyleClass().add("badge-stock-normal");
-                            break;
+                        case "Bajo Stock": badge.getStyleClass().add("badge-stock-low"); break;
+                        case "Medio": badge.getStyleClass().add("badge-stock-medium"); break;
+                        case "Normal": badge.getStyleClass().add("badge-stock-normal"); break;
                     }
                     setGraphic(badge);
                     setAlignment(Pos.CENTER_LEFT);
@@ -387,15 +385,18 @@ public class Almacen1Page extends BorderPane {
             }
         });
 
-        // Columnas eliminadas: Categoria, Precio Unit., Proveedor
-        tablaInsumos.getColumns().addAll(insumoCol, cantidadCol, unidadCol, stockMinCol, estadoCol);
+        // --- COLUMNAS ACTUALIZADAS ---
+        tablaInsumos.getColumns().addAll(insumoCol, cantidadCol, unidadCol, precioCol, stockMinCol, proveedorCol, estadoCol);
         tablaInsumos.setPlaceholder(new Label("No se encontraron insumos."));
     }
 
     private void cargarDatos() {
         todosLosInsumos.clear();
-        // === SQL ADAPTADO a tu tabla 'producto' ===
-        String sql = "SELECT IdProducto, Tipo_de_Producto, Stock, Stock_Minimo, Unidad_de_medida FROM producto";
+        // --- SQL ACTUALIZADO CON JOIN Y NUEVAS COLUMNAS ---
+        String sql = "SELECT p.IdProducto, p.Tipo_de_Producto, p.Stock, p.Stock_Minimo, " +
+                "p.Unidad_de_medida, p.PrecioUnitario, prov.Nombre_comercial " +
+                "FROM producto p " +
+                "LEFT JOIN proveedores prov ON p.IdProveedor = prov.IdProveedor";
 
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
@@ -407,7 +408,9 @@ public class Almacen1Page extends BorderPane {
                         rs.getString("Tipo_de_Producto"),
                         rs.getInt("Stock"),
                         rs.getInt("Stock_Minimo"),
-                        rs.getString("Unidad_de_medida")
+                        rs.getString("Unidad_de_medida"),
+                        rs.getDouble("PrecioUnitario"), // <-- NUEVO
+                        rs.getString("Nombre_comercial") // <-- NUEVO
                 ));
             }
         } catch (SQLException e) {
@@ -419,16 +422,20 @@ public class Almacen1Page extends BorderPane {
     private void setupFiltering() {
         filteredInsumos = new FilteredList<>(todosLosInsumos, p -> true);
 
-        // --- CORRECCIÓN: Esto ahora funciona ---
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             filteredInsumos.setPredicate(insumo -> {
                 if (newValue == null || newValue.isEmpty()) {
-                    return true; // Mostrar todo si el filtro está vacío
+                    return true;
                 }
                 String lowerCaseFilter = newValue.toLowerCase();
 
-                // Filtrar por nombre (Tipo_de_Producto)
-                return insumo.getNombre().toLowerCase().contains(lowerCaseFilter);
+                // Filtrar por nombre o proveedor
+                if (insumo.getNombre().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                } else if (insumo.getProveedorNombre() != null && insumo.getProveedorNombre().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                }
+                return false;
             });
         });
 
@@ -441,9 +448,22 @@ public class Almacen1Page extends BorderPane {
                 .filter(InsumoAlmacen::esStockBajo)
                 .toList();
 
+        // --- CÁLCULOS NUEVOS ---
+        double valorTotal = todosLosInsumos.stream()
+                .mapToDouble(insumo -> insumo.getStock() * insumo.getPrecioUnitario())
+                .sum();
+
+        long numProveedores = todosLosInsumos.stream()
+                .map(InsumoAlmacen::getProveedorNombre)
+                .filter(nombre -> nombre != null && !nombre.isEmpty())
+                .distinct()
+                .count();
+
         // Actualizar Stats
         totalInsumosLabel.setText(String.valueOf(todosLosInsumos.size()));
         stockBajoLabel.setText(String.valueOf(lowStockInsumos.size()));
+        valorTotalLabel.setText(String.format("$%.2f", valorTotal)); // <-- NUEVO
+        totalProveedoresLabel.setText(String.valueOf(numProveedores)); // <-- NUEVO
 
         // Mostrar u ocultar alerta
         alertBoxContainer.getChildren().clear();
@@ -461,24 +481,24 @@ public class Almacen1Page extends BorderPane {
     }
 
 
-    // --- Clase de Datos Interna ---
-
-    /**
-     * Representa un Insumo (Producto) del almacén.
-     */
+    // --- Clase de Datos Interna (ACTUALIZADA) ---
     public static class InsumoAlmacen {
         private final int id;
-        private final String nombre; // -> Tipo_de_Producto
-        private final int stock; // -> Stock
-        private final int stockMinimo; // -> Stock_Minimo
-        private final String unidad; // -> Unidad_de_medida
+        private final String nombre;
+        private final int stock;
+        private final int stockMinimo;
+        private final String unidad;
+        private final double precioUnitario; // <-- NUEVO
+        private final String proveedorNombre; // <-- NUEVO
 
-        public InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad) {
+        public InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precio, String proveedor) {
             this.id = id;
             this.nombre = nombre;
             this.stock = stock;
             this.stockMinimo = stockMinimo;
             this.unidad = (unidad != null) ? unidad : "Unidad";
+            this.precioUnitario = precio;
+            this.proveedorNombre = (proveedor != null) ? proveedor : "N/A";
         }
 
         public int getId() { return id; }
@@ -486,12 +506,13 @@ public class Almacen1Page extends BorderPane {
         public int getStock() { return stock; }
         public int getStockMinimo() { return stockMinimo; }
         public String getUnidad() { return unidad; }
+        public double getPrecioUnitario() { return precioUnitario; }
+        public String getProveedorNombre() { return proveedorNombre; }
 
         public boolean esStockBajo() {
             return stock <= stockMinimo;
         }
 
-        // Lógica para el "Badge" de estado (como en el React)
         public String getEstado() {
             if (stock <= stockMinimo) {
                 return "Bajo Stock";
@@ -504,12 +525,9 @@ public class Almacen1Page extends BorderPane {
     }
 
     // --- Clase de Test para Ejecutar ---
-
     public static class TestApp extends Application {
         @Override
         public void start(Stage stage) {
-            // Ejemplo de cómo usar el 'onNavigate'
-            // En tu app real, el SideBar pasaría esta función
             Consumer<String> navigationHandler = (page) -> {
                 System.out.println("Navegando a: " + page);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -528,6 +546,4 @@ public class Almacen1Page extends BorderPane {
     public static void main(String[] args) {
         Application.launch(TestApp.class, args);
     }
-
-    // --- CORRECCIÓN: Clase SearchableTableView eliminada ---
 }
