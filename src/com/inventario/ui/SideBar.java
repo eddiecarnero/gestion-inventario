@@ -42,9 +42,7 @@ public class SideBar {
         ImageView iconVentas = crearIcono("/com/images/iconos/subir.png");
         ImageView iconUsuarios = crearIcono("/com/images/iconos/usuario.png");
         ImageView iconRecetas = crearIcono("/com/images/iconos/receta.png");
-        ImageView iconSubirInsumos = crearIcono("/com/images/iconos/descarga.png");
         // ImageView iconKardex = crearIcono("/com/images/iconos/portapapeles.png");
-
 
 
         sidebar = new VBox(0);
@@ -92,7 +90,7 @@ public class SideBar {
         Button btnSubirVenta = new Button("Subir Venta", iconVentas);
         Button btnPerfilUsuario = new Button("Perfil de Usuario", iconUsuarios);
         // Button btnKardex = new Button("Kardex", iconKardex);
-        Button btnSubirInsumos = new Button("Ingreso Insumos", iconSubirInsumos);
+
 
         // --- LÓGICA DE NAVEGACIÓN CENTRALIZADA ---
         mainContent = new StackPane();
@@ -110,8 +108,6 @@ public class SideBar {
         btnAlmacen3.setOnAction(e -> navegar("almacen3"));
         btnSubirVenta.setOnAction(e -> navegar("subir-ventas"));
         btnPerfilUsuario.setOnAction(e -> navegar("perfil"));
-        btnSubirInsumos.setOnAction(e -> navegar("subir-insumos"));
-
         // btnKardex.setOnAction(e -> navegar("kardex"));
 
         navegar("dashboard");
@@ -153,7 +149,7 @@ public class SideBar {
         for (Button btn : new Button[]{
                 btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3,
                 btnIngrediente, btnRecetas, btnOrdenCompra,
-                btnSubirVenta, btnPerfilUsuario, btnSubirInsumos
+                btnSubirVenta, btnPerfilUsuario
                 //btnKardex, // Descomentar cuando lo tengas
         }) {
             aplicarEstiloBoton(btn);
@@ -209,18 +205,6 @@ public class SideBar {
                 break;
             case "recetas":
                 pagina = new RecetasPage();
-                break;
-            case "perfil":
-                pagina = new PerfilPage();
-                break;
-            case "almacen3":
-                pagina = new Almacen3Page(this::navegar);
-                break;
-            case "subir-ventas":
-                pagina = new SubirVentasPage();
-                break;
-            case "subir-insumos":
-                pagina = new SubirInsumosPage();
                 break;
 
             default:

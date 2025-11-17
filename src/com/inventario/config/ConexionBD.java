@@ -3,30 +3,46 @@ package com.inventario.config;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class ConexionBD {
 
-    // La ruta ahora es simple: "jdbc:sqlite:" + nombre del archivo
-    // El archivo se creará en la carpeta raíz de tu proyecto/exe
-    private static final String URL = "jdbc:sqlite:mamatania_inventario.db";
+    // ✅ Datos de la BD en la nube
+    private static final String URL_CLOUD =
+            "jdbc:mysql://sql5.freesqldatabase.com:3306/sql5804315?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+    private static final String USER_CLOUD = "sql5804315";
+    private static final String PASS_CLOUD = "kNgqlGh3aL";
 
+    // ✅ Datos de la BD local (MODIFICA AQUÍ SI TU PUERTO / DB SON DIFERENTES)
+    private static final String URL_LOCAL =
+            "jdbc:mysql://localhost:3306/sql5804315?useSSL=false&serverTimezone=UTC";
+    private static final String USER_LOCAL = "root";
+    private static final String PASS_LOCAL = "root";
+
+    // ✅ MÉTODO PRINCIPAL → intenta nube y si falla usa local
     public static Connection getConnection() throws SQLException {
+
+        // Cargar driver
         try {
-            // Cargar el driver (a veces necesario en versiones antiguas de Java)
-            Class.forName("org.sqlite.JDBC");
-
-            Connection conn = DriverManager.getConnection(URL);
-
-            // IMPORTANTE: En SQLite hay que activar las Foreign Keys manualmente
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute("PRAGMA foreign_keys = ON;");
-            }
-
-            return conn;
-
+            Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
-            throw new SQLException("No se encontró el driver de SQLite", e);
+            throw new SQLException("Driver MySQL no encontrado: " + e.getMessage());
+        }
+
+        // 1️⃣ Intentar conectar a la nube
+        try {
+            System.out.println("Intentando conectar a la base de datos en la NUBE...");
+            return DriverManager.getConnection(URL_CLOUD, USER_CLOUD, PASS_CLOUD);
+        } catch (SQLException e) {
+            System.out.println("⚠️ ERROR al conectar a la nube: " + e.getMessage());
+            System.out.println("Intentando conectar a la base de datos LOCAL...");
+        }
+
+        // 2️⃣ Si la nube falla → probar local
+        try {
+            return DriverManager.getConnection(URL_LOCAL, USER_LOCAL, PASS_LOCAL);
+        } catch (SQLException e) {
+            System.out.println("❌ ERROR al conectar a la base LOCAL: " + e.getMessage());
+            throw new SQLException("No se pudo conectar ni a la nube ni a la base local.");
         }
     }
 }
