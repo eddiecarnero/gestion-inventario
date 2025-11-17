@@ -22,13 +22,14 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class Almacen1Page extends BorderPane {
 
-    // --- Estilos ---
-    // (CSS_STYLES sin cambios... puedes mantener el que ya tenías)
+    // (CSS_STYLES ... sin cambios)
     private static final String CSS_STYLES = """
         .root {
             -fx-background-color: #FDF8F0;
@@ -144,22 +145,30 @@ public class Almacen1Page extends BorderPane {
             -fx-text-fill: #DC2626;
             -fx-font-weight: bold;
         }
+        .cell-vencido {
+            -fx-text-fill: #EF4444;
+            -fx-font-weight: bold;
+        }
+        .cell-vence-pronto {
+            -fx-text-fill: #F97316;
+            -fx-font-weight: bold;
+        }
     """;
 
     // --- Variables de UI ---
     private final VBox mainContent;
     private final HBox alertBoxContainer;
-    private Label totalInsumosLabel;
-    private Label stockBajoLabel;
-    private Label valorTotalLabel; // <-- NUEVO
-    private Label totalProveedoresLabel; // <-- NUEVO
-    private TableView<InsumoAlmacen> tablaInsumos;
+    private Label totalInsumosLabel; // Total de *tipos* de producto
+    private Label stockBajoLabel;   // Total de *tipos* de producto con stock bajo
+    private Label valorTotalLabel;
+    private Label totalProveedoresLabel;
+    private TableView<LoteAlmacen> tablaLotes; // --- CAMBIO: La tabla ahora es de Lotes
     private TextField searchField;
 
     // --- Listas de Datos ---
-    private final ObservableList<InsumoAlmacen> todosLosInsumos = FXCollections.observableArrayList();
-    private FilteredList<InsumoAlmacen> filteredInsumos;
-    private List<InsumoAlmacen> lowStockInsumos;
+    private final ObservableList<LoteAlmacen> todosLosLotes = FXCollections.observableArrayList();
+    private FilteredList<LoteAlmacen> filteredLotes;
+    private int lowStockCount = 0; // Contador para el stat
 
     // --- Navegación ---
     private final Consumer<String> onNavigate;
@@ -173,12 +182,12 @@ public class Almacen1Page extends BorderPane {
         mainContent = new VBox(20);
 
         // Inicializar variables de clase
-        this.tablaInsumos = new TableView<>();
+        this.tablaLotes = new TableView<>(); // --- CAMBIO
         this.searchField = new TextField();
         this.totalInsumosLabel = new Label("0");
         this.stockBajoLabel = new Label("0");
-        this.valorTotalLabel = new Label("$0.00"); // <-- NUEVO
-        this.totalProveedoresLabel = new Label("0"); // <-- NUEVO
+        this.valorTotalLabel = new Label("$0.00");
+        this.totalProveedoresLabel = new Label("0");
 
         alertBoxContainer = new HBox();
 
@@ -188,8 +197,8 @@ public class Almacen1Page extends BorderPane {
         Node actionsBar = crearActionsBar();
         // 3. Rejilla de Estadísticas
         Node statsGrid = crearStatsGrid();
-        // 4. Tabla de Insumos
-        Node tableCard = crearTablaInsumos();
+        // 4. Tabla de Lotes (antes Insumos)
+        Node tableCard = crearTablaLotes();
 
         mainContent.getChildren().addAll(header, alertBoxContainer, actionsBar, statsGrid, tableCard);
         setCenter(mainContent);
@@ -204,7 +213,7 @@ public class Almacen1Page extends BorderPane {
         VBox headerBox = new VBox(5);
         Label header = new Label("Almacén 1 - Insumos Básicos");
         header.getStyleClass().add("header-title");
-        Label description = new Label("Gestión de materias primas y stock de insumos");
+        Label description = new Label("Gestión de lotes de materias primas y stock"); // --- CAMBIO
         description.getStyleClass().add("header-description");
         headerBox.getChildren().addAll(header, description);
         return headerBox;
@@ -214,14 +223,11 @@ public class Almacen1Page extends BorderPane {
         HBox alertBox = new HBox(15);
         alertBox.getStyleClass().add("alert-box");
         alertBox.setAlignment(Pos.CENTER_LEFT);
-
-        Text icon = new Text("⚠️"); // Emoji para AlertCircle
+        Text icon = new Text("⚠️");
         icon.setFont(Font.font(20));
         icon.setFill(Color.web("#DC2626"));
-
-        Label alertText = new Label("¡Atención! " + count + " insumo(s) requieren reabastecimiento.");
+        Label alertText = new Label("¡Atención! " + count + " tipo(s) de producto están por debajo del stock mínimo.");
         alertText.getStyleClass().add("alert-text");
-
         alertBox.getChildren().addAll(icon, alertText);
         return alertBox;
     }
@@ -230,10 +236,9 @@ public class Almacen1Page extends BorderPane {
         HBox actionsBar = new HBox(15);
         actionsBar.setAlignment(Pos.CENTER_LEFT);
 
-        // Barra de Búsqueda
         StackPane searchStack = new StackPane();
         searchStack.getStyleClass().add("search-field-stack");
-        searchField.setPromptText("Buscar insumos...");
+        searchField.setPromptText("Buscar por producto, lote o proveedor..."); // --- CAMBIO
         searchField.getStyleClass().add("search-field");
         Text searchIcon = new Text("🔍");
         searchIcon.setFill(Color.web("#9CA3AF"));
@@ -241,14 +246,12 @@ public class Almacen1Page extends BorderPane {
         StackPane.setMargin(searchIcon, new Insets(0, 0, 0, 12));
         searchStack.getChildren().addAll(searchField, searchIcon);
 
-        // Botón
         Button nuevaOrdenBtn = new Button("🛒 Nueva Orden de Compra");
         nuevaOrdenBtn.getStyleClass().add("button-primary");
         nuevaOrdenBtn.setOnAction(e -> onNavigate.accept("orden-compra"));
 
         actionsBar.getChildren().addAll(searchStack, nuevaOrdenBtn);
         HBox.setHgrow(searchStack, Priority.ALWAYS);
-
         return actionsBar;
     }
 
@@ -258,22 +261,14 @@ public class Almacen1Page extends BorderPane {
         grid.setHgap(20);
         grid.setVgap(20);
 
-        // --- AHORA 4 COLUMNAS ---
         ColumnConstraints col = new ColumnConstraints();
         col.setPercentWidth(25);
         grid.getColumnConstraints().addAll(col, col, col, col);
 
-        // --- Stat 1: Total Insumos ---
-        grid.add(createStatCard("Total Insumos", totalInsumosLabel, null), 0, 0);
-
-        // --- Stat 2: Valor Total ---
-        grid.add(createStatCard("Valor Total", valorTotalLabel, null), 1, 0); // <-- NUEVO
-
-        // --- Stat 3: Stock Bajo ---
-        grid.add(createStatCard("Stock Bajo", stockBajoLabel, "stats-card-content-danger"), 2, 0);
-
-        // --- Stat 4: Proveedores ---
-        grid.add(createStatCard("Proveedores", totalProveedoresLabel, null), 3, 0); // <-- NUEVO
+        grid.add(createStatCard("Tipos de Producto", totalInsumosLabel, null), 0, 0); // --- CAMBIO
+        grid.add(createStatCard("Valor Total (Stock)", valorTotalLabel, null), 1, 0); // --- CAMBIO
+        grid.add(createStatCard("Productos (Stock Bajo)", stockBajoLabel, "stats-card-content-danger"), 2, 0); // --- CAMBIO
+        grid.add(createStatCard("Proveedores", totalProveedoresLabel, null), 3, 0);
 
         return grid;
     }
@@ -281,194 +276,208 @@ public class Almacen1Page extends BorderPane {
     private Node createStatCard(String title, Label contentLabel, String contentStyleClass) {
         VBox card = new VBox(5);
         card.getStyleClass().add("stats-card");
-
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("stats-card-title");
-
         contentLabel.getStyleClass().add("stats-card-content");
         if (contentStyleClass != null) {
             contentLabel.getStyleClass().add(contentStyleClass);
         }
-
         card.getChildren().addAll(titleLabel, contentLabel);
         return card;
     }
 
-    private Node crearTablaInsumos() {
+    // --- CAMBIO: Método renombrado ---
+    private Node crearTablaLotes() {
         VBox card = new VBox(15);
         card.getStyleClass().add("card");
 
-        // Header de la Card
-        Label cardTitle = new Label("Inventario de Insumos");
+        Label cardTitle = new Label("Inventario de Lotes"); // --- CAMBIO
         cardTitle.getStyleClass().add("card-title");
-        Label cardDescription = new Label("Lista completa de materias primas disponibles");
-        cardDescription.getStyleClass().add("card-description");
+        Label cardDescription = new Label("Lotes de materias primas disponibles en almacén"); // --- CAMBIO
+        cardDescription.getStyleClass().add("header-description");
         VBox cardHeader = new VBox(5, cardTitle, cardDescription);
 
-        // Configurar Tabla
         configurarTabla();
 
-        card.getChildren().addAll(cardHeader, tablaInsumos);
-        VBox.setVgrow(tablaInsumos, Priority.ALWAYS);
+        card.getChildren().addAll(cardHeader, tablaLotes);
+        VBox.setVgrow(tablaLotes, Priority.ALWAYS);
         return card;
     }
 
+    // --- CAMBIO: Tabla reconfigurada para Lotes ---
     private void configurarTabla() {
-        tablaInsumos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaLotes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<InsumoAlmacen, String> insumoCol = new TableColumn<>("Insumo");
-        insumoCol.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+        TableColumn<LoteAlmacen, Integer> loteCol = new TableColumn<>("ID Lote");
+        loteCol.setCellValueFactory(new PropertyValueFactory<>("idLote"));
 
-        TableColumn<InsumoAlmacen, Integer> cantidadCol = new TableColumn<>("Cantidad");
-        cantidadCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
-        cantidadCol.setCellFactory(column -> new TableCell<InsumoAlmacen, Integer>() {
+        TableColumn<LoteAlmacen, String> insumoCol = new TableColumn<>("Producto");
+        insumoCol.setCellValueFactory(new PropertyValueFactory<>("productoNombre"));
+
+        TableColumn<LoteAlmacen, Double> cantidadCol = new TableColumn<>("Cant. Actual");
+        cantidadCol.setCellValueFactory(new PropertyValueFactory<>("cantidadActual"));
+
+        TableColumn<LoteAlmacen, String> unidadCol = new TableColumn<>("Unidad");
+        unidadCol.setCellValueFactory(new PropertyValueFactory<>("unidad"));
+
+        TableColumn<LoteAlmacen, Date> vencCol = new TableColumn<>("Vencimiento");
+        vencCol.setCellValueFactory(new PropertyValueFactory<>("fechaVencimiento"));
+        // Colorear fechas de vencimiento
+        vencCol.setCellFactory(column -> new TableCell<LoteAlmacen, Date>() {
             @Override
-            protected void updateItem(Integer item, boolean empty) {
+            protected void updateItem(Date item, boolean empty) {
                 super.updateItem(item, empty);
-                this.getStyleClass().remove("cell-stock-low");
+                this.getStyleClass().removeAll("cell-vencido", "cell-vence-pronto");
                 if (empty || item == null) {
                     setText(null);
                 } else {
                     setText(item.toString());
-                    if (getIndex() >= 0 && getIndex() < getTableView().getItems().size()) {
-                        InsumoAlmacen insumo = getTableView().getItems().get(getIndex());
-                        if (insumo.esStockBajo()) {
-                            this.getStyleClass().add("cell-stock-low");
-                        }
+                    long diff = item.getTime() - System.currentTimeMillis();
+                    long diffDays = diff / (24 * 60 * 60 * 1000);
+
+                    if (diffDays < 0) {
+                        this.getStyleClass().add("cell-vencido");
+                    } else if (diffDays <= 7) {
+                        this.getStyleClass().add("cell-vence-pronto");
                     }
                 }
             }
         });
 
-        TableColumn<InsumoAlmacen, String> unidadCol = new TableColumn<>("Unidad");
-        unidadCol.setCellValueFactory(new PropertyValueFactory<>("unidad"));
 
-        // --- NUEVA COLUMNA ---
-        TableColumn<InsumoAlmacen, Double> precioCol = new TableColumn<>("Precio Unit.");
-        precioCol.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
-        precioCol.setCellFactory(tc -> new TableCell<InsumoAlmacen, Double>() {
-            @Override
-            protected void updateItem(Double price, boolean empty) {
-                super.updateItem(price, empty);
-                setText(empty ? null : String.format("$%.2f", price));
-            }
-        });
+        TableColumn<LoteAlmacen, Date> ingresoCol = new TableColumn<>("Ingreso");
+        ingresoCol.setCellValueFactory(new PropertyValueFactory<>("fechaIngreso"));
 
-        TableColumn<InsumoAlmacen, Integer> stockMinCol = new TableColumn<>("Stock Mín.");
-        stockMinCol.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
-
-        // --- NUEVA COLUMNA ---
-        TableColumn<InsumoAlmacen, String> proveedorCol = new TableColumn<>("Proveedor");
+        TableColumn<LoteAlmacen, String> proveedorCol = new TableColumn<>("Proveedor");
         proveedorCol.setCellValueFactory(new PropertyValueFactory<>("proveedorNombre"));
 
-        TableColumn<InsumoAlmacen, String> estadoCol = new TableColumn<>("Estado");
-        estadoCol.setCellValueFactory(new PropertyValueFactory<>("estado"));
-        estadoCol.setCellFactory(column -> new TableCell<InsumoAlmacen, String>() {
-            private final Label badge = new Label();
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                } else {
-                    badge.setText(item);
-                    badge.getStyleClass().clear();
-                    badge.getStyleClass().add("badge");
-                    switch (item) {
-                        case "Bajo Stock": badge.getStyleClass().add("badge-stock-low"); break;
-                        case "Medio": badge.getStyleClass().add("badge-stock-medium"); break;
-                        case "Normal": badge.getStyleClass().add("badge-stock-normal"); break;
-                    }
-                    setGraphic(badge);
-                    setAlignment(Pos.CENTER_LEFT);
-                }
-            }
-        });
+        TableColumn<LoteAlmacen, Integer> ordenCol = new TableColumn<>("ID Orden");
+        ordenCol.setCellValueFactory(new PropertyValueFactory<>("idCompra"));
 
-        // --- COLUMNAS ACTUALIZADAS ---
-        tablaInsumos.getColumns().addAll(insumoCol, cantidadCol, unidadCol, precioCol, stockMinCol, proveedorCol, estadoCol);
-        tablaInsumos.setPlaceholder(new Label("No se encontraron insumos."));
+
+        tablaLotes.getColumns().setAll(loteCol, insumoCol, cantidadCol, unidadCol, vencCol, ingresoCol, proveedorCol, ordenCol);
+        tablaLotes.setPlaceholder(new Label("No hay lotes en el inventario."));
     }
 
+    // --- CAMBIO: Lógica de carga de datos completamente nueva ---
     private void cargarDatos() {
-        todosLosInsumos.clear();
-        // --- SQL ACTUALIZADO CON JOIN Y NUEVAS COLUMNAS ---
-        String sql = "SELECT p.IdProducto, p.Tipo_de_Producto, p.Stock, p.Stock_Minimo, " +
-                "p.Unidad_de_medida, p.PrecioUnitario, prov.Nombre_comercial " +
-                "FROM producto p " +
-                "LEFT JOIN proveedores prov ON p.IdProveedor = prov.IdProveedor";
+        todosLosLotes.clear();
+        lowStockCount = 0;
+        double valorTotalStock = 0;
+        int totalProveedores = 0;
+        int totalTiposProducto = 0;
+
+        // Mapa para sumar el stock total por producto
+        Map<Integer, Double> stockAgregado = new HashMap<>();
+        // Mapa para las reglas de stock mínimo
+        Map<Integer, Integer> stockMinimoReglas = new HashMap<>();
+
+        String sqlLotes = "SELECT " +
+                "l.IdLote, l.IdProducto, l.CantidadActual, l.FechaVencimiento, l.FechaIngreso, l.IdCompra, " +
+                "p.Tipo_de_Producto, p.Unidad_de_medida, p.PrecioUnitario, p.Stock_Minimo, " +
+                "prov.Nombre_comercial " +
+                "FROM lotes l " +
+                "JOIN producto p ON l.IdProducto = p.IdProducto " +
+                "LEFT JOIN proveedores prov ON p.IdProveedor = prov.IdProveedor " +
+                "ORDER BY l.FechaVencimiento ASC";
+
+        String sqlProveedores = "SELECT COUNT(*) FROM proveedores";
+        String sqlTiposProducto = "SELECT COUNT(*) FROM producto";
 
         try (Connection conn = ConexionBD.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             Statement stmt = conn.createStatement()) {
 
-            while (rs.next()) {
-                todosLosInsumos.add(new InsumoAlmacen(
-                        rs.getInt("IdProducto"),
-                        rs.getString("Tipo_de_Producto"),
-                        rs.getInt("Stock"),
-                        rs.getInt("Stock_Minimo"),
-                        rs.getString("Unidad_de_medida"),
-                        rs.getDouble("PrecioUnitario"), // <-- NUEVO
-                        rs.getString("Nombre_comercial") // <-- NUEVO
-                ));
+            // 1. Cargar Lotes
+            ResultSet rsLotes = stmt.executeQuery(sqlLotes);
+            while (rsLotes.next()) {
+                LoteAlmacen lote = new LoteAlmacen(
+                        rsLotes.getInt("IdLote"),
+                        rsLotes.getInt("IdProducto"),
+                        rsLotes.getDouble("CantidadActual"),
+                        rsLotes.getDate("FechaVencimiento"),
+                        rsLotes.getDate("FechaIngreso"),
+                        rsLotes.getInt("IdCompra"),
+                        rsLotes.getString("Tipo_de_Producto"),
+                        rsLotes.getString("Unidad_de_medida"),
+                        rsLotes.getString("Nombre_comercial")
+                );
+                todosLosLotes.add(lote);
+
+                // 2. Calcular stats mientras se recorre
+                valorTotalStock += lote.getCantidadActual() * rsLotes.getDouble("PrecioUnitario");
+
+                // 3. Sumar al stock agregado
+                int idProd = lote.getIdProducto();
+                stockAgregado.put(idProd, stockAgregado.getOrDefault(idProd, 0.0) + lote.getCantidadActual());
+                // Guardar la regla de stock mínimo
+                if (!stockMinimoReglas.containsKey(idProd)) {
+                    stockMinimoReglas.put(idProd, rsLotes.getInt("Stock_Minimo"));
+                }
             }
+
+            // 4. Calcular Stock Bajo
+            for (Map.Entry<Integer, Double> entry : stockAgregado.entrySet()) {
+                int idProd = entry.getKey();
+                double stockTotal = entry.getValue();
+                int stockMin = stockMinimoReglas.get(idProd);
+                if (stockTotal <= stockMin) {
+                    lowStockCount++;
+                }
+            }
+
+            // 5. Cargar Conteo de Proveedores
+            ResultSet rsProv = stmt.executeQuery(sqlProveedores);
+            if (rsProv.next()) totalProveedores = rsProv.getInt(1);
+
+            // 6. Cargar Conteo de Tipos de Producto
+            ResultSet rsTipos = stmt.executeQuery(sqlTiposProducto);
+            if (rsTipos.next()) totalTiposProducto = rsTipos.getInt(1);
+
+            // 7. Actualizar UI
+            totalInsumosLabel.setText(String.valueOf(totalTiposProducto));
+            totalProveedoresLabel.setText(String.valueOf(totalProveedores));
+            valorTotalLabel.setText(String.format("$%.2f", valorTotalStock));
+            stockBajoLabel.setText(String.valueOf(lowStockCount));
+
         } catch (SQLException e) {
             e.printStackTrace();
             mostrarAlerta("Error de BD", "No se pudo cargar el inventario: " + e.getMessage());
         }
     }
 
+    // --- CAMBIO: Lógica de filtrado ---
     private void setupFiltering() {
-        filteredInsumos = new FilteredList<>(todosLosInsumos, p -> true);
+        filteredLotes = new FilteredList<>(todosLosLotes, p -> true);
 
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredInsumos.setPredicate(insumo -> {
+            filteredLotes.setPredicate(lote -> {
                 if (newValue == null || newValue.isEmpty()) {
                     return true;
                 }
                 String lowerCaseFilter = newValue.toLowerCase();
 
-                // Filtrar por nombre o proveedor
-                if (insumo.getNombre().toLowerCase().contains(lowerCaseFilter)) {
+                // Filtrar por nombre, ID de lote o proveedor
+                if (lote.getProductoNombre().toLowerCase().contains(lowerCaseFilter)) {
                     return true;
-                } else if (insumo.getProveedorNombre() != null && insumo.getProveedorNombre().toLowerCase().contains(lowerCaseFilter)) {
+                } else if (lote.getProveedorNombre() != null && lote.getProveedorNombre().toLowerCase().contains(lowerCaseFilter)) {
+                    return true;
+                } else if (String.valueOf(lote.getIdLote()).contains(lowerCaseFilter)) {
                     return true;
                 }
                 return false;
             });
         });
 
-        tablaInsumos.setItems(filteredInsumos);
+        tablaLotes.setItems(filteredLotes);
     }
 
+    // --- CAMBIO: Lógica de actualización de UI ---
     private void actualizarUIConDatos() {
-        // Calcular stock bajo
-        lowStockInsumos = todosLosInsumos.stream()
-                .filter(InsumoAlmacen::esStockBajo)
-                .toList();
-
-        // --- CÁLCULOS NUEVOS ---
-        double valorTotal = todosLosInsumos.stream()
-                .mapToDouble(insumo -> insumo.getStock() * insumo.getPrecioUnitario())
-                .sum();
-
-        long numProveedores = todosLosInsumos.stream()
-                .map(InsumoAlmacen::getProveedorNombre)
-                .filter(nombre -> nombre != null && !nombre.isEmpty())
-                .distinct()
-                .count();
-
-        // Actualizar Stats
-        totalInsumosLabel.setText(String.valueOf(todosLosInsumos.size()));
-        stockBajoLabel.setText(String.valueOf(lowStockInsumos.size()));
-        valorTotalLabel.setText(String.format("$%.2f", valorTotal)); // <-- NUEVO
-        totalProveedoresLabel.setText(String.valueOf(numProveedores)); // <-- NUEVO
-
-        // Mostrar u ocultar alerta
+        // La mayoría de los labels se actualizan en cargarDatos()
+        // Aquí solo actualizamos la alerta
         alertBoxContainer.getChildren().clear();
-        if (!lowStockInsumos.isEmpty()) {
-            alertBoxContainer.getChildren().add(crearAlertBox(lowStockInsumos.size()));
+        if (lowStockCount > 0) {
+            alertBoxContainer.getChildren().add(crearAlertBox(lowStockCount));
         }
     }
 
@@ -481,47 +490,39 @@ public class Almacen1Page extends BorderPane {
     }
 
 
-    // --- Clase de Datos Interna (ACTUALIZADA) ---
-    public static class InsumoAlmacen {
-        private final int id;
-        private final String nombre;
-        private final int stock;
-        private final int stockMinimo;
+    // --- CAMBIO: Clase de Datos Interna -> LoteAlmacen ---
+    public static class LoteAlmacen {
+        private final int idLote;
+        private final int idProducto;
+        private final double cantidadActual;
+        private final Date fechaVencimiento;
+        private final Date fechaIngreso;
+        private final int idCompra;
+        private final String productoNombre;
         private final String unidad;
-        private final double precioUnitario; // <-- NUEVO
-        private final String proveedorNombre; // <-- NUEVO
+        private final String proveedorNombre;
 
-        public InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precio, String proveedor) {
-            this.id = id;
-            this.nombre = nombre;
-            this.stock = stock;
-            this.stockMinimo = stockMinimo;
-            this.unidad = (unidad != null) ? unidad : "Unidad";
-            this.precioUnitario = precio;
-            this.proveedorNombre = (proveedor != null) ? proveedor : "N/A";
+        public LoteAlmacen(int idLote, int idProducto, double cantidadActual, Date fechaVencimiento, Date fechaIngreso, int idCompra, String productoNombre, String unidad, String proveedorNombre) {
+            this.idLote = idLote;
+            this.idProducto = idProducto;
+            this.cantidadActual = cantidadActual;
+            this.fechaVencimiento = fechaVencimiento;
+            this.fechaIngreso = fechaIngreso;
+            this.idCompra = idCompra;
+            this.productoNombre = productoNombre;
+            this.unidad = (unidad != null) ? unidad : "N/A";
+            this.proveedorNombre = (proveedorNombre != null) ? proveedorNombre : "N/A";
         }
 
-        public int getId() { return id; }
-        public String getNombre() { return nombre; }
-        public int getStock() { return stock; }
-        public int getStockMinimo() { return stockMinimo; }
+        public int getIdLote() { return idLote; }
+        public int getIdProducto() { return idProducto; }
+        public double getCantidadActual() { return cantidadActual; }
+        public Date getFechaVencimiento() { return fechaVencimiento; }
+        public Date getFechaIngreso() { return fechaIngreso; }
+        public int getIdCompra() { return idCompra; }
+        public String getProductoNombre() { return productoNombre; }
         public String getUnidad() { return unidad; }
-        public double getPrecioUnitario() { return precioUnitario; }
         public String getProveedorNombre() { return proveedorNombre; }
-
-        public boolean esStockBajo() {
-            return stock <= stockMinimo;
-        }
-
-        public String getEstado() {
-            if (stock <= stockMinimo) {
-                return "Bajo Stock";
-            } else if (stock <= stockMinimo * 1.5) {
-                return "Medio";
-            } else {
-                return "Normal";
-            }
-        }
     }
 
     // --- Clase de Test para Ejecutar ---

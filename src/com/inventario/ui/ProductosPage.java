@@ -14,7 +14,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.sql.*;
@@ -22,7 +21,7 @@ import java.util.HashMap;
 
 public class ProductosPage extends BorderPane {
 
-    // --- Estilos (Mismos que en las otras páginas) ---
+    // (CSS_STYLES ... sin cambios)
     private static final String CSS_STYLES = """
         .root {
             -fx-background-color: #FDF8F0;
@@ -96,14 +95,14 @@ public class ProductosPage extends BorderPane {
     private final ComboBox<Proveedor> proveedorCombo;
     private final TextField precioField;
     private final TextField stockMinField;
-    private final TextField stockMaxField;
-    private final TextField stockInicialField;
-    private final TextField unidadField;
+    // --- CAMPOS DE STOCK ELIMINADOS ---
+    // private final TextField stockMaxField;
+    // private final TextField stockInicialField;
+    private final ComboBox<String> unidadCombo;
     private final TextField ubicacionField;
     private final Button guardarButton;
     private final Button limpiarButton;
 
-    // Label oculta para guardar el ID del producto seleccionado
     private final Label idProductoLabel;
 
     // --- Listas de Datos ---
@@ -122,9 +121,13 @@ public class ProductosPage extends BorderPane {
         proveedorCombo = new ComboBox<>();
         precioField = new TextField();
         stockMinField = new TextField();
-        stockMaxField = new TextField();
-        stockInicialField = new TextField();
-        unidadField = new TextField();
+        // stockMaxField = new TextField(); // ELIMINADO
+        // stockInicialField = new TextField(); // ELIMINADO
+
+        unidadCombo = new ComboBox<>();
+        unidadCombo.getItems().addAll("Unidad", "Kg", "Gramo", "Litro", "ml", "Porción");
+        unidadCombo.getSelectionModel().selectFirst();
+
         ubicacionField = new TextField();
         guardarButton = new Button("💾 Guardar");
         limpiarButton = new Button("✨ Limpiar");
@@ -136,7 +139,7 @@ public class ProductosPage extends BorderPane {
         VBox headerBox = new VBox(5);
         Label header = new Label("Gestión de Productos");
         header.getStyleClass().add("header-title");
-        Label description = new Label("Crear y editar productos del inventario maestro (insumos)");
+        Label description = new Label("Definir los productos maestros del inventario (insumos)");
         description.getStyleClass().add("header-description");
         headerBox.getChildren().addAll(header, description);
 
@@ -153,7 +156,6 @@ public class ProductosPage extends BorderPane {
         cargarProveedores();
         cargarDatosTabla();
 
-        // Acción al seleccionar un item de la tabla
         tablaProductos.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldSelection, newSelection) -> {
                     if (newSelection != null) {
@@ -162,14 +164,10 @@ public class ProductosPage extends BorderPane {
                 }
         );
 
-        // Acciones de botones
         limpiarButton.setOnAction(e -> limpiarFormulario());
         guardarButton.setOnAction(e -> guardarProducto());
     }
 
-    /**
-     * Crea la Card que contiene el formulario de edición/creación.
-     */
     private Node crearFormulario() {
         VBox card = new VBox(15);
         card.getStyleClass().add("card");
@@ -185,7 +183,6 @@ public class ProductosPage extends BorderPane {
         // Fila 1
         grid.add(crearCampo("Nombre Producto", nombreField), 0, 0);
 
-        // Configurar ComboBox de Proveedor
         proveedorCombo.setConverter(new ProveedorStringConverter());
         proveedorCombo.setItems(listaProveedores);
         grid.add(crearCampo("Proveedor", proveedorCombo), 1, 0);
@@ -194,12 +191,10 @@ public class ProductosPage extends BorderPane {
 
         // Fila 2
         grid.add(crearCampo("Stock Mínimo", stockMinField), 0, 1);
-        grid.add(crearCampo("Stock Máximo", stockMaxField), 1, 1);
-        grid.add(crearCampo("Stock Inicial", stockInicialField), 2, 1);
-
-        // Fila 3
-        grid.add(crearCampo("Unidad (Kg, Lt, Un)", unidadField), 0, 2);
-        grid.add(crearCampo("Ubicación (Almacén)", ubicacionField), 1, 2);
+        unidadCombo.setMaxWidth(Double.MAX_VALUE);
+        grid.add(crearCampo("Unidad", unidadCombo), 1, 1);
+        grid.add(crearCampo("Ubicación (Almacén)", ubicacionField), 2, 1);
+        // Stock Máximo y Stock Inicial eliminados
 
         // Configurar columnas del grid
         ColumnConstraints col1 = new ColumnConstraints(); col1.setPercentWidth(40);
@@ -217,9 +212,6 @@ public class ProductosPage extends BorderPane {
         return card;
     }
 
-    /**
-     * Crea la Card que contiene la tabla de productos.
-     */
     private Node crearTablaProductos() {
         VBox card = new VBox(15);
         card.getStyleClass().add("card");
@@ -254,8 +246,9 @@ public class ProductosPage extends BorderPane {
             }
         });
 
-        TableColumn<Producto, Integer> stockCol = new TableColumn<>("Stock");
-        stockCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
+        // --- CAMBIO: Columna de Stock eliminada ---
+        // TableColumn<Producto, Integer> stockCol = new TableColumn<>("Stock");
+        // stockCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
 
         TableColumn<Producto, Integer> stockMinCol = new TableColumn<>("Stock Mín.");
         stockMinCol.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
@@ -263,8 +256,9 @@ public class ProductosPage extends BorderPane {
         TableColumn<Producto, String> unidadCol = new TableColumn<>("Unidad");
         unidadCol.setCellValueFactory(new PropertyValueFactory<>("unidad"));
 
-        tablaProductos.getColumns().addAll(nombreCol, provCol, precioCol, stockCol, stockMinCol, unidadCol);
-        tablaProductos.setPlaceholder(new Label("No hay productos en el inventario."));
+        // --- CAMBIO: Se quita stockCol ---
+        tablaProductos.getColumns().addAll(nombreCol, provCol, precioCol, stockMinCol, unidadCol);
+        tablaProductos.setPlaceholder(new Label("No hay productos definidos."));
     }
 
     // --- Métodos de Lógica ---
@@ -289,7 +283,8 @@ public class ProductosPage extends BorderPane {
 
     private void cargarDatosTabla() {
         listaProductos.clear();
-        String sql = "SELECT * FROM producto";
+        // --- CAMBIO: SQL ya no pide Stock, Stock_Maximo, etc. ---
+        String sql = "SELECT IdProducto, Tipo_de_Producto, Stock_Minimo, Unidad_de_medida, Ubicacion, IdProveedor, PrecioUnitario FROM producto";
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -298,15 +293,12 @@ public class ProductosPage extends BorderPane {
                 Producto p = new Producto(
                         rs.getInt("IdProducto"),
                         rs.getString("Tipo_de_Producto"),
-                        rs.getInt("Stock"),
                         rs.getInt("Stock_Minimo"),
-                        rs.getInt("Stock_Maximo"),
                         rs.getString("Unidad_de_medida"),
                         rs.getString("Ubicacion"),
                         rs.getInt("IdProveedor"),
                         rs.getDouble("PrecioUnitario")
                 );
-                // Asignar nombre del proveedor
                 if (mapaProveedores.containsKey(p.getIdProveedor())) {
                     p.setProveedorNombre(mapaProveedores.get(p.getIdProveedor()).getNombre());
                 }
@@ -323,13 +315,15 @@ public class ProductosPage extends BorderPane {
         nombreField.setText(p.getNombre());
         precioField.setText(String.format("%.2f", p.getPrecioUnitario()));
         stockMinField.setText(String.valueOf(p.getStockMinimo()));
-        stockMaxField.setText(String.valueOf(p.getStockMaximo()));
-        stockInicialField.setText(String.valueOf(p.getStock()));
-        stockInicialField.setDisable(true); // No se puede editar stock aquí (usar Kardex)
-        unidadField.setText(p.getUnidad());
+
+        // --- CAMBIO: Campos de stock eliminados ---
+        // stockMaxField.setText(String.valueOf(p.getStockMaximo()));
+        // stockInicialField.setText(String.valueOf(p.getStock()));
+        // stockInicialField.setDisable(true);
+
+        unidadCombo.setValue(p.getUnidad());
         ubicacionField.setText(p.getUbicacion());
 
-        // Seleccionar proveedor en ComboBox
         proveedorCombo.setValue(mapaProveedores.get(p.getIdProveedor()));
 
         guardarButton.setText("💾 Actualizar");
@@ -340,10 +334,10 @@ public class ProductosPage extends BorderPane {
         nombreField.clear();
         precioField.clear();
         stockMinField.clear();
-        stockMaxField.clear();
-        stockInicialField.clear();
-        stockInicialField.setDisable(false); // Habilitar para nuevos productos
-        unidadField.clear();
+        // stockMaxField.clear(); // ELIMINADO
+        // stockInicialField.clear(); // ELIMINADO
+        // stockInicialField.setDisable(false); // ELIMINADO
+        unidadCombo.getSelectionModel().selectFirst();
         ubicacionField.clear();
         proveedorCombo.getSelectionModel().clearSelection();
 
@@ -352,7 +346,6 @@ public class ProductosPage extends BorderPane {
     }
 
     private void guardarProducto() {
-        // Validaciones
         if (nombreField.getText().isEmpty() ||
                 precioField.getText().isEmpty() ||
                 stockMinField.getText().isEmpty() ||
@@ -366,19 +359,18 @@ public class ProductosPage extends BorderPane {
             int idProveedor = proveedorCombo.getValue().getId();
             double precio = Double.parseDouble(precioField.getText());
             int stockMin = Integer.parseInt(stockMinField.getText());
-            int stockMax = stockMaxField.getText().isEmpty() ? 100 : Integer.parseInt(stockMaxField.getText());
-            int stock = stockInicialField.getText().isEmpty() ? 0 : Integer.parseInt(stockInicialField.getText());
-            String unidad = unidadField.getText();
+            String unidad = unidadCombo.getValue();
             String ubicacion = ubicacionField.getText();
 
-            // Decidir si es INSERT o UPDATE
+            // --- CAMBIO: Lógica de stock eliminada ---
+
             if (idProductoLabel.getText().isEmpty()) {
                 // INSERT
-                accionInsertar(nombre, idProveedor, precio, stockMin, stockMax, stock, unidad, ubicacion);
+                accionInsertar(nombre, idProveedor, precio, stockMin, unidad, ubicacion);
             } else {
                 // UPDATE
                 int idProducto = Integer.parseInt(idProductoLabel.getText());
-                accionActualizar(idProducto, nombre, idProveedor, precio, stockMin, stockMax, unidad, ubicacion);
+                accionActualizar(idProducto, nombre, idProveedor, precio, stockMin, unidad, ubicacion);
             }
 
         } catch (NumberFormatException e) {
@@ -386,27 +378,27 @@ public class ProductosPage extends BorderPane {
         }
     }
 
-    private void accionInsertar(String nombre, int idProveedor, double precio, int stockMin, int stockMax, int stock, String unidad, String ubicacion) {
-        String sql = "INSERT INTO producto (Tipo_de_Producto, Stock, Stock_Minimo, Stock_Maximo, Unidad_de_medida, Ubicacion, IdProveedor, PrecioUnitario) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    // --- CAMBIO: accionInsertar simplificado (sin stock) ---
+    private void accionInsertar(String nombre, int idProveedor, double precio, int stockMin, String unidad, String ubicacion) {
+        String sql = "INSERT INTO producto (Tipo_de_Producto, Stock_Minimo, Unidad_de_medida, Ubicacion, IdProveedor, PrecioUnitario) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, nombre);
-            stmt.setInt(2, stock);
-            stmt.setInt(3, stockMin);
-            stmt.setInt(4, stockMax);
-            stmt.setString(5, unidad);
-            stmt.setString(6, ubicacion);
-            stmt.setInt(7, idProveedor);
-            stmt.setDouble(8, precio);
+            stmt.setInt(2, stockMin);
+            stmt.setString(3, unidad);
+            stmt.setString(4, ubicacion);
+            stmt.setInt(5, idProveedor);
+            stmt.setDouble(6, precio);
+            // Stock, Stock_Maximo eliminados
 
             int filas = stmt.executeUpdate();
             if (filas > 0) {
                 mostrarAlerta("Éxito", "Producto creado correctamente.");
-                cargarDatosTabla(); // Recargar la tabla
-                limpiarFormulario(); // Limpiar el formulario
+                cargarDatosTabla();
+                limpiarFormulario();
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -414,8 +406,9 @@ public class ProductosPage extends BorderPane {
         }
     }
 
-    private void accionActualizar(int idProducto, String nombre, int idProveedor, double precio, int stockMin, int stockMax, String unidad, String ubicacion) {
-        String sql = "UPDATE producto SET Tipo_de_Producto = ?, Stock_Minimo = ?, Stock_Maximo = ?, " +
+    // --- CAMBIO: accionActualizar simplificado (sin stock) ---
+    private void accionActualizar(int idProducto, String nombre, int idProveedor, double precio, int stockMin, String unidad, String ubicacion) {
+        String sql = "UPDATE producto SET Tipo_de_Producto = ?, Stock_Minimo = ?, " +
                 "Unidad_de_medida = ?, Ubicacion = ?, IdProveedor = ?, PrecioUnitario = ? " +
                 "WHERE IdProducto = ?";
 
@@ -424,18 +417,18 @@ public class ProductosPage extends BorderPane {
 
             stmt.setString(1, nombre);
             stmt.setInt(2, stockMin);
-            stmt.setInt(3, stockMax);
-            stmt.setString(4, unidad);
-            stmt.setString(5, ubicacion);
-            stmt.setInt(6, idProveedor);
-            stmt.setDouble(7, precio);
-            stmt.setInt(8, idProducto);
+            stmt.setString(3, unidad);
+            stmt.setString(4, ubicacion);
+            stmt.setInt(5, idProveedor);
+            stmt.setDouble(6, precio);
+            stmt.setInt(7, idProducto);
+            // Stock, Stock_Maximo eliminados
 
             int filas = stmt.executeUpdate();
             if (filas > 0) {
                 mostrarAlerta("Éxito", "Producto actualizado correctamente.");
-                cargarDatosTabla(); // Recargar la tabla
-                limpiarFormulario(); // Limpiar el formulario
+                cargarDatosTabla();
+                limpiarFormulario();
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -453,6 +446,9 @@ public class ProductosPage extends BorderPane {
 
     private void mostrarAlerta(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        if (titulo.startsWith("Error")) {
+            alert.setAlertType(Alert.AlertType.ERROR);
+        }
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
@@ -461,7 +457,6 @@ public class ProductosPage extends BorderPane {
 
     // --- Clases de Datos Internas ---
 
-    // Clase para manejar los Proveedores en el ComboBox
     public static class Proveedor {
         private final int id;
         private final String nombre;
@@ -470,7 +465,6 @@ public class ProductosPage extends BorderPane {
         public String getNombre() { return nombre; }
     }
 
-    // Convertidor para que el ComboBox muestre el nombre del Proveedor
     private static class ProveedorStringConverter extends javafx.util.StringConverter<Proveedor> {
         @Override
         public String toString(Proveedor p) {
@@ -478,41 +472,35 @@ public class ProductosPage extends BorderPane {
         }
         @Override
         public Proveedor fromString(String string) {
-            return null; // No necesario para un ComboBox no editable
+            return null;
         }
     }
 
-    // Clase para manejar los Productos en la Tabla
+    // --- CAMBIO: Clase Producto simplificada (sin stock) ---
     public static class Producto {
         private final int id;
         private final String nombre;
-        private final int stock;
         private final int stockMinimo;
-        private final int stockMaximo;
         private final String unidad;
         private final String ubicacion;
         private final int idProveedor;
         private final double precioUnitario;
         private String proveedorNombre;
 
-        public Producto(int id, String nombre, int stock, int stockMinimo, int stockMaximo, String unidad, String ubicacion, int idProveedor, double precioUnitario) {
+        public Producto(int id, String nombre, int stockMinimo, String unidad, String ubicacion, int idProveedor, double precioUnitario) {
             this.id = id;
             this.nombre = nombre;
-            this.stock = stock;
             this.stockMinimo = stockMinimo;
-            this.stockMaximo = stockMaximo;
-            this.unidad = unidad;
+            this.unidad = (unidad != null) ? unidad : "Unidad";
             this.ubicacion = ubicacion;
             this.idProveedor = idProveedor;
             this.precioUnitario = precioUnitario;
-            this.proveedorNombre = "N/A"; // Default
+            this.proveedorNombre = "N/A";
         }
 
         public int getId() { return id; }
         public String getNombre() { return nombre; }
-        public int getStock() { return stock; }
         public int getStockMinimo() { return stockMinimo; }
-        public int getStockMaximo() { return stockMaximo; }
         public String getUnidad() { return unidad; }
         public String getUbicacion() { return ubicacion; }
         public int getIdProveedor() { return idProveedor; }

@@ -16,11 +16,14 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class OrdenesPage extends BorderPane {
@@ -31,15 +34,16 @@ public class OrdenesPage extends BorderPane {
     private final ComboBox<String> proveedorCombo;
     private final ComboBox<Insumo> insumoCombo;
     private final TextField cantidadField;
-    // private final TextField precioField; // <-- ELIMINADO
     private final DatePicker fechaPicker;
+    private final TableView<ItemOrdenGestion> tablaGestion;
+    private final ObservableList<ItemOrdenGestion> listaOrdenesPendientes = FXCollections.observableArrayList();
+    private VBox historialContainer;
 
     // --- Listas de Datos ---
     private final ObservableList<ItemOrden> items = FXCollections.observableArrayList();
     private final ObservableList<Insumo> todosLosInsumos = FXCollections.observableArrayList();
 
-    // --- Estilos ---
-    // (CSS_STYLES sin cambios... puedes mantener el que ya tenías)
+    // (CSS_STYLES ... sin cambios)
     private static final String CSS_STYLES = """
         .root {
             -fx-background-color: #FDF8F0;
@@ -72,7 +76,7 @@ public class OrdenesPage extends BorderPane {
         }
         .tab-content-area {
             -fx-background-color: transparent;
-            -fx-padding: 20 0 0 0;
+            -fx-padding: 20 0 0 0; 
         }
         .card {
             -fx-background-color: white;
@@ -134,6 +138,15 @@ public class OrdenesPage extends BorderPane {
         .button-danger:hover {
             -fx-background-color: #FEE2E2;
         }
+        .button-accept {
+            -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
+        }
+        .button-edit {
+            -fx-background-color: #F97316; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
+        }
+        .button-reject {
+            -fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
+        }
         .table-view .column-header {
             -fx-background-color: #F9FAFB;
             -fx-font-weight: bold;
@@ -146,57 +159,69 @@ public class OrdenesPage extends BorderPane {
         this.getStyleClass().add("root");
         setPadding(new Insets(30, 40, 30, 40));
 
-        // --- Campos de UI reutilizables ---
         proveedorCombo = new ComboBox<>();
         insumoCombo = new ComboBox<>();
         cantidadField = new TextField();
-        // precioField ELIMINADO
         tablaItems = new TableView<>();
         totalLabel = new Label("$0.00");
         fechaPicker = new DatePicker(LocalDate.now());
+        tablaGestion = new TableView<>();
 
-        // --- Cargar Datos Iniciales ---
         cargarProveedores(proveedorCombo);
-        cargarTodosLosInsumos(); // Carga todos los 'producto'
+        cargarTodosLosInsumos();
 
-        // --- Estructura Principal ---
-        VBox mainContent = new VBox(20);
+        VBox mainContent = new VBox();
+        Node header = crearHeader();
+        Node tabPane = crearTabPane();
+        mainContent.getChildren().addAll(header, tabPane);
+        setCenter(mainContent);
+    }
 
-        // 1. Header
+    private Node crearHeader() {
         VBox headerBox = new VBox(5);
+        headerBox.setPadding(new Insets(0, 0, 20, 0));
         Label header = new Label("Orden de Compra");
         header.getStyleClass().add("header-title");
         Label description = new Label("Crear y gestionar órdenes de compra de insumos");
         description.getStyleClass().add("header-description");
         headerBox.getChildren().addAll(header, description);
+        return headerBox;
+    }
 
-        // 2. TabPane
+    private Node crearTabPane() {
         TabPane tabPane = new TabPane();
         tabPane.getStyleClass().add("tab-pane");
 
         Tab tabNueva = new Tab("Nueva Orden", crearTabNuevaOrden());
         tabNueva.setClosable(false);
+
+        Tab tabGestion = new Tab("Gestionar Órdenes", crearTabGestion());
+        tabGestion.setClosable(false);
+        tabGestion.setOnSelectionChanged(e -> {
+            if (tabGestion.isSelected()) {
+                cargarOrdenesPendientes();
+            }
+        });
+
         Tab tabHistorial = new Tab("Historial", crearTabHistorial());
         tabHistorial.setClosable(false);
+        tabHistorial.setOnSelectionChanged(e -> {
+            if (tabHistorial.isSelected()) {
+                cargarHistorial(historialContainer);
+            }
+        });
 
-        tabPane.getTabs().addAll(tabNueva, tabHistorial);
-
-        mainContent.getChildren().addAll(headerBox, tabPane);
-        setCenter(mainContent);
+        tabPane.getTabs().addAll(tabNueva, tabGestion, tabHistorial);
+        return tabPane;
     }
 
-    /**
-     * Crea el contenido de la pestaña "Nueva Orden".
-     */
+    // (crearTabNuevaOrden y configurarTablaItems sin cambios desde la última versión)
     private Node crearTabNuevaOrden() {
-        VBox layout = new VBox(20);
+        VBox layout = new VBox(25);
         layout.getStyleClass().add("tab-content-area");
-
-        // --- Card Principal ---
         VBox card = new VBox(25);
         card.getStyleClass().add("card");
 
-        // Título de la Card
         HBox cardHeader = new HBox(10);
         cardHeader.setAlignment(Pos.CENTER_LEFT);
         Text icon = new Text("🛒");
@@ -206,10 +231,8 @@ public class OrdenesPage extends BorderPane {
         cardHeader.getChildren().addAll(icon, cardTitle);
         Label cardDescription = new Label("Complete los detalles de la orden");
         cardDescription.getStyleClass().add("card-description");
-
         VBox cardHeaderBox = new VBox(5, cardHeader, cardDescription);
 
-        // --- Proveedor y Fecha ---
         GridPane gridSup = new GridPane();
         gridSup.setHgap(20);
         gridSup.setVgap(10);
@@ -224,17 +247,14 @@ public class OrdenesPage extends BorderPane {
         col2.setPercentWidth(50);
         gridSup.getColumnConstraints().addAll(col1, col2);
 
-        // --- "Agregar Items" Box ---
         VBox addItemsBox = new VBox(15);
         addItemsBox.setPadding(new Insets(15));
         addItemsBox.setStyle("-fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8;");
         Label addItemsTitle = new Label("Agregar Items");
         addItemsTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
-
         GridPane addItemsGrid = new GridPane();
         addItemsGrid.setHgap(15);
         addItemsGrid.setVgap(10);
-        // --- LAYOUT DE 3 COLUMNAS ---
         ColumnConstraints colInsumo = new ColumnConstraints();
         colInsumo.setPercentWidth(60);
         ColumnConstraints colCant = new ColumnConstraints();
@@ -242,23 +262,15 @@ public class OrdenesPage extends BorderPane {
         ColumnConstraints colBtn = new ColumnConstraints();
         colBtn.setPercentWidth(20);
         addItemsGrid.getColumnConstraints().addAll(colInsumo, colCant, colBtn);
-
-        // ComboBox de Insumos (Productos)
         insumoCombo.setPromptText("Seleccionar producto");
         insumoCombo.setMaxWidth(Double.MAX_VALUE);
-        insumoCombo.setDisable(true); // Deshabilitado hasta seleccionar proveedor
+        insumoCombo.setDisable(true);
         insumoCombo.setCellFactory(lv -> new InsumoListCell());
         insumoCombo.setButtonCell(new InsumoListCell());
         addItemsGrid.add(crearCampo("Producto", insumoCombo), 0, 0);
-
-        // Campo Cantidad
         cantidadField.setPromptText("0");
         cantidadField.setMaxWidth(Double.MAX_VALUE);
         addItemsGrid.add(crearCampo("Cantidad", cantidadField), 1, 0);
-
-        // Campo Precio ELIMINADO
-
-        // Botón Agregar
         Button addButton = new Button("➕ Agregar");
         addButton.getStyleClass().add("button-add");
         addButton.setMaxWidth(Double.MAX_VALUE);
@@ -266,16 +278,14 @@ public class OrdenesPage extends BorderPane {
         VBox btnBox = new VBox(addButton);
         btnBox.setAlignment(Pos.BOTTOM_CENTER);
         btnBox.setPadding(new Insets(19, 0, 0, 0));
-        addItemsGrid.add(btnBox, 2, 0); // <-- Posición 2
-
+        addItemsGrid.add(btnBox, 2, 0);
         addItemsBox.getChildren().addAll(addItemsTitle, addItemsGrid);
 
-        // --- LÓGICA DE FILTRADO (RE-INTRODUCIDA) ---
         proveedorCombo.setOnAction(e -> {
             String proveedorNombre = proveedorCombo.getValue();
             if (proveedorNombre != null && !proveedorNombre.isEmpty()) {
                 int idProveedor = obtenerIdProveedor(proveedorNombre);
-                filtrarInsumosPorProveedor(idProveedor);
+                filtrarInsumosPorProveedor(insumoCombo, idProveedor);
                 insumoCombo.setDisable(false);
             } else {
                 insumoCombo.getItems().clear();
@@ -283,11 +293,8 @@ public class OrdenesPage extends BorderPane {
             }
         });
 
-        // --- Tabla de Items ---
-        configurarTabla();
+        configurarTablaItems(tablaItems, items, totalLabel);
         VBox tablaYTotal = new VBox();
-
-        // --- Total ---
         HBox totalBox = new HBox(10);
         totalBox.setAlignment(Pos.CENTER_RIGHT);
         totalBox.setPadding(new Insets(15));
@@ -296,31 +303,24 @@ public class OrdenesPage extends BorderPane {
         totalText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         totalLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         totalBox.getChildren().addAll(totalText, totalLabel);
-
         tablaYTotal.getChildren().addAll(tablaItems, totalBox);
         VBox.setVgrow(tablaItems, Priority.ALWAYS);
 
-        // --- Botón Crear Orden ---
         Button crearOrdenBtn = new Button("🛒 Crear Orden de Compra");
         crearOrdenBtn.getStyleClass().add("button-primary");
         crearOrdenBtn.setMaxWidth(Double.MAX_VALUE);
         crearOrdenBtn.setOnAction(e -> guardarOrden());
 
-        // Ensamblar Card
         card.getChildren().addAll(cardHeaderBox, gridSup, addItemsBox, tablaYTotal, crearOrdenBtn);
         layout.getChildren().add(card);
         return layout;
     }
 
-    /**
-     * Configura las columnas y propiedades de la tabla de items.
-     */
-    private void configurarTabla() {
-        tablaItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    private void configurarTablaItems(TableView<ItemOrden> tabla, ObservableList<ItemOrden> lista, Label totalLabel) {
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<ItemOrden, String> insumoCol = new TableColumn<>("Producto");
         insumoCol.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-
         TableColumn<ItemOrden, Double> cantidadCol = new TableColumn<>("Cantidad");
         cantidadCol.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
 
@@ -351,7 +351,8 @@ public class OrdenesPage extends BorderPane {
                 deleteButton.getStyleClass().add("button-danger");
                 deleteButton.setOnAction(event -> {
                     ItemOrden item = getTableView().getItems().get(getIndex());
-                    eliminarItem(item);
+                    lista.remove(item);
+                    actualizarTotal(lista, totalLabel);
                 });
             }
             @Override
@@ -362,39 +363,148 @@ public class OrdenesPage extends BorderPane {
             }
         });
 
-        tablaItems.getColumns().addAll(insumoCol, cantidadCol, precioCol, totalCol, accionCol);
-        tablaItems.setItems(items);
-        tablaItems.setPlaceholder(new Label("Agregue productos a la orden"));
+        tabla.getColumns().setAll(insumoCol, cantidadCol, precioCol, totalCol, accionCol);
+        tabla.setItems(lista);
+        tabla.setPlaceholder(new Label("Agregue productos a la orden"));
     }
 
-    /**
-     * Crea el contenido de la pestaña "Historial".
-     */
+
+    // --- PESTAÑA "GESTIONAR ÓRDENES" ---
+
+    private Node crearTabGestion() {
+        VBox layout = new VBox(20);
+        layout.getStyleClass().add("tab-content-area");
+
+        VBox card = new VBox(15);
+        card.getStyleClass().add("card");
+        Label cardTitle = new Label("Órdenes de Compra Pendientes");
+        cardTitle.getStyleClass().add("card-title");
+        Label cardDescription = new Label("Acepte, edite o rechace las órdenes pendientes de ingreso.");
+        cardDescription.getStyleClass().add("card-description");
+
+        configurarTablaGestion();
+
+        card.getChildren().addAll(cardTitle, cardDescription, tablaGestion);
+        VBox.setVgrow(tablaGestion, Priority.ALWAYS);
+        layout.getChildren().add(card);
+
+        cargarOrdenesPendientes();
+        return layout;
+    }
+
+    private void configurarTablaGestion() {
+        tablaGestion.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        TableColumn<ItemOrdenGestion, Integer> idCol = new TableColumn<>("ID Orden");
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<ItemOrdenGestion, String> provCol = new TableColumn<>("Proveedor");
+        provCol.setCellValueFactory(new PropertyValueFactory<>("proveedorNombre"));
+
+        TableColumn<ItemOrdenGestion, Date> fechaCol = new TableColumn<>("Fecha");
+        fechaCol.setCellValueFactory(new PropertyValueFactory<>("fecha"));
+
+        TableColumn<ItemOrdenGestion, Double> totalCol = new TableColumn<>("Total");
+        totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
+        totalCol.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double total, boolean empty) {
+                super.updateItem(total, empty);
+                setText(empty ? null : String.format("$%.2f", total));
+            }
+        });
+
+        TableColumn<ItemOrdenGestion, String> estadoCol = new TableColumn<>("Estado");
+        estadoCol.setCellValueFactory(new PropertyValueFactory<>("estado"));
+
+        TableColumn<ItemOrdenGestion, Void> accionCol = new TableColumn<>("Acciones");
+        accionCol.setCellFactory(param -> new TableCell<>() {
+            private final Button btnAccept = new Button("Aceptar");
+            private final Button btnEdit = new Button("Editar");
+            private final Button btnReject = new Button("Rechazar");
+            private final HBox pane = new HBox(5, btnAccept, btnEdit, btnReject);
+
+            {
+                btnAccept.getStyleClass().add("button-accept");
+                btnEdit.getStyleClass().add("button-edit");
+                btnReject.getStyleClass().add("button-reject");
+                pane.setAlignment(Pos.CENTER);
+
+                btnAccept.setOnAction(event -> {
+                    ItemOrdenGestion orden = getTableView().getItems().get(getIndex());
+                    accionAceptarOrden(orden);
+                });
+                btnEdit.setOnAction(event -> {
+                    ItemOrdenGestion orden = getTableView().getItems().get(getIndex());
+                    accionEditarOrden(orden);
+                });
+                btnReject.setOnAction(event -> {
+                    ItemOrdenGestion orden = getTableView().getItems().get(getIndex());
+                    accionRechazarOrden(orden);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : pane);
+            }
+        });
+
+        tablaGestion.getColumns().setAll(idCol, provCol, fechaCol, totalCol, estadoCol, accionCol);
+        tablaGestion.setItems(listaOrdenesPendientes);
+        tablaGestion.setPlaceholder(new Label("No hay órdenes pendientes."));
+    }
+
+    private void cargarOrdenesPendientes() {
+        listaOrdenesPendientes.clear();
+        String sql = "SELECT o.IdCompra, p.Nombre_comercial, o.Fecha_de_Compra, o.Precio_total, o.Estado " +
+                "FROM orden_compra o " +
+                "JOIN proveedores p ON o.IdProveedor = p.IdProveedor " +
+                "WHERE o.Estado = 'Pendiente' ORDER BY o.Fecha_de_Compra ASC";
+
+        try (Connection conn = ConexionBD.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while(rs.next()) {
+                listaOrdenesPendientes.add(new ItemOrdenGestion(
+                        rs.getInt("IdCompra"),
+                        rs.getString("Nombre_comercial"),
+                        rs.getDate("Fecha_de_Compra"),
+                        rs.getDouble("Precio_total"),
+                        rs.getString("Estado")
+                ));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error de BD", "No se pudo cargar las órdenes pendientes: " + e.getMessage());
+        }
+    }
+
+
+    // --- PESTAÑA "HISTORIAL" ---
+
     private Node crearTabHistorial() {
         VBox layout = new VBox(20);
         layout.getStyleClass().add("tab-content-area");
 
-        // Card para el historial
         VBox card = new VBox(15);
         card.getStyleClass().add("card");
         Label cardTitle = new Label("Historial de Órdenes");
+        Label cardDescription = new Label("Órdenes de compra completadas o rechazadas");
         cardTitle.getStyleClass().add("card-title");
-        Label cardDescription = new Label("Todas las órdenes de compra registradas");
         cardDescription.getStyleClass().add("card-description");
         card.getChildren().addAll(cardTitle, cardDescription);
 
-        // Contenedor para las cards de órdenes
-        VBox historialContainer = new VBox(10);
+        historialContainer = new VBox(10);
         historialContainer.setPadding(new Insets(10, 0, 10, 0));
 
-        // ScrollPane para el historial
         ScrollPane scrollPane = new ScrollPane(historialContainer);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent;");
-
-        // Cargar datos
-        cargarHistorial(historialContainer);
 
         card.getChildren().add(scrollPane);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
@@ -402,15 +512,14 @@ public class OrdenesPage extends BorderPane {
         return layout;
     }
 
-    /**
-     * Carga el historial de órdenes desde la BD y las añade al VBox.
-     */
     private void cargarHistorial(VBox container) {
+        if (container == null) return;
         container.getChildren().clear();
-        String sql = "SELECT o.IdCompra, p.Nombre_comercial, o.Fecha_de_Compra, o.Precio_total " +
+
+        String sql = "SELECT o.IdCompra, p.Nombre_comercial, o.Fecha_de_Compra, o.Precio_total, o.Estado " +
                 "FROM orden_compra o " +
                 "JOIN proveedores p ON o.IdProveedor = p.IdProveedor " +
-                "ORDER BY o.Fecha_de_Compra DESC";
+                "WHERE o.Estado != 'Pendiente' ORDER BY o.Fecha_de_Compra DESC";
 
         String sqlDetalle = "SELECT i.Tipo_de_Producto, d.Cantidad, d.PrecioUnitario " +
                 "FROM detalle_compra d " +
@@ -426,6 +535,7 @@ public class OrdenesPage extends BorderPane {
                 String proveedor = rs.getString("Nombre_comercial");
                 Date fecha = rs.getDate("Fecha_de_Compra");
                 double total = rs.getDouble("Precio_total");
+                String estado = rs.getString("Estado");
 
                 List<ItemHistorial> itemsHistorial = new ArrayList<>();
                 try (PreparedStatement stmtDet = conn.prepareStatement(sqlDetalle)) {
@@ -440,7 +550,7 @@ public class OrdenesPage extends BorderPane {
                     }
                 }
 
-                OrdenHistorial orden = new OrdenHistorial(idOrden, proveedor, fecha, total, itemsHistorial);
+                OrdenHistorial orden = new OrdenHistorial(idOrden, proveedor, fecha, total, estado, itemsHistorial);
                 container.getChildren().add(crearCardOrden(orden));
             }
 
@@ -450,15 +560,11 @@ public class OrdenesPage extends BorderPane {
         }
     }
 
-    /**
-     * Crea un "Card" de JavaFX para una orden individual del historial.
-     */
     private Node crearCardOrden(OrdenHistorial orden) {
         VBox card = new VBox(10);
         card.getStyleClass().add("card");
         card.setStyle("-fx-border-color: #E0E0E0;");
 
-        // Header
         BorderPane header = new BorderPane();
         VBox tituloFecha = new VBox(2);
         Label titulo = new Label(String.format("Orden #%d - %s", orden.getId(), orden.getProveedor()));
@@ -468,7 +574,17 @@ public class OrdenesPage extends BorderPane {
         tituloFecha.getChildren().addAll(titulo, fecha);
         header.setLeft(tituloFecha);
 
-        // Content
+        Label badge = new Label(orden.getEstado().toUpperCase());
+        badge.getStyleClass().add("badge");
+        if ("Completada".equalsIgnoreCase(orden.getEstado())) {
+            badge.setStyle("-fx-background-color: #22C55E; -fx-text-fill: white;");
+        } else if ("Rechazada".equalsIgnoreCase(orden.getEstado())) {
+            badge.setStyle("-fx-background-color: #EF4444; -fx-text-fill: white;");
+        } else {
+            badge.setStyle("-fx-background-color: #777777; -fx-text-fill: white;");
+        }
+        header.setRight(badge);
+
         VBox itemsBox = new VBox(5);
         itemsBox.setPadding(new Insets(10, 0, 10, 0));
         for (ItemHistorial item : orden.getItems()) {
@@ -482,7 +598,6 @@ public class OrdenesPage extends BorderPane {
             itemsBox.getChildren().add(itemPane);
         }
 
-        // Footer
         BorderPane footer = new BorderPane();
         footer.setPadding(new Insets(10, 0, 0, 0));
         footer.setStyle("-fx-border-color: #E0E0E0; -fx-border-width: 1 0 0 0;");
@@ -500,6 +615,7 @@ public class OrdenesPage extends BorderPane {
     // --- Métodos de Carga de Datos ---
 
     private void cargarProveedores(ComboBox<String> combo) {
+        combo.getItems().clear();
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT Nombre_comercial FROM proveedores")) {
@@ -526,7 +642,6 @@ public class OrdenesPage extends BorderPane {
 
     private void cargarTodosLosInsumos() {
         todosLosInsumos.clear();
-        // --- SQL ACTUALIZADO ---
         String sql = "SELECT IdProducto, IdProveedor, Tipo_de_Producto, PrecioUnitario, Unidad_de_medida FROM producto";
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
@@ -534,9 +649,9 @@ public class OrdenesPage extends BorderPane {
             while (rs.next()) {
                 todosLosInsumos.add(new Insumo(
                         rs.getInt("IdProducto"),
-                        rs.getInt("IdProveedor"), // <-- NUEVO
+                        rs.getInt("IdProveedor"),
                         rs.getString("Tipo_de_Producto"),
-                        rs.getDouble("PrecioUnitario"), // <-- NUEVO
+                        rs.getDouble("PrecioUnitario"),
                         rs.getString("Unidad_de_medida")
                 ));
             }
@@ -545,12 +660,11 @@ public class OrdenesPage extends BorderPane {
         }
     }
 
-    // --- MÉTODO DE FILTRADO (RE-INTRODUCIDO) ---
-    private void filtrarInsumosPorProveedor(int idProveedor) {
+    private void filtrarInsumosPorProveedor(ComboBox<Insumo> combo, int idProveedor) {
         List<Insumo> filtrados = todosLosInsumos.stream()
                 .filter(insumo -> insumo.getIdProveedor() == idProveedor)
                 .collect(Collectors.toList());
-        insumoCombo.setItems(FXCollections.observableArrayList(filtrados));
+        combo.setItems(FXCollections.observableArrayList(filtrados));
     }
 
 
@@ -565,38 +679,35 @@ public class OrdenesPage extends BorderPane {
     }
 
     private void agregarItem() {
+        agregarItemLogica(insumoCombo, cantidadField, items, totalLabel);
+    }
+
+    private void agregarItemLogica(ComboBox<Insumo> combo, TextField field, ObservableList<ItemOrden> lista, Label labelTotal) {
         try {
-            Insumo insumo = insumoCombo.getValue();
-            double cantidad = Double.parseDouble(cantidadField.getText().trim());
-            // double precio = ... <-- ELIMINADO
+            Insumo insumo = combo.getValue();
+            double cantidad = Double.parseDouble(field.getText().trim());
 
             if (insumo == null || cantidad <= 0) {
                 mostrarAlerta("Error", "Seleccione un producto y una cantidad válida.");
                 return;
             }
-
-            // --- LÓGICA DE PRECIO ACTUALIZADA ---
-            // El precio se obtiene del insumo, no de un campo de texto
             double precio = insumo.getPrecioUnitario();
-
-            // Verificar si el item ya existe para actualizar cantidad
             boolean existe = false;
-            for (ItemOrden item : items) {
+            for (ItemOrden item : lista) {
                 if (item.getInsumoId() == insumo.getId() && item.getPrecioUnitario() == precio) {
                     item.setCantidad(item.getCantidad() + cantidad);
                     existe = true;
                     break;
                 }
             }
-
             if (!existe) {
-                // Constructor actualizado
-                items.add(new ItemOrden(insumo, cantidad));
+                lista.add(new ItemOrden(insumo, cantidad));
             }
 
-            tablaItems.refresh();
-            limpiarCamposItem();
-            actualizarTotal();
+            actualizarTotal(lista, labelTotal);
+
+            combo.getSelectionModel().clearSelection();
+            field.clear();
 
         } catch (NumberFormatException e) {
             mostrarAlerta("Error", "Cantidad debe ser un número válido.");
@@ -605,23 +716,20 @@ public class OrdenesPage extends BorderPane {
 
     private void eliminarItem(ItemOrden item) {
         items.remove(item);
-        actualizarTotal();
+        actualizarTotal(items, totalLabel);
     }
 
     private void limpiarCamposItem() {
         insumoCombo.getSelectionModel().clearSelection();
         cantidadField.clear();
-        // precioField.clear(); // <-- ELIMINADO
     }
 
-    private void actualizarTotal() {
-        double total = items.stream().mapToDouble(ItemOrden::getTotal).sum();
-        totalLabel.setText(String.format("$%.2f", total));
+    private void actualizarTotal(ObservableList<ItemOrden> lista, Label labelTotal) {
+        double total = lista.stream().mapToDouble(ItemOrden::getTotal).sum();
+        labelTotal.setText(String.format("$%.2f", total));
     }
 
     private void guardarOrden() {
-        // (Esta función ya estaba bien y coincidía con tu BD)
-        // (No necesita cambios)
         String proveedorNombre = proveedorCombo.getValue();
         LocalDate fecha = fechaPicker.getValue();
 
@@ -645,9 +753,8 @@ public class OrdenesPage extends BorderPane {
             conn = ConexionBD.getConnection();
             conn.setAutoCommit(false);
 
-            // 1. Insertar Orden
-            String sqlOrden = "INSERT INTO orden_compra (IdProveedor, IdEmpleado, Fecha_de_Compra, Precio_total) " +
-                    "VALUES (?, ?, ?, ?)";
+            String sqlOrden = "INSERT INTO orden_compra (IdProveedor, IdEmpleado, Fecha_de_Compra, Precio_total, Estado) " +
+                    "VALUES (?, ?, ?, ?, 'Pendiente')";
             int idOrdenGenerada;
             try (PreparedStatement stmtOrden = conn.prepareStatement(sqlOrden, Statement.RETURN_GENERATED_KEYS)) {
                 stmtOrden.setInt(1, idProveedor);
@@ -664,7 +771,6 @@ public class OrdenesPage extends BorderPane {
                 }
             }
 
-            // 2. Insertar Detalles
             String sqlDetalle = "INSERT INTO detalle_compra (IdCompra, IdProducto, Cantidad, PrecioUnitario, SubTotal) " +
                     "VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement stmtDetalle = conn.prepareStatement(sqlDetalle)) {
@@ -682,13 +788,14 @@ public class OrdenesPage extends BorderPane {
             conn.commit();
             mostrarAlerta("Éxito", "✅ Orden registrada correctamente.");
 
-            // Limpiar UI
             items.clear();
-            actualizarTotal();
+            actualizarTotal(items, totalLabel);
             proveedorCombo.getSelectionModel().clearSelection();
             insumoCombo.getItems().clear();
             insumoCombo.setDisable(true);
             fechaPicker.setValue(LocalDate.now());
+
+            cargarOrdenesPendientes();
 
         } catch (SQLException ex) {
             if (conn != null) try { conn.rollback(); } catch (SQLException e) { e.printStackTrace(); }
@@ -699,8 +806,245 @@ public class OrdenesPage extends BorderPane {
         }
     }
 
+
+    // --- ACCIONES DE GESTIÓN (CORREGIDAS PARA LOTES) ---
+
+    /**
+     * CORREGIDO: Abre un diálogo para pedir fecha de vencimiento POR PRODUCTO.
+     */
+    private void accionAceptarOrden(ItemOrdenGestion orden) {
+        // 1. Cargar los detalles de la orden primero
+        ObservableList<ItemOrden> itemsDeLaOrden = FXCollections.observableArrayList();
+        cargarItemsDeOrden(orden.getId(), itemsDeLaOrden);
+
+        if (itemsDeLaOrden.isEmpty()) {
+            mostrarAlerta("Error", "Esta orden no tiene detalles y no puede ser procesada.");
+            return;
+        }
+
+        // 2. Crear Diálogo
+        Dialog<HashMap<Integer, LocalDate>> dialog = new Dialog<>();
+        dialog.setTitle("Confirmar Recepción de Lotes");
+        dialog.setHeaderText("Orden #" + orden.getId() + ". Ingrese las fechas de vencimiento:");
+        dialog.getDialogPane().setMinWidth(500);
+
+        ButtonType okButtonType = new ButtonType("Aceptar Lotes", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
+
+        // 3. Crear Layout del Diálogo (un GridPane)
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 20, 10, 10));
+
+        grid.add(new Label("Producto"), 0, 0);
+        grid.add(new Label("Fecha Vencimiento"), 1, 0);
+        grid.add(new Label("No Aplica"), 2, 0);
+
+        // Listas para guardar los controles creados
+        List<DatePicker> datePickers = new ArrayList<>();
+        List<CheckBox> checkBoxes = new ArrayList<>();
+
+        // 4. Poblar el GridPane con los items de la orden
+        for (int i = 0; i < itemsDeLaOrden.size(); i++) {
+            ItemOrden item = itemsDeLaOrden.get(i);
+
+            Label itemLabel = new Label(item.getNombre());
+            DatePicker picker = new DatePicker(LocalDate.now().plusMonths(6));
+            CheckBox noVenceCheck = new CheckBox();
+
+            // Lógica del CheckBox
+            picker.disableProperty().bind(noVenceCheck.selectedProperty());
+
+            grid.add(itemLabel, 0, i + 1);
+            grid.add(picker, 1, i + 1);
+            grid.add(noVenceCheck, 2, i + 1);
+
+            datePickers.add(picker);
+            checkBoxes.add(noVenceCheck);
+        }
+
+        dialog.getDialogPane().setContent(new ScrollPane(grid));
+
+        // 5. Convertir resultado (Crear un Mapa de [IdProducto -> FechaVencimiento])
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == okButtonType) {
+                HashMap<Integer, LocalDate> fechasVencimiento = new HashMap<>();
+                for (int i = 0; i < itemsDeLaOrden.size(); i++) {
+                    int idProducto = itemsDeLaOrden.get(i).getInsumoId();
+                    LocalDate fecha = null;
+
+                    if (!checkBoxes.get(i).isSelected()) {
+                        fecha = datePickers.get(i).getValue();
+                        if (fecha == null) {
+                            mostrarAlerta("Error", "Debe seleccionar una fecha para '" + itemsDeLaOrden.get(i).getNombre() + "' o marcar 'No Aplica'.");
+                            return null; // Devuelve null para no cerrar el diálogo
+                        }
+                    }
+                    fechasVencimiento.put(idProducto, fecha);
+                }
+                return fechasVencimiento;
+            }
+            return null; // Cancela
+        });
+
+        Optional<HashMap<Integer, LocalDate>> result = dialog.showAndWait();
+
+        // 6. Procesar si el usuario presionó OK y los datos son válidos
+        if (result.isPresent()) {
+            procesarAceptacion(orden, itemsDeLaOrden, result.get());
+        }
+    }
+
+    /**
+     * CORREGIDO: Lógica de BD que recibe el Mapa de fechas.
+     */
+    private void procesarAceptacion(ItemOrdenGestion orden, ObservableList<ItemOrden> detalles, HashMap<Integer, LocalDate> fechasVencimiento) {
+        Connection conn = null;
+        try {
+            conn = ConexionBD.getConnection();
+            conn.setAutoCommit(false); // Iniciar Transacción
+
+            // 1. Insertar en la tabla 'lotes'
+            String sqlInsertLote = "INSERT INTO lotes (IdProducto, CantidadActual, FechaVencimiento, FechaIngreso, IdCompra) " +
+                    "VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement stmtLote = conn.prepareStatement(sqlInsertLote)) {
+                for (ItemOrden d : detalles) {
+                    LocalDate fechaVencimiento = fechasVencimiento.get(d.getInsumoId());
+
+                    stmtLote.setInt(1, d.getInsumoId());
+                    stmtLote.setDouble(2, d.getCantidad());
+
+                    if (fechaVencimiento != null) {
+                        stmtLote.setDate(3, Date.valueOf(fechaVencimiento));
+                    } else {
+                        stmtLote.setNull(3, java.sql.Types.DATE);
+                    }
+
+                    stmtLote.setDate(4, Date.valueOf(LocalDate.now())); // Fecha de hoy
+                    stmtLote.setInt(5, orden.getId());
+                    stmtLote.addBatch();
+                }
+                stmtLote.executeBatch();
+            }
+
+            // 2. Registrar en el Kardex (Esto sigue igual, está bien)
+            String sqlKardex = "INSERT INTO kardex (IdProducto, Fecha, Motivo, TipoMovimiento, IdEmpleado, Cantidad) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement stmtKardex = conn.prepareStatement(sqlKardex)) {
+                for (ItemOrden d : detalles) {
+                    stmtKardex.setInt(1, d.getInsumoId());
+                    stmtKardex.setDate(2, java.sql.Date.valueOf(LocalDate.now()));
+                    stmtKardex.setString(3, "Recepción Orden #" + orden.getId());
+                    stmtKardex.setString(4, "Entrada");
+                    stmtKardex.setInt(5, 1); // TODO: Usar ID de empleado de sesión
+                    stmtKardex.setDouble(6, d.getCantidad());
+                    stmtKardex.addBatch();
+                }
+                stmtKardex.executeBatch();
+            }
+
+            // 3. Actualizar el estado de la orden
+            String sqlUpdateOrden = "UPDATE orden_compra SET Estado = 'Completada' WHERE IdCompra = ?";
+            try (PreparedStatement stmtOrden = conn.prepareStatement(sqlUpdateOrden)) {
+                stmtOrden.setInt(1, orden.getId());
+                stmtOrden.executeUpdate();
+            }
+
+            // 4. Confirmar transacción
+            conn.commit();
+            mostrarAlerta("Éxito", "Orden #" + orden.getId() + " aceptada. Los lotes han sido creados.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            mostrarAlerta("Error de Transacción", "No se pudo aceptar la orden: " + e.getMessage());
+        } finally {
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+
+            // 5. Recargar ambas tablas
+            cargarOrdenesPendientes();
+            cargarHistorial(historialContainer);
+        }
+    }
+
+    private void accionRechazarOrden(ItemOrdenGestion orden) {
+        String sql = "UPDATE orden_compra SET Estado = 'Rechazada' WHERE IdCompra = ?";
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, orden.getId());
+            stmt.executeUpdate();
+
+            mostrarAlerta("Éxito", "Orden #" + orden.getId() + " ha sido rechazada.");
+
+            cargarOrdenesPendientes();
+            cargarHistorial(historialContainer);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "No se pudo rechazar la orden: " + e.getMessage());
+        }
+    }
+
+    /**
+     * CAMBIO: Deshabilitado temporalmente.
+     */
+    private void accionEditarOrden(ItemOrdenGestion orden) {
+        mostrarAlerta("Información", "La edición de órdenes pendientes ha sido deshabilitada\ndebido a la complejidad del sistema de Lotes.");
+    }
+
+
+    /**
+     * Carga los items de una orden específica en una lista observable.
+     */
+    private void cargarItemsDeOrden(int idCompra, ObservableList<ItemOrden> lista) {
+        lista.clear();
+        String sql = "SELECT d.IdProducto, d.Cantidad, p.IdProveedor, p.Tipo_de_Producto, p.PrecioUnitario, p.Unidad_de_medida " +
+                "FROM detalle_compra d " +
+                "JOIN producto p ON d.IdProducto = p.IdProducto " +
+                "WHERE d.IdCompra = ?";
+
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idCompra);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Insumo insumo = new Insumo(
+                        rs.getInt("IdProducto"),
+                        rs.getInt("IdProveedor"),
+                        rs.getString("Tipo_de_Producto"),
+                        rs.getDouble("PrecioUnitario"),
+                        rs.getString("Unidad_de_medida")
+                );
+                double cantidad = rs.getDouble("Cantidad");
+                lista.add(new ItemOrden(insumo, cantidad));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "No se pudieron cargar los detalles de la orden: " + e.getMessage());
+        }
+    }
+
+    /**
+     * (Este método está actualmente deshabilitado por accionEditarOrden)
+     */
+    private boolean actualizarOrdenEnBD(int idCompra, int idProveedor, LocalDate fecha, double total, ObservableList<ItemOrden> nuevosItems) {
+        // Esta lógica es ahora incorrecta porque no maneja Lotes.
+        // Requiere una reimplementación completa que está fuera del alcance
+        // de la función de "Editar" simple.
+        mostrarAlerta("Error", "La lógica de edición no está implementada para el sistema de lotes.");
+        return false;
+    }
+
+
     private void mostrarAlerta(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        if (titulo.startsWith("Error")) {
+            alert.setAlertType(Alert.AlertType.ERROR);
+        }
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
@@ -709,58 +1053,33 @@ public class OrdenesPage extends BorderPane {
 
     // --- Clases de Datos Internas ---
 
-    /**
-     * Representa un Insumo (Producto) cargado desde la base de datos.
-     * === CLASE ACTUALIZADA ===
-     */
     public static class Insumo {
         private final int id;
-        private final int idProveedor; // <-- NUEVO
+        private final int idProveedor;
         private final String nombre;
-        private final double precioUnitario; // <-- NUEVO
+        private final double precioUnitario;
         private final String unidad;
 
         public Insumo(int id, int idProveedor, String nombre, double precio, String unidad) {
-            this.id = id;
-            this.idProveedor = idProveedor;
-            this.nombre = nombre;
-            this.precioUnitario = precio;
+            this.id = id; this.idProveedor = idProveedor; this.nombre = nombre; this.precioUnitario = precio;
             this.unidad = (unidad != null) ? unidad : "Unidad";
         }
-
         public int getId() { return id; }
         public int getIdProveedor() { return idProveedor; }
         public String getNombre() { return nombre; }
         public double getPrecioUnitario() { return precioUnitario; }
         public String getUnidad() { return unidad; }
-
-        // Esto es lo que se muestra en el ComboBox
-        @Override
-        public String toString() {
-            return String.format("%s - $%.2f (%s)", nombre, precioUnitario, unidad);
-        }
+        @Override public String toString() { return String.format("%s - $%.2f (%s)", nombre, precioUnitario, unidad); }
     }
 
-    /**
-     * Personaliza cómo se muestra un Insumo en el ComboBox.
-     * === CLASE ACTUALIZADA ===
-     */
     private static class InsumoListCell extends ListCell<Insumo> {
         @Override
         protected void updateItem(Insumo item, boolean empty) {
             super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText(null);
-            } else {
-                setText(String.format("%s - $%.2f (%s)", item.getNombre(), item.getPrecioUnitario(), item.getUnidad()));
-            }
+            setText((empty || item == null) ? null : String.format("%s - $%.2f (%s)", item.getNombre(), item.getPrecioUnitario(), item.getUnidad()));
         }
     }
 
-    /**
-     * Representa un ítem en la tabla de la nueva orden.
-     * === CLASE ACTUALIZADA ===
-     */
     public static class ItemOrden {
         private final int insumoId;
         private final String nombre;
@@ -768,70 +1087,73 @@ public class OrdenesPage extends BorderPane {
         private final double precioUnitario;
         private double total;
 
-        // Constructor actualizado (ya no recibe precio manual)
         public ItemOrden(Insumo insumo, double cantidad) {
-            this.insumoId = insumo.getId();
-            this.nombre = insumo.getNombre();
-            this.cantidad = cantidad;
-            this.precioUnitario = insumo.getPrecioUnitario(); // <-- Obtiene precio del insumo
-            this.total = cantidad * this.precioUnitario;
+            this.insumoId = insumo.getId(); this.nombre = insumo.getNombre(); this.cantidad = cantidad;
+            this.precioUnitario = insumo.getPrecioUnitario(); this.total = cantidad * this.precioUnitario;
         }
-
         public int getInsumoId() { return insumoId; }
         public String getNombre() { return nombre; }
         public double getCantidad() { return cantidad; }
         public double getPrecioUnitario() { return precioUnitario; }
         public double getTotal() { return total; }
-
-        public void setCantidad(double cantidad) {
-            this.cantidad = cantidad;
-            this.total = this.cantidad * this.precioUnitario;
-        }
+        public void setCantidad(double cantidad) { this.cantidad = cantidad; this.total = this.cantidad * this.precioUnitario; }
     }
 
-    /**
-     * Representa una orden para la pestaña de Historial.
-     */
     public static class OrdenHistorial {
         private final int id;
         private final String proveedor;
         private final Date fecha;
         private final double total;
+        private final String estado;
         private final List<ItemHistorial> items;
 
-        public OrdenHistorial(int id, String proveedor, Date fecha, double total, List<ItemHistorial> items) {
-            this.id = id;
-            this.proveedor = proveedor;
-            this.fecha = fecha;
-            this.total = total;
-            this.items = items;
+        public OrdenHistorial(int id, String proveedor, Date fecha, double total, String estado, List<ItemHistorial> items) {
+            this.id = id; this.proveedor = proveedor; this.fecha = fecha; this.total = total; this.estado = estado; this.items = items;
         }
-
         public int getId() { return id; }
         public String getProveedor() { return proveedor; }
         public Date getFecha() { return fecha; }
         public double getTotal() { return total; }
+        public String getEstado() { return estado; }
         public List<ItemHistorial> getItems() { return items; }
     }
 
-    /**
-     * Representa un ítem dentro de una OrdenHistorial.
-     */
     public static class ItemHistorial {
         private final String nombre;
         private final double cantidad;
         private final double precioUnitario;
-
         public ItemHistorial(String nombre, double cantidad, double precioUnitario) {
-            this.nombre = nombre;
-            this.cantidad = cantidad;
-            this.precioUnitario = precioUnitario;
+            this.nombre = nombre; this.cantidad = cantidad; this.precioUnitario = precioUnitario;
         }
-
         public String getNombre() { return nombre; }
         public double getCantidad() { return cantidad; }
         public double getPrecioUnitario() { return precioUnitario; }
         public double getSubtotal() { return cantidad * precioUnitario; }
+    }
+
+    public static class ItemOrdenGestion {
+        private final int id;
+        private final String proveedorNombre;
+        private final Date fecha;
+        private final double total;
+        private final String estado;
+
+        public ItemOrdenGestion(int id, String proveedorNombre, Date fecha, double total, String estado) {
+            this.id = id; this.proveedorNombre = proveedorNombre; this.fecha = fecha; this.total = total; this.estado = estado;
+        }
+        public int getId() { return id; }
+        public String getProveedorNombre() { return proveedorNombre; }
+        public Date getFecha() { return fecha; }
+        public double getTotal() { return total; }
+        public String getEstado() { return estado; }
+    }
+
+    private static class DetalleCompra {
+        private final int idProducto;
+        private final double cantidad;
+        public DetalleCompra(int idProducto, double cantidad) { this.idProducto = idProducto; this.cantidad = cantidad; }
+        public int getIdProducto() { return idProducto; }
+        public double getCantidad() { return cantidad; }
     }
 
     // --- Clase de Test para Ejecutar ---
