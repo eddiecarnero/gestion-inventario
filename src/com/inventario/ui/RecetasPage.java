@@ -16,6 +16,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -28,14 +29,15 @@ public class RecetasPage extends BorderPane {
     private final TextField nombreRecetaField;
     private final TextField cantidadProducidaField;
     private final ComboBox<String> unidadProducidaCombo;
-    private final TextField ingredienteField;
+    private final ComboBox<ProductoSimple> ingredienteCombo;
     private final TextField cantidadIngredienteField;
     private final ComboBox<String> unidadIngredienteCombo;
 
     // --- Listas de Datos ---
     private final ObservableList<IngredienteItem> items = FXCollections.observableArrayList();
+    private final ObservableList<ProductoSimple> todosLosProductos = FXCollections.observableArrayList();
 
-    // --- Estilos (Mismos que en las otras páginas) ---
+    // (CSS_STYLES ... sin cambios)
     private static final String CSS_STYLES = """
         .root {
             -fx-background-color: #FDF8F0;
@@ -147,7 +149,7 @@ public class RecetasPage extends BorderPane {
         nombreRecetaField = new TextField();
         cantidadProducidaField = new TextField();
         unidadProducidaCombo = new ComboBox<>();
-        ingredienteField = new TextField();
+        ingredienteCombo = new ComboBox<>();
         cantidadIngredienteField = new TextField();
         unidadIngredienteCombo = new ComboBox<>();
 
@@ -170,16 +172,21 @@ public class RecetasPage extends BorderPane {
         tabNueva.setClosable(false);
         Tab tabHistorial = new Tab("Historial", crearTabHistorial());
         tabHistorial.setClosable(false);
+        // Recargar historial al seleccionar
+        tabHistorial.setOnSelectionChanged(e -> {
+            if (tabHistorial.isSelected()) {
+                cargarHistorial((VBox) ((ScrollPane) ((VBox) tabHistorial.getContent()).getChildren().get(0)).getContent());
+            }
+        });
 
         tabPane.getTabs().addAll(tabNueva, tabHistorial);
 
         mainContent.getChildren().addAll(headerBox, tabPane);
         setCenter(mainContent);
+
+        cargarProductos();
     }
 
-    /**
-     * Crea el contenido de la pestaña "Nueva Receta".
-     */
     private Node crearTabNuevaReceta() {
         VBox layout = new VBox(20);
         layout.getStyleClass().add("tab-content-area");
@@ -189,7 +196,7 @@ public class RecetasPage extends BorderPane {
         card.getStyleClass().add("card");
 
         // Título de la Card
-        Text icon = new Text("🍳"); // Emoji de cocina
+        Text icon = new Text("🍳");
         icon.setFont(Font.font(20));
         Label cardTitle = new Label("Crear Nueva Receta");
         cardTitle.getStyleClass().add("card-title");
@@ -237,8 +244,11 @@ public class RecetasPage extends BorderPane {
         ColumnConstraints colBtn = new ColumnConstraints(); colBtn.setPercentWidth(20);
         addItemsGrid.getColumnConstraints().addAll(colIng, colCant, colUni, colBtn);
 
-        ingredienteField.setPromptText("Ej. Harina");
-        addItemsGrid.add(crearCampo("Ingrediente", ingredienteField), 0, 0);
+        ingredienteCombo.setPromptText("Seleccionar producto");
+        ingredienteCombo.setMaxWidth(Double.MAX_VALUE);
+        ingredienteCombo.setItems(todosLosProductos);
+        ingredienteCombo.setConverter(new ProductoSimpleConverter());
+        addItemsGrid.add(crearCampo("Ingrediente (de Almacén 1)", ingredienteCombo), 0, 0);
 
         cantidadIngredienteField.setPromptText("0");
         addItemsGrid.add(crearCampo("Cantidad", cantidadIngredienteField), 1, 0);
@@ -274,9 +284,6 @@ public class RecetasPage extends BorderPane {
         return layout;
     }
 
-    /**
-     * Configura las columnas y propiedades de la tabla de ingredientes.
-     */
     private void configurarTabla() {
         tablaItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
@@ -312,9 +319,6 @@ public class RecetasPage extends BorderPane {
         tablaItems.setPlaceholder(new Label("Agregue ingredientes a la receta"));
     }
 
-    /**
-     * Crea el contenido de la pestaña "Historial".
-     */
     private Node crearTabHistorial() {
         VBox layout = new VBox(20);
         layout.getStyleClass().add("tab-content-area");
@@ -344,14 +348,16 @@ public class RecetasPage extends BorderPane {
         return layout;
     }
 
-    /**
-     * Carga el historial de recetas desde la BD y las añade al VBox.
-     */
     private void cargarHistorial(VBox container) {
         container.getChildren().clear();
         String sqlReceta = "SELECT id, nombre, cantidad_producida, unidad_producida, fecha_creacion " +
                 "FROM recetas ORDER BY fecha_creacion DESC";
-        String sqlIngred = "SELECT nombre, cantidad, unidad FROM ingredientes WHERE receta_id = ?";
+
+        // --- CAMBIO: Leer IdProducto y unir con 'producto' para obtener el nombre ---
+        String sqlIngred = "SELECT p.Tipo_de_Producto, i.cantidad, i.unidad " +
+                "FROM ingredientes i " +
+                "JOIN producto p ON i.IdProducto = p.IdProducto " +
+                "WHERE i.receta_id = ?";
 
         try (Connection conn = ConexionBD.getConnection();
              Statement stmtReceta = conn.createStatement();
@@ -363,14 +369,14 @@ public class RecetasPage extends BorderPane {
                 double cant = rsReceta.getDouble("cantidad_producida");
                 String unidad = rsReceta.getString("unidad_producida");
 
-                // Cargar ingredientes de esta receta
                 List<IngredienteItem> itemsHistorial = new ArrayList<>();
                 try (PreparedStatement stmtIngred = conn.prepareStatement(sqlIngred)) {
                     stmtIngred.setInt(1, idReceta);
                     ResultSet rsIngred = stmtIngred.executeQuery();
                     while (rsIngred.next()) {
                         itemsHistorial.add(new IngredienteItem(
-                                rsIngred.getString("nombre"),
+                                0, // El ID no importa para mostrar el historial
+                                rsIngred.getString("Tipo_de_Producto"), // <-- Nombre del producto
                                 rsIngred.getDouble("cantidad"),
                                 rsIngred.getString("unidad")
                         ));
@@ -387,24 +393,19 @@ public class RecetasPage extends BorderPane {
         }
     }
 
-    /**
-     * Crea un "Card" de JavaFX para una receta individual del historial.
-     */
     private Node crearCardReceta(RecetaHistorial receta) {
         VBox card = new VBox(10);
         card.getStyleClass().add("card");
         card.setStyle("-fx-border-color: #E0E0E0;");
 
-        // Header
         Label titulo = new Label(receta.getNombre());
         titulo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
         Label subtitulo = new Label(String.format("Produce: %.2f %s", receta.getCantidadProducida(), receta.getUnidadProducida()));
         subtitulo.getStyleClass().add("card-description");
         VBox headerBox = new VBox(2, titulo, subtitulo);
 
-        // Content (Ingredientes)
         VBox itemsBox = new VBox(5);
-        itemsBox.setPadding(new Insets(10, 0, 0, 15)); // Sangría para ingredientes
+        itemsBox.setPadding(new Insets(10, 0, 0, 15));
 
         if (receta.getItems().isEmpty()) {
             itemsBox.getChildren().add(new Label("Esta receta no tiene ingredientes registrados."));
@@ -420,9 +421,6 @@ public class RecetasPage extends BorderPane {
         return card;
     }
 
-
-    // --- Métodos de Lógica de UI ---
-
     private VBox crearCampo(String labelText, Control input) {
         VBox vbox = new VBox(5);
         Label label = new Label(labelText);
@@ -433,16 +431,23 @@ public class RecetasPage extends BorderPane {
 
     private void agregarItem() {
         try {
-            String nombre = ingredienteField.getText().trim();
+            // --- CAMBIO: Lee del ComboBox ---
+            ProductoSimple productoSeleccionado = ingredienteCombo.getValue();
             double cantidad = Double.parseDouble(cantidadIngredienteField.getText().trim());
             String unidad = unidadIngredienteCombo.getValue();
 
-            if (nombre.isEmpty() || cantidad <= 0) {
-                mostrarAlerta("Error", "Ingrese un nombre y cantidad válidos para el ingrediente.");
+            if (productoSeleccionado == null || cantidad <= 0) {
+                mostrarAlerta("Error", "Seleccione un producto e ingrese una cantidad válida.");
                 return;
             }
 
-            items.add(new IngredienteItem(nombre, cantidad, unidad));
+            // --- CAMBIO: Guarda el ID y el Nombre ---
+            items.add(new IngredienteItem(
+                    productoSeleccionado.getId(),
+                    productoSeleccionado.getNombre(),
+                    cantidad,
+                    unidad
+            ));
             limpiarCamposItem();
 
         } catch (NumberFormatException e) {
@@ -455,7 +460,7 @@ public class RecetasPage extends BorderPane {
     }
 
     private void limpiarCamposItem() {
-        ingredienteField.clear();
+        ingredienteCombo.getSelectionModel().clearSelection();
         cantidadIngredienteField.clear();
         unidadIngredienteCombo.getSelectionModel().selectFirst();
     }
@@ -492,9 +497,8 @@ public class RecetasPage extends BorderPane {
         Connection conn = null;
         try {
             conn = ConexionBD.getConnection();
-            conn.setAutoCommit(false); // Iniciar transacción
+            conn.setAutoCommit(false);
 
-            // 1. Insertar la Receta
             String sqlReceta = "INSERT INTO recetas (nombre, cantidad_producida, unidad_producida) " +
                     "VALUES (?, ?, ?)";
             int idRecetaGenerada;
@@ -512,13 +516,13 @@ public class RecetasPage extends BorderPane {
                 }
             }
 
-            // 2. Insertar los Ingredientes
-            String sqlIngred = "INSERT INTO ingredientes (receta_id, nombre, cantidad, unidad) " +
+            // --- CAMBIO: Insertar IdProducto en lugar de nombre ---
+            String sqlIngred = "INSERT INTO ingredientes (receta_id, IdProducto, cantidad, unidad) " +
                     "VALUES (?, ?, ?, ?)";
             try (PreparedStatement stmtIngred = conn.prepareStatement(sqlIngred)) {
                 for (IngredienteItem item : items) {
                     stmtIngred.setInt(1, idRecetaGenerada);
-                    stmtIngred.setString(2, item.getNombre());
+                    stmtIngred.setInt(2, item.getIdProducto()); // <-- ID del producto
                     stmtIngred.setDouble(3, item.getCantidad());
                     stmtIngred.setString(4, item.getUnidad());
                     stmtIngred.addBatch();
@@ -526,11 +530,9 @@ public class RecetasPage extends BorderPane {
                 stmtIngred.executeBatch();
             }
 
-            conn.commit(); // Confirmar transacción
+            conn.commit();
             mostrarAlerta("Éxito", "✅ Receta guardada correctamente.");
-
             limpiarFormularioReceta();
-            // Opcional: Recargar el historial
 
         } catch (SQLException ex) {
             if (conn != null) try { conn.rollback(); } catch (SQLException e) { e.printStackTrace(); }
@@ -541,8 +543,30 @@ public class RecetasPage extends BorderPane {
         }
     }
 
+    private void cargarProductos() {
+        todosLosProductos.clear();
+        String sql = "SELECT IdProducto, Tipo_de_Producto FROM producto";
+        try (Connection conn = ConexionBD.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                todosLosProductos.add(new ProductoSimple(
+                        rs.getInt("IdProducto"),
+                        rs.getString("Tipo_de_Producto")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "No se pudieron cargar los productos de Almacén 1.");
+        }
+    }
+
     private void mostrarAlerta(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        if (titulo.startsWith("Error")) {
+            alert.setAlertType(Alert.AlertType.ERROR);
+        }
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
@@ -551,28 +575,48 @@ public class RecetasPage extends BorderPane {
 
     // --- Clases de Datos Internas ---
 
+    public static class ProductoSimple {
+        private final int id;
+        private final String nombre;
+
+        public ProductoSimple(int id, String nombre) { this.id = id; this.nombre = nombre; }
+        public int getId() { return id; }
+        public String getNombre() { return nombre; }
+        @Override
+        public String toString() { return nombre; }
+    }
+
+    public static class ProductoSimpleConverter extends StringConverter<ProductoSimple> {
+        @Override
+        public String toString(ProductoSimple producto) {
+            return (producto == null) ? null : producto.getNombre();
+        }
+        @Override
+        public ProductoSimple fromString(String string) { return null; }
+    }
+
     /**
-     * Representa un ingrediente en la tabla de la nueva receta (temporal).
+     * CAMBIO: Ahora guarda el IdProducto
      */
     public static class IngredienteItem {
+        private final int idProducto; // <-- NUEVO
         private final String nombre;
         private final double cantidad;
         private final String unidad;
 
-        public IngredienteItem(String nombre, double cantidad, String unidad) {
+        public IngredienteItem(int idProducto, String nombre, double cantidad, String unidad) {
+            this.idProducto = idProducto; // <-- NUEVO
             this.nombre = nombre;
             this.cantidad = cantidad;
             this.unidad = unidad;
         }
 
+        public int getIdProducto() { return idProducto; } // <-- NUEVO
         public String getNombre() { return nombre; }
         public double getCantidad() { return cantidad; }
         public String getUnidad() { return unidad; }
     }
 
-    /**
-     * Representa una receta para la pestaña de Historial.
-     */
     public static class RecetaHistorial {
         private final int id;
         private final String nombre;

@@ -1,7 +1,7 @@
 package com.inventario.dao;
 
-import com.inventario.ui.CreationRecipePage.Receta;
-import com.inventario.ui.CreationRecipePage.Ingrediente;
+import com.paraEliminar.CreationRecipePage.Receta;
+import com.paraEliminar.CreationRecipePage.Ingrediente;
 
 import com.inventario.config.ConexionBD;
 import java.sql.*;

@@ -3,6 +3,7 @@ package com.inventario.ui;
 import com.inventario.config.AuthService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -13,7 +14,7 @@ import javafx.stage.Stage;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
 
-import java.util.function.Consumer; // <-- IMPORTANTE: Añadir esta importación
+import java.util.function.Consumer;
 
 public class SideBar {
     private BorderPane root;
@@ -23,6 +24,7 @@ public class SideBar {
 
     public SideBar(Stage stage, String usuario) {
 
+        // --- Estilos y Fuentes ---
         Color turquesa = Color.web("#1F9B7F");
         Color crema = Color.web("#F9F1E6");
         Color marron = Color.web("#736049");
@@ -30,9 +32,7 @@ public class SideBar {
                 getClass().getResourceAsStream("/com/images/global.ttf"), 14
         );
 
-        // --- Advertencia: Asegúrate de que estas rutas sean correctas ---
-        // Si alguna ruta es incorrecta, getResourceAsStream devolverá null
-        // y el programa fallará con un NullPointerException.
+        // --- Iconos ---
         ImageView iconDashboard = crearIcono("/com/images/iconos/monitor.png");
         ImageView iconAlmacen1 = crearIcono("/com/images/iconos/paquete.png");
         ImageView iconAlmacen2 = crearIcono("/com/images/iconos/nivel-intermedio.png");
@@ -42,7 +42,8 @@ public class SideBar {
         ImageView iconVentas = crearIcono("/com/images/iconos/subir.png");
         ImageView iconUsuarios = crearIcono("/com/images/iconos/usuario.png");
         ImageView iconRecetas = crearIcono("/com/images/iconos/receta.png");
-        // --- Fin de la Advertencia ---
+        // ImageView iconKardex = crearIcono("/com/images/iconos/portapapeles.png");
+
 
         sidebar = new VBox(0);
         sidebar.setPrefWidth(250);
@@ -62,61 +63,57 @@ public class SideBar {
             -fx-padding: 0;
         """);
 
+        // --- Header del Sidebar ---
         Label logo = new Label("MamaTania");
         logo.setTextFill(Color.web("#1F9B7F"));
         logo.setFont(Font.loadFont(getClass().getResourceAsStream("/com/images/fontlogo.ttf"), 40));
         Label texto = new Label("Gestion Inventario");
         texto.setTextFill(Paint.valueOf("white"));
         texto.setFont(poppins);
-
         Region separator1 = new Region();
         separator1.setPrefHeight(0.5);
         separator1.setMaxWidth(Double.MAX_VALUE);
         separator1.setStyle("-fx-background-color: #999999;");
-
         VBox header = new VBox(2);
         header.getChildren().addAll(logo, texto, separator1);
         header.setPadding(new Insets(0, 24, 0, 24));
         header.setMargin(texto, new Insets(4, 0, 0, 0));
 
+        // --- Botones del Menú ---
         Button btnDashboard = new Button("Dashboard", iconDashboard);
-        Button btnAlmacen1 = new Button("Almacen 1 - Insumos", iconAlmacen1);
+        Button btnAlmacen1 = new Button("Almacen 1 - Vista", iconAlmacen1);
+        Button btnIngrediente = new Button("Gestionar Productos", iconIngrediente);
         Button btnAlmacen2 = new Button("Almacen 2 - Intermedios", iconAlmacen2);
         Button btnAlmacen3 = new Button("Almacen 3 - Terminados", iconAlmacen3);
-        Button btnIngrediente = new Button("Ingrediente", iconIngrediente);
         Button btnRecetas = new Button("Recetas", iconRecetas);
         Button btnOrdenCompra = new Button("Orden de Compra", iconOrdenCompra);
         Button btnSubirVenta = new Button("Subir Venta", iconVentas);
         Button btnPerfilUsuario = new Button("Perfil de Usuario", iconUsuarios);
+        // Button btnKardex = new Button("Kardex", iconKardex);
 
 
+        // --- LÓGICA DE NAVEGACIÓN CENTRALIZADA ---
         mainContent = new StackPane();
-        mainContent.setStyle("-fx-background-color: #F9F1E6;"); // Fondo crema
+        mainContent.setStyle("-fx-background-color: #F9F1E6;");
 
-        // 2. Definimos el "manejador de navegación" que Almacen1Page necesita
-        Consumer<String> navigationHandler = pageName -> {
-            if ("orden-compra".equals(pageName)) {
-                // Si se hace clic en el botón de Almacen1Page,
-                // cambiamos el contenido a OrdenesPage
-                mainContent.getChildren().setAll(new OrdenesPage());
-            }
-            // Aquí puedes añadir más casos 'else if' para otras páginas
-        };
+        btnDashboard.setOnAction(e -> navegar("dashboard"));
+        btnAlmacen1.setOnAction(e -> navegar("almacen1")); // Vista de Almacen1Page
+        btnIngrediente.setOnAction(e -> navegar("productos-crud")); // Vista de ProductosPage
+        btnOrdenCompra.setOnAction(e -> navegar("orden-compra"));
+        btnRecetas.setOnAction(e -> navegar("recetas"));
 
-        // 3. Asignamos las acciones a los botones para que carguen el contenido
-        //    DENTRO de 'mainContent', no en lugar de él.
+        // Botones no implementados
 
-        btnAlmacen1.setOnAction(e -> mainContent.getChildren().setAll(new Almacen1Page(navigationHandler)));
-        btnOrdenCompra.setOnAction(e -> mainContent.getChildren().setAll(new OrdenesPage()));
-        btnRecetas.setOnAction(e -> mainContent.getChildren().setAll(new RecetasPage()));
-        btnIngrediente.setOnAction(e-> mainContent.getChildren().setAll(new ProductosPage()));
+        btnAlmacen2.setOnAction(e -> navegar("almacen2"));
+        btnAlmacen3.setOnAction(e -> navegar("almacen3"));
+        btnSubirVenta.setOnAction(e -> navegar("subir-ventas"));
+        btnPerfilUsuario.setOnAction(e -> navegar("perfil"));
+        // btnKardex.setOnAction(e -> navegar("kardex"));
 
-        // Cargar una página por defecto al iniciar
-        mainContent.getChildren().setAll(new Almacen1Page(navigationHandler));
-
-        // --- FIN DE LA CORRECCIÓN ---
+        navegar("dashboard");
 
 
+        // --- Footer del Sidebar (Info de Usuario) ---
         String nombreUsuario = AuthService.obtenerNombre(usuario);
         String rangoUsuario = AuthService.obtenerTipoEmpleado(usuario);
         Label lblnombreUsuario = new Label(nombreUsuario);
@@ -131,7 +128,6 @@ public class SideBar {
         lblrangoUsuario.setFont(Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 12));
         lblrangoUsuario.setPadding(new Insets(-1, 0, 0, 16));
 
-
         VBox labelfooter = new VBox(2);
         labelfooter.setPadding(new Insets(5, 0, 0, 0));
         for (Label lbl : new Label[]{lblnombreUsuario, lblrangoUsuario}) {
@@ -141,18 +137,21 @@ public class SideBar {
             labelfooter.getChildren().add(lbl);
         }
 
-
         Button btnCerrarSesion = new Button("Cerrar Sesión");
         btnCerrarSesion.setOnAction(e -> {
             LoginPage login = new LoginPage(stage);
             stage.setScene(login.getScene());
         });
 
-
+        // --- Ensamblaje del Sidebar ---
         VBox sidebarcontent = new VBox(2);
-        // Botones que aún no tienen acción:
-        // btnAlmacen2, btnAlmacen3, btnKardex, btnSubirVenta, btnPerfilUsuario
-        for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnIngrediente, btnRecetas, btnOrdenCompra, btnSubirVenta, btnPerfilUsuario}) {
+
+        for (Button btn : new Button[]{
+                btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3,
+                btnIngrediente, btnRecetas, btnOrdenCompra,
+                btnSubirVenta, btnPerfilUsuario
+                //btnKardex, // Descomentar cuando lo tengas
+        }) {
             aplicarEstiloBoton(btn);
             sidebarcontent.getChildren().add(btn);
             VBox.setMargin(btn, new Insets(0,0,8,0));
@@ -174,21 +173,63 @@ public class SideBar {
         sidebar.getChildren().addAll(header, sidebarcontent, spacer, footer);
         aplicarEstiloBoton(btnCerrarSesion);
 
+        // --- Ensamblaje Final de la Escena ---
         root = new BorderPane();
         root.setLeft(scrollSidebar);
-        root.setCenter(mainContent); // <-- CORRECCIÓN: El centro siempre es mainContent
+        root.setCenter(mainContent);
 
         scene = new Scene(root, 1551, 862);
         stage.setScene(scene);
         stage.show();
     }
 
+    // --- MÉTODO DE NAVEGACIÓN CENTRALIZADO ---
+    private void navegar(String pageName) {
+        Node pagina = null;
+
+        switch (pageName) {
+            case "almacen2":
+                pagina = new Almacen2Page(this::navegar);
+                break;
+            case "dashboard":
+                pagina = new DashboardPage(this::navegar);
+                break;
+            case "almacen1":
+                pagina = new Almacen1Page(this::navegar);
+                break;
+            case "productos-crud": // Botón "Ingrediente"
+                pagina = new ProductosPage();
+                break;
+            case "orden-compra":
+                pagina = new OrdenesPage();
+                break;
+            case "recetas":
+                pagina = new RecetasPage();
+                break;
+
+            default:
+                System.out.println("Navegación a página no implementada: " + pageName);
+                Label label = new Label("Página '" + pageName + "' no encontrada.");
+                label.setAlignment(Pos.CENTER);
+                pagina = new StackPane(label);
+                break;
+        }
+
+        if (pagina != null && mainContent != null) {
+            mainContent.getChildren().setAll(pagina);
+        } else {
+            System.err.println("Error: mainContent es nulo o la página es nula.");
+        }
+    }
+
+
     private ImageView crearIcono(String ruta) {
-        // --- Advertencia de NullPointerException ---
-        // Si la ruta es incorrecta, la línea de abajo fallará.
-        // Asegúrate de que tu estructura de carpetas sea:
-        // src/main/resources/com/images/iconos/monitor.png
         Image img = new Image(getClass().getResourceAsStream(ruta));
+        if (img.isError()) {
+            System.err.println("Error al cargar icono: " + ruta);
+            return new ImageView();
+        }
+
         ImageView icon = new ImageView(img);
         icon.setFitWidth(18);
         icon.setFitHeight(18);
