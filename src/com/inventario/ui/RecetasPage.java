@@ -1,19 +1,25 @@
 package com.inventario.ui;
 
 import com.inventario.config.ConexionBD;
-import com.inventario.util.ConversorUnidades;
+import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecetasPage extends BorderPane {
@@ -23,576 +29,627 @@ public class RecetasPage extends BorderPane {
     private final TextField nombreRecetaField;
     private final TextField cantidadProducidaField;
     private final ComboBox<String> unidadProducidaCombo;
-    private final ComboBox<String> tipoDestinoCombo;
-    private final ComboBox<IngredienteSeleccionable> ingredienteCombo;
+    private final ComboBox<ProductoSimple> ingredienteCombo;
     private final TextField cantidadIngredienteField;
     private final ComboBox<String> unidadIngredienteCombo;
-    private final TabPane tabPane;
-    private final ObservableList<RecetaModel> listaRecetas = FXCollections.observableArrayList();
-    private final ObservableList<IngredienteItem> listaDetalleReceta = FXCollections.observableArrayList();
+
     // --- Listas de Datos ---
     private final ObservableList<IngredienteItem> items = FXCollections.observableArrayList();
-    private final ObservableList<IngredienteSeleccionable> todosLosIngredientesPosibles = FXCollections.observableArrayList();
-    // Botones y Control
-    private Button btnGuardar;
-    private Integer idRecetaEditando = null; // Null = Nueva, ID = Editando
-    // --- Variables para el Recetario ---
-    private TableView<RecetaModel> tablaRecetas;
-    private TableView<IngredienteItem> tablaDetalleReceta;
+    private final ObservableList<ProductoSimple> todosLosProductos = FXCollections.observableArrayList();
+
+    // (CSS_STYLES ... sin cambios)
+    private static final String CSS_STYLES = """
+        .root {
+            -fx-background-color: #FDF8F0;
+            -fx-font-family: 'Segoe UI';
+        }
+        .header-title {
+            -fx-font-size: 2.2em;
+            -fx-font-weight: bold;
+            -fx-text-fill: #333333;
+        }
+        .header-description {
+            -fx-font-size: 1.1em;
+            -fx-text-fill: #555555;
+        }
+        .tab-pane .tab-header-area .tab-header-background {
+            -fx-background-color: transparent;
+        }
+        .tab-pane .tab {
+            -fx-background-color: transparent;
+            -fx-border-color: transparent;
+            -fx-padding: 8 15 8 15;
+            -fx-font-size: 1.1em;
+        }
+        .tab-pane .tab:selected {
+            -fx-background-color: transparent;
+            -fx-border-color: #4A90E2; /* PRIMARY */
+            -fx-border-width: 0 0 3 0;
+            -fx-text-fill: #4A90E2;
+            -fx-font-weight: bold;
+        }
+        .tab-content-area {
+            -fx-background-color: transparent;
+            -fx-padding: 20 0 0 0;
+        }
+        .card {
+            -fx-background-color: white;
+            -fx-border-color: #E0E0E0; /* BORDER_LIGHT */
+            -fx-border-width: 1;
+            -fx-border-radius: 8;
+            -fx-background-radius: 8;
+            -fx-padding: 20px;
+        }
+        .card-title {
+            -fx-font-size: 1.4em;
+            -fx-font-weight: bold;
+            -fx-text-fill: #333333;
+        }
+        .card-description {
+            -fx-font-size: 1em;
+            -fx-text-fill: #555555;
+        }
+        .label {
+            -fx-font-size: 1.05em;
+            -fx-font-weight: 500;
+            -fx-text-fill: #333333;
+        }
+        .combo-box, .text-field, .date-picker {
+            -fx-font-size: 1.05em;
+            -fx-pref-height: 38px;
+            -fx-border-color: #CCCCCC;
+            -fx-border-radius: 5;
+            -fx-background-radius: 5;
+        }
+        .button-primary {
+            -fx-background-color: #4A90E2; /* PRIMARY */
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-font-size: 1.1em;
+            -fx-pref-height: 40px;
+            -fx-background-radius: 5;
+            -fx-cursor: hand;
+        }
+        .button-primary:hover {
+            -fx-background-color: #357ABD;
+        }
+        .button-add {
+            -fx-background-color: #22C55E;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-font-size: 1.1em;
+            -fx-pref-height: 38px;
+            -fx-background-radius: 5;
+            -fx-cursor: hand;
+        }
+        .button-danger {
+            -fx-background-color: transparent;
+            -fx-text-fill: #EF4444;
+            -fx-font-size: 1.4em;
+            -fx-cursor: hand;
+            -fx-padding: 5;
+        }
+        .button-danger:hover {
+            -fx-background-color: #FEE2E2;
+        }
+        .table-view .column-header {
+            -fx-background-color: #F9FAFB;
+            -fx-font-weight: bold;
+            -fx-font-size: 1.05em;
+        }
+    """;
 
     public RecetasPage() {
-        // Estilos CSS integrados
-        String css = """
-                    .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
-                    .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-                    .tab-content-area { -fx-padding: 20 0 0 0; }
-                    .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
-                    .tab-pane .tab { -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 8 15 8 15; -fx-font-size: 1.1em; }
-                    .tab-pane .tab:selected { -fx-background-color: transparent; -fx-border-color: #4A90E2; -fx-border-width: 0 0 3 0; -fx-text-fill: #4A90E2; -fx-font-weight: bold; }
-                    .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
-                    .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-                    .label { -fx-font-size: 1.05em; -fx-font-weight: 500; -fx-text-fill: #333333; }
-                    .combo-box, .text-field { -fx-font-size: 1.05em; -fx-pref-height: 38px; -fx-border-color: #CCCCCC; -fx-border-radius: 5; }
-                    .button-primary { -fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 40px; -fx-background-radius: 5; -fx-cursor: hand; }
-                    .button-secondary { -fx-background-color: #9CA3AF; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 40px; -fx-background-radius: 5; -fx-cursor: hand; }
-                    .button-add { -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 38px; -fx-cursor: hand; }
-                    .button-danger { -fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; }
-                    .button-edit { -fx-background-color: #F59E0B; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; }
-                    .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; }
-                """;
-        this.getStylesheets().add("data:text/css," + css.replace("\n", ""));
+        this.getStylesheets().add("data:text/css," + CSS_STYLES.replace("\n", ""));
         this.getStyleClass().add("root");
         setPadding(new Insets(30, 40, 30, 40));
 
+        // --- Inicializar campos ---
         tablaItems = new TableView<>();
         nombreRecetaField = new TextField();
         cantidadProducidaField = new TextField();
         unidadProducidaCombo = new ComboBox<>();
-        tipoDestinoCombo = new ComboBox<>();
         ingredienteCombo = new ComboBox<>();
         cantidadIngredienteField = new TextField();
         unidadIngredienteCombo = new ComboBox<>();
 
+        // --- Estructura Principal ---
         VBox mainContent = new VBox(20);
+
+        // 1. Header
         VBox headerBox = new VBox(5);
         Label header = new Label("Gestión de Recetas");
         header.getStyleClass().add("header-title");
-        headerBox.getChildren().addAll(header, new Label("Define cómo se crean los productos intermedios y finales"));
+        Label description = new Label("Crear y gestionar recetas y sus ingredientes");
+        description.getStyleClass().add("header-description");
+        headerBox.getChildren().addAll(header, description);
 
-        tabPane = new TabPane();
+        // 2. TabPane
+        TabPane tabPane = new TabPane();
         tabPane.getStyleClass().add("tab-pane");
 
-        Tab tabNueva = new Tab("Formulario Receta", crearTabNuevaReceta());
+        Tab tabNueva = new Tab("Nueva Receta", crearTabNuevaReceta());
         tabNueva.setClosable(false);
-
-        Tab tabRecetario = new Tab("Recetario (Ver/Editar)", crearTabRecetario());
-        tabRecetario.setClosable(false);
-        tabRecetario.setOnSelectionChanged(e -> {
-            if (tabRecetario.isSelected()) cargarRecetas();
+        Tab tabHistorial = new Tab("Historial", crearTabHistorial());
+        tabHistorial.setClosable(false);
+        // Recargar historial al seleccionar
+        tabHistorial.setOnSelectionChanged(e -> {
+            if (tabHistorial.isSelected()) {
+                cargarHistorial((VBox) ((ScrollPane) ((VBox) tabHistorial.getContent()).getChildren().get(0)).getContent());
+            }
         });
 
-        tabPane.getTabs().addAll(tabNueva, tabRecetario);
+        tabPane.getTabs().addAll(tabNueva, tabHistorial);
+
         mainContent.getChildren().addAll(headerBox, tabPane);
         setCenter(mainContent);
 
-        cargarTodosLosIngredientesPosibles();
+        cargarProductos();
     }
 
-    // --- PESTAÑA 1: NUEVA/EDITAR RECETA ---
     private Node crearTabNuevaReceta() {
         VBox layout = new VBox(20);
         layout.getStyleClass().add("tab-content-area");
+
+        // --- Card Principal ---
         VBox card = new VBox(25);
         card.getStyleClass().add("card");
 
-        HBox cardHeader = new HBox(10, new Text("🍳"), new Label("Detalles de la Receta"));
-        cardHeader.getChildren().get(1).getStyleClass().add("card-title");
+        // Título de la Card
+        Text icon = new Text("🍳");
+        icon.setFont(Font.font(20));
+        Label cardTitle = new Label("Crear Nueva Receta");
+        cardTitle.getStyleClass().add("card-title");
+        HBox cardHeader = new HBox(10, icon, cardTitle);
         cardHeader.setAlignment(Pos.CENTER_LEFT);
 
-        GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(10);
-        nombreRecetaField.setPromptText("Ej. Base de Galleta o Helado de Fresa");
-        grid.add(crearCampo("Nombre de la Receta", nombreRecetaField), 0, 0);
+        Label cardDescription = new Label("Define el producto final y sus ingredientes.");
+        cardDescription.getStyleClass().add("card-description");
+        VBox cardHeaderBox = new VBox(5, cardHeader, cardDescription);
 
-        tipoDestinoCombo.getItems().addAll("Producto Intermedio (Almacén 2)", "Producto Terminado (Almacén 3)");
-        tipoDestinoCombo.getSelectionModel().selectFirst();
-        tipoDestinoCombo.setMaxWidth(Double.MAX_VALUE);
-        grid.add(crearCampo("Tipo de Producto Resultante", tipoDestinoCombo), 1, 0);
+        // --- Formulario de Receta (Header) ---
+        GridPane gridSup = new GridPane();
+        gridSup.setHgap(20);
+        gridSup.setVgap(10);
+
+        nombreRecetaField.setPromptText("Ej. Pie de Limón");
+        gridSup.add(crearCampo("Nombre de la Receta", nombreRecetaField), 0, 0);
 
         cantidadProducidaField.setPromptText("Ej. 1");
-        grid.add(crearCampo("Cantidad Resultante", cantidadProducidaField), 0, 1);
+        gridSup.add(crearCampo("Cantidad Producida", cantidadProducidaField), 1, 0);
 
-        unidadProducidaCombo.getItems().addAll("Unidad", "Kg", "Litro", "Porción", "Bote 1L", "Paleta");
+        unidadProducidaCombo.getItems().addAll("Unidad", "Kg", "Litro", "Porción");
         unidadProducidaCombo.getSelectionModel().selectFirst();
-        unidadProducidaCombo.setMaxWidth(Double.MAX_VALUE);
-        grid.add(crearCampo("Unidad Resultante", unidadProducidaCombo), 1, 1);
+        gridSup.add(crearCampo("Unidad Producida", unidadProducidaCombo), 2, 0);
 
-        ColumnConstraints c1 = new ColumnConstraints();
-        c1.setPercentWidth(50);
-        grid.getColumnConstraints().addAll(c1, c1);
+        ColumnConstraints col1 = new ColumnConstraints(); col1.setPercentWidth(50);
+        ColumnConstraints col2 = new ColumnConstraints(); col2.setPercentWidth(25);
+        ColumnConstraints col3 = new ColumnConstraints(); col3.setPercentWidth(25);
+        gridSup.getColumnConstraints().addAll(col1, col2, col3);
 
-        VBox itemsBox = new VBox(15);
-        itemsBox.setStyle("-fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #F9FAFB;");
-        Label lblIng = new Label("Ingredientes (Insumos o Intermedios)");
-        lblIng.setStyle("-fx-font-weight: bold; -fx-text-fill: #555;");
+        // --- "Agregar Items" Box ---
+        VBox addItemsBox = new VBox(15);
+        addItemsBox.setPadding(new Insets(15));
+        addItemsBox.setStyle("-fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8;");
+        Label addItemsTitle = new Label("Agregar Ingredientes");
+        addItemsTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
 
-        GridPane itemsGrid = new GridPane();
-        itemsGrid.setHgap(15);
-        ingredienteCombo.setPromptText("Buscar ingrediente...");
+        GridPane addItemsGrid = new GridPane();
+        addItemsGrid.setHgap(15);
+        addItemsGrid.setVgap(10);
+
+        ColumnConstraints colIng = new ColumnConstraints(); colIng.setPercentWidth(50);
+        ColumnConstraints colCant = new ColumnConstraints(); colCant.setPercentWidth(15);
+        ColumnConstraints colUni = new ColumnConstraints(); colUni.setPercentWidth(15);
+        ColumnConstraints colBtn = new ColumnConstraints(); colBtn.setPercentWidth(20);
+        addItemsGrid.getColumnConstraints().addAll(colIng, colCant, colUni, colBtn);
+
+        ingredienteCombo.setPromptText("Seleccionar producto");
         ingredienteCombo.setMaxWidth(Double.MAX_VALUE);
-        ingredienteCombo.setItems(todosLosIngredientesPosibles);
-        ingredienteCombo.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(IngredienteSeleccionable i) {
-                return i != null ? i.toString() : null;
-            }
+        ingredienteCombo.setItems(todosLosProductos);
+        ingredienteCombo.setConverter(new ProductoSimpleConverter());
+        addItemsGrid.add(crearCampo("Ingrediente (de Almacén 1)", ingredienteCombo), 0, 0);
 
-            @Override
-            public IngredienteSeleccionable fromString(String s) {
-                return null;
-            }
-        });
-
-        ingredienteCombo.setOnAction(e -> {
-            IngredienteSeleccionable prod = ingredienteCombo.getValue();
-            if (prod != null && prod.unidad() != null) {
-                List<String> compatibles = ConversorUnidades.obtenerUnidadesCompatibles(prod.unidad());
-                unidadIngredienteCombo.getItems().setAll(compatibles);
-                unidadIngredienteCombo.setValue(prod.unidad());
-            }
-        });
-
-        itemsGrid.add(crearCampo("Seleccionar Ingrediente", ingredienteCombo), 0, 0);
         cantidadIngredienteField.setPromptText("0");
-        itemsGrid.add(crearCampo("Cant.", cantidadIngredienteField), 1, 0);
-        unidadIngredienteCombo.getItems().addAll("Kg", "Gramo", "Litro", "ml", "Unidad", "Cucharada");
+        addItemsGrid.add(crearCampo("Cantidad", cantidadIngredienteField), 1, 0);
+
+        unidadIngredienteCombo.getItems().addAll("Kg", "Gramo", "Litro", "Unidad", "Cucharada");
         unidadIngredienteCombo.getSelectionModel().selectFirst();
-        itemsGrid.add(crearCampo("Unid.", unidadIngredienteCombo), 2, 0);
+        addItemsGrid.add(crearCampo("Unidad", unidadIngredienteCombo), 2, 0);
 
-        Button addBtn = new Button("➕ Agregar");
-        addBtn.getStyleClass().add("button-add");
-        addBtn.setOnAction(e -> agregarItem());
-        itemsGrid.add(new VBox(new Label(""), addBtn), 3, 0);
+        Button addButton = new Button("➕ Agregar");
+        addButton.getStyleClass().add("button-add");
+        addButton.setMaxWidth(Double.MAX_VALUE);
+        addButton.setOnAction(e -> agregarItem());
+        VBox btnBox = new VBox(addButton);
+        btnBox.setAlignment(Pos.BOTTOM_CENTER);
+        btnBox.setPadding(new Insets(19, 0, 0, 0));
+        addItemsGrid.add(btnBox, 3, 0);
 
-        ColumnConstraints ic1 = new ColumnConstraints();
-        ic1.setPercentWidth(50);
-        ColumnConstraints ic2 = new ColumnConstraints();
-        ic2.setPercentWidth(15);
-        ColumnConstraints ic3 = new ColumnConstraints();
-        ic3.setPercentWidth(15);
-        ColumnConstraints ic4 = new ColumnConstraints();
-        ic4.setPercentWidth(20);
-        itemsGrid.getColumnConstraints().addAll(ic1, ic2, ic3, ic4);
+        addItemsBox.getChildren().addAll(addItemsTitle, addItemsGrid);
 
-        itemsBox.getChildren().addAll(lblIng, itemsGrid);
+        // --- Tabla de Items ---
         configurarTabla();
         VBox.setVgrow(tablaItems, Priority.ALWAYS);
 
-        // Botones de acción
-        HBox btnBox = new HBox(10);
-        btnBox.setAlignment(Pos.CENTER_RIGHT);
+        // --- Botón Guardar Receta ---
+        Button crearRecetaBtn = new Button("💾 Guardar Receta");
+        crearRecetaBtn.getStyleClass().add("button-primary");
+        crearRecetaBtn.setMaxWidth(Double.MAX_VALUE);
+        crearRecetaBtn.setOnAction(e -> guardarReceta());
 
-        Button btnLimpiar = new Button("Cancelar / Limpiar");
-        btnLimpiar.getStyleClass().add("button-secondary");
-        btnLimpiar.setOnAction(e -> limpiarFormulario());
-
-        btnGuardar = new Button("💾 Guardar Receta Maestra");
-        btnGuardar.getStyleClass().add("button-primary");
-        btnGuardar.setPrefWidth(200);
-        btnGuardar.setOnAction(e -> guardarReceta());
-
-        btnBox.getChildren().addAll(btnLimpiar, btnGuardar);
-
-        card.getChildren().addAll(cardHeader, grid, itemsBox, tablaItems, btnBox);
+        // Ensamblar Card
+        card.getChildren().addAll(cardHeaderBox, gridSup, addItemsBox, tablaItems, crearRecetaBtn);
         layout.getChildren().add(card);
         return layout;
     }
 
     private void configurarTabla() {
         tablaItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<IngredienteItem, String> cTipo = new TableColumn<>("Tipo");
-        cTipo.setCellValueFactory(new PropertyValueFactory<>("tipoOrigen"));
-        TableColumn<IngredienteItem, String> c1 = new TableColumn<>("Ingrediente");
-        c1.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        TableColumn<IngredienteItem, Double> c2 = new TableColumn<>("Cantidad");
-        c2.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        TableColumn<IngredienteItem, String> c3 = new TableColumn<>("Unidad");
-        c3.setCellValueFactory(new PropertyValueFactory<>("unidad"));
 
-        TableColumn<IngredienteItem, Void> c4 = new TableColumn<>("Acción");
-        c4.setCellFactory(p -> new TableCell<>() {
-            final Button b = new Button("🗑️");
+        TableColumn<IngredienteItem, String> ingredienteCol = new TableColumn<>("Ingrediente");
+        ingredienteCol.setCellValueFactory(new PropertyValueFactory<>("nombre"));
 
+        TableColumn<IngredienteItem, Double> cantidadCol = new TableColumn<>("Cantidad");
+        cantidadCol.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+
+        TableColumn<IngredienteItem, String> unidadCol = new TableColumn<>("Unidad");
+        unidadCol.setCellValueFactory(new PropertyValueFactory<>("unidad"));
+
+        TableColumn<IngredienteItem, Void> accionCol = new TableColumn<>("Acción");
+        accionCol.setCellFactory(param -> new TableCell<>() {
+            private final Button deleteButton = new Button("🗑️");
             {
-                b.setStyle("-fx-background-color: #EF4444; -fx-text-fill: white; -fx-cursor: hand;");
-                b.setOnAction(e -> items.remove(getIndex()));
-            }
-
-            @Override
-            protected void updateItem(Void i, boolean e) {
-                super.updateItem(i, e);
-                setGraphic(e ? null : b);
-            }
-        });
-
-        tablaItems.getColumns().addAll(cTipo, c1, c2, c3, c4);
-        tablaItems.setItems(items);
-    }
-
-    // --- PESTAÑA 2: RECETARIO ---
-    private Node crearTabRecetario() {
-        HBox layout = new HBox(20);
-        layout.getStyleClass().add("tab-content-area");
-        layout.setPadding(new Insets(20, 0, 0, 0));
-
-        // Izquierda: Lista
-        VBox leftPanel = new VBox(10);
-        leftPanel.setPrefWidth(450);
-        leftPanel.getStyleClass().add("card");
-        Label lblRecetas = new Label("Recetas Disponibles");
-        lblRecetas.getStyleClass().add("card-title");
-        tablaRecetas = new TableView<>();
-        tablaRecetas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        TableColumn<RecetaModel, String> colNombre = new TableColumn<>("Nombre");
-        colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        TableColumn<RecetaModel, String> colDestino = new TableColumn<>("Tipo");
-        colDestino.setCellValueFactory(new PropertyValueFactory<>("tipoDestino"));
-
-        TableColumn<RecetaModel, Void> colAccion = new TableColumn<>("Acciones");
-
-        colAccion.setCellFactory(param -> new TableCell<>() {
-            // 1. Definimos los componentes como variables de la celda
-            private final Button btnEdit = new Button("✏️");
-            private final Button btnDel = new Button("❌");
-            private final HBox box = new HBox(5, btnEdit, btnDel);
-
-            {
-                // 2. Configuramos estilos y acciones en el bloque de inicialización
-
-                // Estilo Botón Editar
-                btnEdit.setStyle("-fx-background-color: transparent; -fx-text-fill: #F59E0B; -fx-font-size: 1.2em; -fx-cursor: hand;");
-                btnEdit.setTooltip(new Tooltip("Editar Receta"));
-                btnEdit.setOnAction(e -> {
-                    // Obtenemos el objeto de la fila actual de forma segura
-                    RecetaModel data = getTableView().getItems().get(getIndex());
-                    cargarParaEdicion(data);
+                deleteButton.getStyleClass().add("button-danger");
+                deleteButton.setOnAction(event -> {
+                    IngredienteItem item = getTableView().getItems().get(getIndex());
+                    eliminarItem(item);
                 });
-
-                // Estilo Botón Eliminar
-                btnDel.setStyle("-fx-background-color: transparent; -fx-text-fill: red; -fx-font-weight: bold; -fx-font-size: 1.2em; -fx-cursor: hand;");
-                btnDel.setTooltip(new Tooltip("Eliminar Receta"));
-                btnDel.setOnAction(e -> {
-                    RecetaModel data = getTableView().getItems().get(getIndex());
-                    eliminarReceta(data);
-                });
-
-                box.setAlignment(Pos.CENTER);
             }
-
-            // 3. Sobrescribimos updateItem (¡ESTO ES LO QUE FALTABA!)
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null); // Si la fila está vacía, no mostramos nada
-                } else {
-                    setGraphic(box);  // Si hay datos, mostramos la caja con los botones
-                }
-            }
-        });
-        colAccion.setMinWidth(90);
-
-        tablaRecetas.getColumns().addAll(colNombre, colDestino, colAccion);
-        tablaRecetas.setItems(listaRecetas);
-
-        tablaRecetas.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) cargarDetalleReceta(newVal);
-        });
-
-        leftPanel.getChildren().addAll(lblRecetas, tablaRecetas);
-        VBox.setVgrow(tablaRecetas, Priority.ALWAYS);
-
-        // Derecha: Detalles
-        VBox rightPanel = new VBox(15);
-        rightPanel.getStyleClass().add("card");
-        HBox.setHgrow(rightPanel, Priority.ALWAYS);
-        Label lblDetalles = new Label("Vista Previa Ingredientes");
-        lblDetalles.getStyleClass().add("card-title");
-        Label lblInfoExtra = new Label("Selecciona una receta para ver detalles...");
-        lblInfoExtra.setStyle("-fx-text-fill: #777; -fx-font-style: italic;");
-
-        tablaDetalleReceta = new TableView<>();
-        tablaDetalleReceta.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        TableColumn<IngredienteItem, String> cIng = new TableColumn<>("Ingrediente");
-        cIng.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        TableColumn<IngredienteItem, Double> cCant = new TableColumn<>("Cantidad");
-        cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        TableColumn<IngredienteItem, String> cUnd = new TableColumn<>("Unidad");
-        cUnd.setCellValueFactory(new PropertyValueFactory<>("unidad"));
-        TableColumn<IngredienteItem, String> cOrigen = new TableColumn<>("Origen");
-        cOrigen.setCellValueFactory(new PropertyValueFactory<>("tipoOrigen"));
-
-        tablaDetalleReceta.getColumns().addAll(cIng, cCant, cUnd, cOrigen);
-        tablaDetalleReceta.setItems(listaDetalleReceta);
-        tablaDetalleReceta.setPlaceholder(new Label("Sin ingredientes seleccionados"));
-
-        rightPanel.getChildren().addAll(lblDetalles, lblInfoExtra, tablaDetalleReceta);
-        VBox.setVgrow(tablaDetalleReceta, Priority.ALWAYS);
-
-        tablaRecetas.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
-            if (val != null) {
-                lblInfoExtra.setText("Produce: " + val.cantidadProducida() + " " + val.unidadProducida());
-                lblInfoExtra.setStyle("-fx-text-fill: #4A90E2; -fx-font-weight: bold;");
-            } else {
-                lblInfoExtra.setText("Selecciona una receta para ver detalles...");
-                lblInfoExtra.setStyle("-fx-text-fill: #777;");
+                setGraphic(empty ? null : deleteButton);
+                setAlignment(Pos.CENTER);
             }
         });
 
-        layout.getChildren().addAll(leftPanel, rightPanel);
+        tablaItems.getColumns().addAll(ingredienteCol, cantidadCol, unidadCol, accionCol);
+        tablaItems.setItems(items);
+        tablaItems.setPlaceholder(new Label("Agregue ingredientes a la receta"));
+    }
+
+    private Node crearTabHistorial() {
+        VBox layout = new VBox(20);
+        layout.getStyleClass().add("tab-content-area");
+
+        VBox card = new VBox(15);
+        card.getStyleClass().add("card");
+        Label cardTitle = new Label("Historial de Recetas");
+        cardTitle.getStyleClass().add("card-title");
+        Label cardDescription = new Label("Todas las recetas guardadas");
+        cardDescription.getStyleClass().add("card-description");
+        card.getChildren().addAll(cardTitle, cardDescription);
+
+        VBox historialContainer = new VBox(10);
+        historialContainer.setPadding(new Insets(10, 0, 10, 0));
+
+        ScrollPane scrollPane = new ScrollPane(historialContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background-color: transparent;");
+
+        // Cargar datos
+        cargarHistorial(historialContainer);
+
+        card.getChildren().add(scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        layout.getChildren().add(card);
         return layout;
     }
 
-    // --- LÓGICA DE DATOS ---
+    private void cargarHistorial(VBox container) {
+        container.getChildren().clear();
+        String sqlReceta = "SELECT id, nombre, cantidad_producida, unidad_producida, fecha_creacion " +
+                "FROM recetas ORDER BY fecha_creacion DESC";
 
-    private void cargarRecetas() {
-        listaRecetas.clear();
-        listaDetalleReceta.clear();
-        String sql = "SELECT id, nombre, cantidad_producida, unidad_producida, tipo_destino FROM recetas ORDER BY id DESC";
-        try (Connection c = ConexionBD.getConnection(); ResultSet rs = c.createStatement().executeQuery(sql)) {
-            while (rs.next())
-                listaRecetas.add(new RecetaModel(rs.getInt("id"), rs.getString("nombre"), rs.getDouble("cantidad_producida"), rs.getString("unidad_producida"), rs.getString("tipo_destino")));
-        } catch (Exception e) {
+        // --- CAMBIO: Leer IdProducto y unir con 'producto' para obtener el nombre ---
+        String sqlIngred = "SELECT p.Tipo_de_Producto, i.cantidad, i.unidad " +
+                "FROM ingredientes i " +
+                "JOIN producto p ON i.IdProducto = p.IdProducto " +
+                "WHERE i.receta_id = ?";
+
+        try (Connection conn = ConexionBD.getConnection();
+             Statement stmtReceta = conn.createStatement();
+             ResultSet rsReceta = stmtReceta.executeQuery(sqlReceta)) {
+
+            while (rsReceta.next()) {
+                int idReceta = rsReceta.getInt("id");
+                String nombre = rsReceta.getString("nombre");
+                double cant = rsReceta.getDouble("cantidad_producida");
+                String unidad = rsReceta.getString("unidad_producida");
+
+                List<IngredienteItem> itemsHistorial = new ArrayList<>();
+                try (PreparedStatement stmtIngred = conn.prepareStatement(sqlIngred)) {
+                    stmtIngred.setInt(1, idReceta);
+                    ResultSet rsIngred = stmtIngred.executeQuery();
+                    while (rsIngred.next()) {
+                        itemsHistorial.add(new IngredienteItem(
+                                0, // El ID no importa para mostrar el historial
+                                rsIngred.getString("Tipo_de_Producto"), // <-- Nombre del producto
+                                rsIngred.getDouble("cantidad"),
+                                rsIngred.getString("unidad")
+                        ));
+                    }
+                }
+
+                RecetaHistorial receta = new RecetaHistorial(idReceta, nombre, cant, unidad, itemsHistorial);
+                container.getChildren().add(crearCardReceta(receta));
+            }
+
+        } catch (SQLException e) {
             e.printStackTrace();
+            mostrarAlerta("Error de BD", "No se pudo cargar el historial de recetas: " + e.getMessage());
         }
     }
 
-    // Carga para solo visualización (Tab 2)
-    private void cargarDetalleReceta(RecetaModel receta) {
-        listaDetalleReceta.clear();
-        String sql = "SELECT p.Tipo_de_Producto, pi.Nombre, i.cantidad, i.unidad, i.tipo_origen FROM ingredientes i LEFT JOIN producto p ON i.IdProducto = p.IdProducto LEFT JOIN productos_intermedios pi ON i.IdIntermedio = pi.IdProductoIntermedio WHERE i.receta_id = ?";
-        try (Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, receta.id());
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                String nombre = "INSUMO".equals(rs.getString("tipo_origen")) ? rs.getString(1) : rs.getString(2);
-                listaDetalleReceta.add(new IngredienteItem(0, nombre, rs.getDouble("cantidad"), rs.getString("unidad"), rs.getString("tipo_origen")));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    private Node crearCardReceta(RecetaHistorial receta) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("card");
+        card.setStyle("-fx-border-color: #E0E0E0;");
 
-    // Carga para edición (Tab 1)
-    private void cargarParaEdicion(RecetaModel r) {
-        limpiarFormulario(); // Resetear campos primero
-        idRecetaEditando = r.id();
+        Label titulo = new Label(receta.getNombre());
+        titulo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
+        Label subtitulo = new Label(String.format("Produce: %.2f %s", receta.getCantidadProducida(), receta.getUnidadProducida()));
+        subtitulo.getStyleClass().add("card-description");
+        VBox headerBox = new VBox(2, titulo, subtitulo);
 
-        // Llenar campos cabecera
-        nombreRecetaField.setText(r.nombre());
-        cantidadProducidaField.setText(String.valueOf(r.cantidadProducida()));
-        unidadProducidaCombo.setValue(r.unidadProducida());
+        VBox itemsBox = new VBox(5);
+        itemsBox.setPadding(new Insets(10, 0, 0, 15));
 
-        if ("INTERMEDIO".equals(r.tipoDestino())) tipoDestinoCombo.getSelectionModel().select(0);
-        else tipoDestinoCombo.getSelectionModel().select(1);
-
-        // Cambiar UI a modo edición
-        btnGuardar.setText("💾 Actualizar Receta");
-
-        // Cargar ingredientes a la lista editable 'items'
-        String sql = "SELECT i.cantidad, i.unidad, i.tipo_origen, i.IdProducto, i.IdIntermedio, p.Tipo_de_Producto, pi.Nombre FROM ingredientes i LEFT JOIN producto p ON i.IdProducto = p.IdProducto LEFT JOIN productos_intermedios pi ON i.IdIntermedio = pi.IdProductoIntermedio WHERE i.receta_id = ?";
-
-        try (Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, r.id());
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                String tipo = rs.getString("tipo_origen");
-                int idRef = "INSUMO".equals(tipo) ? rs.getInt("IdProducto") : rs.getInt("IdIntermedio");
-                String nombre = "INSUMO".equals(tipo) ? rs.getString("Tipo_de_Producto") : rs.getString("Nombre");
-
-                items.add(new IngredienteItem(idRef, nombre, rs.getDouble("cantidad"), rs.getString("unidad"), tipo));
-            }
-        } catch (Exception e) {
-            mostrarAlerta("Error", "No se pudieron cargar los ingredientes: " + e.getMessage());
-        }
-
-        // Cambiar al tab de edición
-        tabPane.getSelectionModel().select(0);
-    }
-
-    private void limpiarFormulario() {
-        idRecetaEditando = null;
-        nombreRecetaField.clear();
-        cantidadProducidaField.clear();
-        unidadProducidaCombo.getSelectionModel().selectFirst();
-        tipoDestinoCombo.getSelectionModel().selectFirst();
-        items.clear();
-        ingredienteCombo.getSelectionModel().clearSelection();
-        cantidadIngredienteField.clear();
-        unidadIngredienteCombo.getSelectionModel().selectFirst();
-
-        btnGuardar.setText("💾 Guardar Receta Maestra");
-    }
-
-    private void eliminarReceta(RecetaModel r) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "¿Seguro que desea eliminar la receta '" + r.nombre() + "'?", ButtonType.YES, ButtonType.NO);
-        if (alert.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
-            try (Connection conn = ConexionBD.getConnection(); PreparedStatement stmt = conn.prepareStatement("DELETE FROM recetas WHERE id = ?")) {
-                stmt.setInt(1, r.id());
-                stmt.executeUpdate();
-                cargarRecetas();
-                // Si estábamos editando esta misma receta, limpiar
-                if (idRecetaEditando != null && idRecetaEditando == r.id()) limpiarFormulario();
-            } catch (SQLException e) {
-                mostrarAlerta("Error", e.getMessage());
+        if (receta.getItems().isEmpty()) {
+            itemsBox.getChildren().add(new Label("Esta receta no tiene ingredientes registrados."));
+        } else {
+            for (IngredienteItem item : receta.getItems()) {
+                Label itemLabel = new Label(String.format("• %s (%.2f %s)",
+                        item.getNombre(), item.getCantidad(), item.getUnidad()));
+                itemsBox.getChildren().add(itemLabel);
             }
         }
+
+        card.getChildren().addAll(headerBox, new Separator(), itemsBox);
+        return card;
     }
 
-    private void cargarTodosLosIngredientesPosibles() {
-        todosLosIngredientesPosibles.clear();
-        try (Connection c = ConexionBD.getConnection(); Statement s = c.createStatement()) {
-            ResultSet rs1 = s.executeQuery("SELECT IdProducto, Tipo_de_Producto, Unidad_de_medida FROM producto");
-            while (rs1.next())
-                todosLosIngredientesPosibles.add(new IngredienteSeleccionable(rs1.getInt(1), rs1.getString(2), rs1.getString(3), "INSUMO"));
-            rs1.close();
-            try {
-                ResultSet rs2 = s.executeQuery("SELECT IdProductoIntermedio, Nombre, Unidad_de_medida FROM productos_intermedios");
-                while (rs2.next())
-                    todosLosIngredientesPosibles.add(new IngredienteSeleccionable(rs2.getInt(1), rs2.getString(2), rs2.getString(3), "INTERMEDIO"));
-                rs2.close();
-            } catch (Exception ignored) {
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private VBox crearCampo(String labelText, Control input) {
+        VBox vbox = new VBox(5);
+        Label label = new Label(labelText);
+        label.getStyleClass().add("label");
+        vbox.getChildren().addAll(label, input);
+        return vbox;
     }
 
     private void agregarItem() {
         try {
-            IngredienteSeleccionable s = ingredienteCombo.getValue();
-            double q = Double.parseDouble(cantidadIngredienteField.getText());
-            if (s != null && q > 0) {
-                items.add(new IngredienteItem(s.id(), s.nombre(), q, unidadIngredienteCombo.getValue(), s.tipo()));
-                ingredienteCombo.getSelectionModel().clearSelection();
-                cantidadIngredienteField.clear();
+            // --- CAMBIO: Lee del ComboBox ---
+            ProductoSimple productoSeleccionado = ingredienteCombo.getValue();
+            double cantidad = Double.parseDouble(cantidadIngredienteField.getText().trim());
+            String unidad = unidadIngredienteCombo.getValue();
+
+            if (productoSeleccionado == null || cantidad <= 0) {
+                mostrarAlerta("Error", "Seleccione un producto e ingrese una cantidad válida.");
+                return;
             }
-        } catch (Exception e) {
-            mostrarAlerta("Error", "Datos inválidos");
+
+            // --- CAMBIO: Guarda el ID y el Nombre ---
+            items.add(new IngredienteItem(
+                    productoSeleccionado.getId(),
+                    productoSeleccionado.getNombre(),
+                    cantidad,
+                    unidad
+            ));
+            limpiarCamposItem();
+
+        } catch (NumberFormatException e) {
+            mostrarAlerta("Error", "La cantidad del ingrediente debe ser un número.");
         }
+    }
+
+    private void eliminarItem(IngredienteItem item) {
+        items.remove(item);
+    }
+
+    private void limpiarCamposItem() {
+        ingredienteCombo.getSelectionModel().clearSelection();
+        cantidadIngredienteField.clear();
+        unidadIngredienteCombo.getSelectionModel().selectFirst();
+    }
+
+    private void limpiarFormularioReceta() {
+        nombreRecetaField.clear();
+        cantidadProducidaField.clear();
+        unidadProducidaCombo.getSelectionModel().selectFirst();
+        items.clear();
+        limpiarCamposItem();
     }
 
     private void guardarReceta() {
-        if (nombreRecetaField.getText().isEmpty() || items.isEmpty()) {
-            mostrarAlerta("Error", "Faltan datos o ingredientes.");
+        String nombreReceta = nombreRecetaField.getText().trim();
+        String unidadReceta = unidadProducidaCombo.getValue();
+        double cantidadReceta;
+
+        try {
+            cantidadReceta = Double.parseDouble(cantidadProducidaField.getText().trim());
+        } catch (NumberFormatException e) {
+            mostrarAlerta("Error", "La 'Cantidad Producida' de la receta debe ser un número.");
             return;
         }
-        String tipoDestino = tipoDestinoCombo.getValue().contains("Intermedio") ? "INTERMEDIO" : "FINAL";
 
-        Connection c = null;
+        if (nombreReceta.isEmpty() || cantidadReceta <= 0) {
+            mostrarAlerta("Error", "Complete los campos de la receta (Nombre, Cantidad).");
+            return;
+        }
+        if (items.isEmpty()) {
+            mostrarAlerta("Error", "Agregue al menos un ingrediente a la receta.");
+            return;
+        }
+
+        Connection conn = null;
         try {
-            c = ConexionBD.getConnection();
-            c.setAutoCommit(false);
+            conn = ConexionBD.getConnection();
+            conn.setAutoCommit(false);
 
-            int idReceta;
+            String sqlReceta = "INSERT INTO recetas (nombre, cantidad_producida, unidad_producida) " +
+                    "VALUES (?, ?, ?)";
+            int idRecetaGenerada;
+            try (PreparedStatement stmtReceta = conn.prepareStatement(sqlReceta, Statement.RETURN_GENERATED_KEYS)) {
+                stmtReceta.setString(1, nombreReceta);
+                stmtReceta.setDouble(2, cantidadReceta);
+                stmtReceta.setString(3, unidadReceta);
 
-            if (idRecetaEditando == null) {
-                // INSERT NUEVO
-                try (PreparedStatement ps = c.prepareStatement("INSERT INTO recetas (nombre, cantidad_producida, unidad_producida, tipo_destino) VALUES (?,?,?,?)", Statement.RETURN_GENERATED_KEYS)) {
-                    ps.setString(1, nombreRecetaField.getText());
-                    ps.setDouble(2, Double.parseDouble(cantidadProducidaField.getText()));
-                    ps.setString(3, unidadProducidaCombo.getValue());
-                    ps.setString(4, tipoDestino);
-                    ps.executeUpdate();
-                    ResultSet rs = ps.getGeneratedKeys();
-                    if (rs.next()) idReceta = rs.getInt(1);
-                    else throw new SQLException("No se generó ID para receta.");
-                }
-            } else {
-                // UPDATE EXISTENTE
-                idReceta = idRecetaEditando;
-                try (PreparedStatement ps = c.prepareStatement("UPDATE recetas SET nombre=?, cantidad_producida=?, unidad_producida=?, tipo_destino=? WHERE id=?")) {
-                    ps.setString(1, nombreRecetaField.getText());
-                    ps.setDouble(2, Double.parseDouble(cantidadProducidaField.getText()));
-                    ps.setString(3, unidadProducidaCombo.getValue());
-                    ps.setString(4, tipoDestino);
-                    ps.setInt(5, idReceta);
-                    ps.executeUpdate();
-                }
-                // Eliminar ingredientes viejos para reinsertar los nuevos
-                try (PreparedStatement psDel = c.prepareStatement("DELETE FROM ingredientes WHERE receta_id=?")) {
-                    psDel.setInt(1, idReceta);
-                    psDel.executeUpdate();
+                stmtReceta.executeUpdate();
+                ResultSet rsKeys = stmtReceta.getGeneratedKeys();
+                if (rsKeys.next()) {
+                    idRecetaGenerada = rsKeys.getInt(1);
+                } else {
+                    throw new SQLException("No se pudo obtener el ID de la receta.");
                 }
             }
 
-            // Insertar Ingredientes (Común para Insert y Update)
-            try (PreparedStatement ps = c.prepareStatement("INSERT INTO ingredientes (receta_id, IdProducto, IdIntermedio, cantidad, unidad, tipo_origen) VALUES (?,?,?,?,?,?)")) {
-                for (IngredienteItem i : items) {
-                    ps.setInt(1, idReceta);
-                    if (i.tipoOrigen().equals("INSUMO")) {
-                        ps.setInt(2, i.idReferencia());
-                        ps.setNull(3, Types.INTEGER);
-                    } else {
-                        ps.setNull(2, Types.INTEGER);
-                        ps.setInt(3, i.idReferencia());
-                    }
-                    ps.setDouble(4, i.cantidad());
-                    ps.setString(5, i.unidad());
-                    ps.setString(6, i.tipoOrigen());
-                    ps.addBatch();
+            // --- CAMBIO: Insertar IdProducto en lugar de nombre ---
+            String sqlIngred = "INSERT INTO ingredientes (receta_id, IdProducto, cantidad, unidad) " +
+                    "VALUES (?, ?, ?, ?)";
+            try (PreparedStatement stmtIngred = conn.prepareStatement(sqlIngred)) {
+                for (IngredienteItem item : items) {
+                    stmtIngred.setInt(1, idRecetaGenerada);
+                    stmtIngred.setInt(2, item.getIdProducto()); // <-- ID del producto
+                    stmtIngred.setDouble(3, item.getCantidad());
+                    stmtIngred.setString(4, item.getUnidad());
+                    stmtIngred.addBatch();
                 }
-                ps.executeBatch();
+                stmtIngred.executeBatch();
             }
 
-            c.commit();
-            mostrarAlerta("Éxito", idRecetaEditando == null ? "Receta guardada." : "Receta actualizada.");
-            limpiarFormulario();
-            cargarRecetas(); // Refrescar tabla de la otra pestaña
+            conn.commit();
+            mostrarAlerta("Éxito", "✅ Receta guardada correctamente.");
+            limpiarFormularioReceta();
 
-        } catch (Exception e) {
-            if (c != null) try {
-                c.rollback();
-            } catch (Exception ex) {
-            }
-            e.printStackTrace();
-            mostrarAlerta("Error SQL", e.getMessage());
+        } catch (SQLException ex) {
+            if (conn != null) try { conn.rollback(); } catch (SQLException e) { e.printStackTrace(); }
+            ex.printStackTrace();
+            mostrarAlerta("Error", "Ocurrió un problema: " + ex.getMessage());
         } finally {
-            if (c != null) try {
-                c.setAutoCommit(true);
-                c.close();
-            } catch (Exception ex) {
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+        }
+    }
+
+    private void cargarProductos() {
+        todosLosProductos.clear();
+        String sql = "SELECT IdProducto, Tipo_de_Producto FROM producto";
+        try (Connection conn = ConexionBD.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                todosLosProductos.add(new ProductoSimple(
+                        rs.getInt("IdProducto"),
+                        rs.getString("Tipo_de_Producto")
+                ));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "No se pudieron cargar los productos de Almacén 1.");
         }
     }
 
-    private VBox crearCampo(String l, Control c) {
-        VBox v = new VBox(5);
-        Label lbl = new Label(l);
-        lbl.getStyleClass().add("label");
-        v.getChildren().addAll(lbl, c);
-        return v;
+    private void mostrarAlerta(String titulo, String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        if (titulo.startsWith("Error")) {
+            alert.setAlertType(Alert.AlertType.ERROR);
+        }
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 
-    private void mostrarAlerta(String t, String m) {
-        new Alert(Alert.AlertType.INFORMATION, m).showAndWait();
-    }
+    // --- Clases de Datos Internas ---
 
-    // Clases Modelo (Inner)
-    public record IngredienteSeleccionable(int id, String nombre, String unidad, String tipo) {
+    public static class ProductoSimple {
+        private final int id;
+        private final String nombre;
+
+        public ProductoSimple(int id, String nombre) { this.id = id; this.nombre = nombre; }
+        public int getId() { return id; }
+        public String getNombre() { return nombre; }
         @Override
-        public String toString() {
-            return (tipo.equals("INSUMO") ? "[Insumo] " : "[Inter] ") + nombre;
+        public String toString() { return nombre; }
+    }
+
+    public static class ProductoSimpleConverter extends StringConverter<ProductoSimple> {
+        @Override
+        public String toString(ProductoSimple producto) {
+            return (producto == null) ? null : producto.getNombre();
+        }
+        @Override
+        public ProductoSimple fromString(String string) { return null; }
+    }
+
+    /**
+     * CAMBIO: Ahora guarda el IdProducto
+     */
+    public static class IngredienteItem {
+        private final int idProducto; // <-- NUEVO
+        private final String nombre;
+        private final double cantidad;
+        private final String unidad;
+
+        public IngredienteItem(int idProducto, String nombre, double cantidad, String unidad) {
+            this.idProducto = idProducto; // <-- NUEVO
+            this.nombre = nombre;
+            this.cantidad = cantidad;
+            this.unidad = unidad;
+        }
+
+        public int getIdProducto() { return idProducto; } // <-- NUEVO
+        public String getNombre() { return nombre; }
+        public double getCantidad() { return cantidad; }
+        public String getUnidad() { return unidad; }
+    }
+
+    public static class RecetaHistorial {
+        private final int id;
+        private final String nombre;
+        private final double cantidadProducida;
+        private final String unidadProducida;
+        private final List<IngredienteItem> items;
+
+        public RecetaHistorial(int id, String nombre, double cantidad, String unidad, List<IngredienteItem> items) {
+            this.id = id;
+            this.nombre = nombre;
+            this.cantidadProducida = cantidad;
+            this.unidadProducida = unidad;
+            this.items = items;
+        }
+
+        public int getId() { return id; }
+        public String getNombre() { return nombre; }
+        public double getCantidadProducida() { return cantidadProducida; }
+        public String getUnidadProducida() { return unidadProducida; }
+        public List<IngredienteItem> getItems() { return items; }
+    }
+
+    // --- Clase de Test para Ejecutar ---
+    public static class TestApp extends Application {
+        @Override
+        public void start(Stage stage) {
+            stage.setTitle("Gestión de Recetas - JavaFX");
+            stage.setScene(new Scene(new RecetasPage(), 1300, 900));
+            stage.show();
         }
     }
 
-    public record IngredienteItem(int idReferencia, String nombre, double cantidad, String unidad, String tipoOrigen) {
-    }
-
-    public record RecetaModel(int id, String nombre, double cantidadProducida, String unidadProducida,
-                              String tipoDestino) {
+    public static void main(String[] args) {
+        Application.launch(TestApp.class, args);
     }
 }
