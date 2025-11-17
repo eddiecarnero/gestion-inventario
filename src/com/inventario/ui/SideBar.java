@@ -5,33 +5,32 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.Image;
+
+import java.util.function.Consumer;
 
 public class SideBar {
-    private final BorderPane root;
-    private final VBox sidebar;
-    private final StackPane mainContent; // <-- Este es el panel donde irá el contenido
-    private final Scene scene;
-
-    private final String usuarioActualSesion;
+    private BorderPane root;
+    private VBox sidebar;
+    private StackPane mainContent; // <-- Este es el panel donde irá el contenido
+    private Scene scene;
 
     public SideBar(Stage stage, String usuario) {
-        this.usuarioActualSesion = usuario;
+
         // --- Estilos y Fuentes ---
         Color turquesa = Color.web("#1F9B7F");
         Color crema = Color.web("#F9F1E6");
         Color marron = Color.web("#736049");
-        Font poppins = Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 14);
+        Font poppins = Font.loadFont(
+                getClass().getResourceAsStream("/com/images/global.ttf"), 14
+        );
 
         // --- Iconos ---
         ImageView iconDashboard = crearIcono("/com/images/iconos/monitor.png");
@@ -43,7 +42,6 @@ public class SideBar {
         ImageView iconVentas = crearIcono("/com/images/iconos/subir.png");
         ImageView iconUsuarios = crearIcono("/com/images/iconos/usuario.png");
         ImageView iconRecetas = crearIcono("/com/images/iconos/receta.png");
-        ImageView iconSubirInsumos = crearIcono("/com/images/iconos/descarga.png");
         // ImageView iconKardex = crearIcono("/com/images/iconos/portapapeles.png");
 
 
@@ -59,11 +57,11 @@ public class SideBar {
         scrollSidebar.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollSidebar.setPannable(true);
         scrollSidebar.setStyle("""
-                    -fx-background-color: transparent;
-                    -fx-background: transparent;
-                    -fx-border-color: transparent;
-                    -fx-padding: 0;
-                """);
+            -fx-background-color: transparent;
+            -fx-background: transparent;
+            -fx-border-color: transparent;
+            -fx-padding: 0;
+        """);
 
         // --- Header del Sidebar ---
         Label logo = new Label("MamaTania");
@@ -79,7 +77,7 @@ public class SideBar {
         VBox header = new VBox(2);
         header.getChildren().addAll(logo, texto, separator1);
         header.setPadding(new Insets(0, 24, 0, 24));
-        VBox.setMargin(texto, new Insets(4, 0, 0, 0));
+        header.setMargin(texto, new Insets(4, 0, 0, 0));
 
         // --- Botones del Menú ---
         Button btnDashboard = new Button("Dashboard", iconDashboard);
@@ -92,8 +90,7 @@ public class SideBar {
         Button btnSubirVenta = new Button("Subir Venta", iconVentas);
         Button btnPerfilUsuario = new Button("Perfil de Usuario", iconUsuarios);
         // Button btnKardex = new Button("Kardex", iconKardex);
-        Button btnSubirInsumos = new Button("Ingreso Insumos", iconSubirInsumos);
-        Button btnGestionInsumos = new Button("Gestionar Insumos", iconIngrediente);
+
 
         // --- LÓGICA DE NAVEGACIÓN CENTRALIZADA ---
         mainContent = new StackPane();
@@ -111,9 +108,6 @@ public class SideBar {
         btnAlmacen3.setOnAction(e -> navegar("almacen3"));
         btnSubirVenta.setOnAction(e -> navegar("subir-ventas"));
         btnPerfilUsuario.setOnAction(e -> navegar("perfil"));
-        btnSubirInsumos.setOnAction(e -> navegar("subir-insumos"));
-        btnGestionInsumos.setOnAction(e -> navegar("gestion-insumos"));
-
         // btnKardex.setOnAction(e -> navegar("kardex"));
 
         navegar("dashboard");
@@ -152,10 +146,15 @@ public class SideBar {
         // --- Ensamblaje del Sidebar ---
         VBox sidebarcontent = new VBox(2);
 
-        for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnGestionInsumos, btnRecetas, btnSubirVenta, btnPerfilUsuario}) {
+        for (Button btn : new Button[]{
+                btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3,
+                btnIngrediente, btnRecetas, btnOrdenCompra,
+                btnSubirVenta, btnPerfilUsuario
+                //btnKardex, // Descomentar cuando lo tengas
+        }) {
             aplicarEstiloBoton(btn);
             sidebarcontent.getChildren().add(btn);
-            VBox.setMargin(btn, new Insets(0, 0, 8, 0));
+            VBox.setMargin(btn, new Insets(0,0,8,0));
         }
         sidebarcontent.setPadding(new Insets(16));
 
@@ -179,7 +178,7 @@ public class SideBar {
         root.setLeft(scrollSidebar);
         root.setCenter(mainContent);
 
-        scene = new Scene(root, 1200, 720);
+        scene = new Scene(root, 1551, 862);
         stage.setScene(scene);
         stage.show();
     }
@@ -207,21 +206,7 @@ public class SideBar {
             case "recetas":
                 pagina = new RecetasPage();
                 break;
-            case "almacen3":
-                pagina = new Almacen3Page(this::navegar);
-                break;
-            case "subir-ventas":
-                pagina = new SubirVentasPage();
-                break;
-            case "subir-insumos":
-                pagina = new SubirInsumosPage();
-                break;
-            case "gestion-insumos":
-                pagina = new GestionInsumosPage();
-                break;
-            case "perfil":
-                pagina = new PerfilPage(usuarioActualSesion);
-                break;
+
             default:
                 System.out.println("Navegación a página no implementada: " + pageName);
                 Label label = new Label("Página '" + pageName + "' no encontrada.");
@@ -250,7 +235,16 @@ public class SideBar {
         icon.setFitHeight(18);
         icon.setPreserveRatio(true);
 
-        javafx.scene.effect.Blend blend = new javafx.scene.effect.Blend(javafx.scene.effect.BlendMode.SRC_ATOP, null, new javafx.scene.effect.ColorInput(0, 0, icon.getFitWidth(), icon.getFitHeight(), Color.web("#FFFFFF")));
+        javafx.scene.effect.Blend blend = new javafx.scene.effect.Blend(
+                javafx.scene.effect.BlendMode.SRC_ATOP,
+                null,
+                new javafx.scene.effect.ColorInput(
+                        0, 0,
+                        icon.getFitWidth(),
+                        icon.getFitHeight(),
+                        Color.web("#FFFFFF")
+                )
+        );
         icon.setEffect(blend);
 
         return icon;
@@ -261,12 +255,14 @@ public class SideBar {
         btn.setMinHeight(44);
         btn.setFont(Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 15));
         btn.setGraphicTextGap(20);
-        btn.setPadding(new Insets(12, 16, 12, 16));
+        btn.setPadding(new Insets(12,16,12,16));
         btn.setAlignment(Pos.CENTER_LEFT);
         btn.setContentDisplay(ContentDisplay.LEFT);
 
-        String normal = "-fx-background-color: #736049; -fx-text-fill: white;" + "-fx-border-radius: 10; -fx-background-radius: 15;";
-        String hover = "-fx-background-color: rgba(255,255,255,0.3);" + "-fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 15;";
+        String normal = "-fx-background-color: #736049; -fx-text-fill: white;" +
+                "-fx-border-radius: 10; -fx-background-radius: 15;";
+        String hover = "-fx-background-color: rgba(255,255,255,0.3);" +
+                "-fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 15;";
 
         btn.setStyle(normal);
         btn.setWrapText(true);

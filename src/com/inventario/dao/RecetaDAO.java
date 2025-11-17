@@ -1,9 +1,9 @@
 package com.inventario.dao;
 
-import com.inventario.config.ConexionBD;
-import com.paraEliminar.CreationRecipePage.Ingrediente;
 import com.paraEliminar.CreationRecipePage.Receta;
+import com.paraEliminar.CreationRecipePage.Ingrediente;
 
+import com.inventario.config.ConexionBD;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +27,14 @@ public class RecetaDAO {
             // Desactivar auto-commit para hacer transacción
             conn.setAutoCommit(false);
 
-            System.out.println("🔄 Guardando receta: " + receta.nombre());
+            System.out.println("🔄 Guardando receta: " + receta.getNombre());
 
             // 1. Insertar la receta
             String sqlReceta = "INSERT INTO recetas (nombre, cantidad_producida, unidad_producida) VALUES (?, ?, ?)";
             stmtReceta = conn.prepareStatement(sqlReceta, Statement.RETURN_GENERATED_KEYS);
-            stmtReceta.setString(1, receta.nombre());
-            stmtReceta.setDouble(2, receta.cantidadProducida());
-            stmtReceta.setString(3, receta.unidadProducida());
+            stmtReceta.setString(1, receta.getNombre());
+            stmtReceta.setDouble(2, receta.getCantidadProducida());
+            stmtReceta.setString(3, receta.getUnidadProducida());
 
             int filasAfectadas = stmtReceta.executeUpdate();
             System.out.println("   Receta insertada, filas afectadas: " + filasAfectadas);
@@ -56,11 +56,11 @@ public class RecetaDAO {
             stmtIngrediente = conn.prepareStatement(sqlIngrediente);
 
             int ingredientesGuardados = 0;
-            for (Ingrediente ing : receta.ingredientes()) {
+            for (Ingrediente ing : receta.getIngredientes()) {
                 stmtIngrediente.setInt(1, recetaId);
-                stmtIngrediente.setString(2, ing.nombre());
-                stmtIngrediente.setDouble(3, ing.cantidad());
-                stmtIngrediente.setString(4, ing.unidad());
+                stmtIngrediente.setString(2, ing.getNombre());
+                stmtIngrediente.setDouble(3, ing.getCantidad());
+                stmtIngrediente.setString(4, ing.getUnidad());
                 stmtIngrediente.executeUpdate();
                 ingredientesGuardados++;
             }
@@ -71,7 +71,7 @@ public class RecetaDAO {
             conn.commit();
             conn.setAutoCommit(true);
 
-            System.out.println("✅ Receta guardada exitosamente: " + receta.nombre());
+            System.out.println("✅ Receta guardada exitosamente: " + receta.getNombre());
             return true;
 
         } catch (SQLException e) {
