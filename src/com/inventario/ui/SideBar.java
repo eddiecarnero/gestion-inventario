@@ -206,6 +206,9 @@ public class SideBar {
             case "recetas":
                 pagina = new RecetasPage();
                 break;
+            case "perfil":
+                pagina = new PerfilPage();
+                break;
 
             default:
                 System.out.println("Navegación a página no implementada: " + pageName);

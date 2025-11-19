@@ -8,9 +8,9 @@ public class ConexionBD {
 
     // ✅ Datos de la BD en la nube
     private static final String URL_CLOUD =
-            "jdbc:mysql://sql5.freesqldatabase.com:3306/sql5804315?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-    private static final String USER_CLOUD = "sql5804315";
-    private static final String PASS_CLOUD = "kNgqlGh3aL";
+            "jdbc:mysql://gondola.proxy.rlwy.net:15652/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+    private static final String USER_CLOUD = "root";
+    private static final String PASS_CLOUD = "EdKHQORZkHSYGjlBnApMjqdcaQemPmRI";
 
     // ✅ Datos de la BD local (MODIFICA AQUÍ SI TU PUERTO / DB SON DIFERENTES)
     private static final String URL_LOCAL =
