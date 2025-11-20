@@ -2,11 +2,7 @@ package com.inventario.ui;
 
 import com.inventario.config.ConexionBD;
 import javafx.scene.control.Alert;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,16 +72,9 @@ public class GestorVencimientos {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            if (conn != null) try {
-                conn.rollback();
-            } catch (Exception ex) {
-            }
+            if (conn != null) try { conn.rollback(); } catch (Exception ex) {}
         } finally {
-            if (conn != null) try {
-                conn.setAutoCommit(true);
-                conn.close();
-            } catch (Exception ex) {
-            }
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (Exception ex) {}
         }
     }
 }
