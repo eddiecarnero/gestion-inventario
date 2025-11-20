@@ -10,8 +10,7 @@
     <orderEntry type="library" name="MigLayout" level="project" />
     <orderEntry type="library" name="forms_rt" level="project" />
     <orderEntry type="library" name="mysql-connector-j-9.4" level="project" />
+    <orderEntry type="library" name="sqlite-jdbc-3.51.0.0" level="project" />
     <orderEntry type="library" name="lib" level="project" />
-    <orderEntry type="library" name="mysql-connector-j-9.4.0" level="project" />
-    <orderEntry type="library" name="lib1" level="project" />
   </component>
 </module>
