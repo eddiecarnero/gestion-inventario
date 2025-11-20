@@ -6,12 +6,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
+import javafx.scene.Node; // Importante: Node es la clase padre
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -35,6 +34,8 @@ public class OrdenesPage extends BorderPane {
     private final ComboBox<Insumo> insumoCombo;
     private final TextField cantidadField;
     private final DatePicker fechaPicker;
+
+    // UI para la pestaña de Gestión
     private final TableView<ItemOrdenGestion> tablaGestion;
     private final ObservableList<ItemOrdenGestion> listaOrdenesPendientes = FXCollections.observableArrayList();
     private VBox historialContainer;
@@ -43,115 +44,30 @@ public class OrdenesPage extends BorderPane {
     private final ObservableList<ItemOrden> items = FXCollections.observableArrayList();
     private final ObservableList<Insumo> todosLosInsumos = FXCollections.observableArrayList();
 
-    // (CSS_STYLES ... sin cambios)
+    // --- ESTILOS ---
     private static final String CSS_STYLES = """
-        .root {
-            -fx-background-color: #FDF8F0;
-            -fx-font-family: 'Segoe UI';
-        }
-        .header-title {
-            -fx-font-size: 2.2em;
-            -fx-font-weight: bold;
-            -fx-text-fill: #333333;
-        }
-        .header-description {
-            -fx-font-size: 1.1em;
-            -fx-text-fill: #555555;
-        }
-        .tab-pane .tab-header-area .tab-header-background {
-            -fx-background-color: transparent;
-        }
-        .tab-pane .tab {
-            -fx-background-color: transparent;
-            -fx-border-color: transparent;
-            -fx-padding: 8 15 8 15;
-            -fx-font-size: 1.1em;
-        }
-        .tab-pane .tab:selected {
-            -fx-background-color: transparent;
-            -fx-border-color: #4A90E2; /* PRIMARY */
-            -fx-border-width: 0 0 3 0;
-            -fx-text-fill: #4A90E2;
-            -fx-font-weight: bold;
-        }
-        .tab-content-area {
-            -fx-background-color: transparent;
-            -fx-padding: 20 0 0 0; 
-        }
-        .card {
-            -fx-background-color: white;
-            -fx-border-color: #E0E0E0; /* BORDER_LIGHT */
-            -fx-border-width: 1;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-padding: 20px;
-        }
-        .card-title {
-            -fx-font-size: 1.4em;
-            -fx-font-weight: bold;
-            -fx-text-fill: #333333;
-        }
-        .card-description {
-            -fx-font-size: 1em;
-            -fx-text-fill: #555555;
-        }
-        .label {
-            -fx-font-size: 1.05em;
-            -fx-font-weight: 500;
-            -fx-text-fill: #333333;
-        }
-        .combo-box, .text-field, .date-picker {
-            -fx-font-size: 1.05em;
-            -fx-pref-height: 38px;
-            -fx-border-color: #CCCCCC;
-            -fx-border-radius: 5;
-            -fx-background-radius: 5;
-        }
-        .button-primary {
-            -fx-background-color: #4A90E2; /* PRIMARY */
-            -fx-text-fill: white;
-            -fx-font-weight: bold;
-            -fx-font-size: 1.1em;
-            -fx-pref-height: 40px;
-            -fx-background-radius: 5;
-            -fx-cursor: hand;
-        }
-        .button-primary:hover {
-            -fx-background-color: #357ABD;
-        }
-        .button-add {
-            -fx-background-color: #22C55E;
-            -fx-text-fill: white;
-            -fx-font-weight: bold;
-            -fx-font-size: 1.1em;
-            -fx-pref-height: 38px;
-            -fx-background-radius: 5;
-            -fx-cursor: hand;
-        }
-        .button-danger {
-            -fx-background-color: transparent;
-            -fx-text-fill: #EF4444;
-            -fx-font-size: 1.4em;
-            -fx-cursor: hand;
-            -fx-padding: 5;
-        }
-        .button-danger:hover {
-            -fx-background-color: #FEE2E2;
-        }
-        .button-accept {
-            -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
-        }
-        .button-edit {
-            -fx-background-color: #F97316; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
-        }
-        .button-reject {
-            -fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;
-        }
-        .table-view .column-header {
-            -fx-background-color: #F9FAFB;
-            -fx-font-weight: bold;
-            -fx-font-size: 1.05em;
-        }
+        .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
+        .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; -fx-padding: 0 0 -5 0; }
+        .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; -fx-padding: 0 0 10 0; }
+        .tab-pane { -fx-padding: 0; }
+        .tab-pane .tab-header-area { -fx-padding: 0; }
+        .tab-content-area { -fx-background-color: transparent; -fx-padding: 20 0 0 0; }
+        .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
+        .tab-pane .tab { -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 8 15 8 15; -fx-font-size: 1.1em; }
+        .tab-pane .tab:selected { -fx-background-color: transparent; -fx-border-color: #4A90E2; -fx-border-width: 0 0 3 0; -fx-text-fill: #4A90E2; -fx-font-weight: bold; }
+        .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
+        .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+        .card-description { -fx-font-size: 1em; -fx-text-fill: #555555; }
+        .label { -fx-font-size: 1.05em; -fx-font-weight: 500; -fx-text-fill: #333333; }
+        .combo-box, .text-field, .date-picker { -fx-font-size: 1.05em; -fx-pref-height: 38px; -fx-border-color: #CCCCCC; -fx-border-radius: 5; }
+        .button-primary { -fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 1.1em; -fx-pref-height: 40px; -fx-cursor: hand; -fx-background-radius: 5; }
+        .button-add { -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 1.1em; -fx-pref-height: 38px; -fx-cursor: hand; -fx-background-radius: 5; }
+        .button-danger { -fx-background-color: transparent; -fx-text-fill: #EF4444; -fx-font-size: 1.4em; -fx-cursor: hand; -fx-padding: 5; }
+        .button-accept { -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; }
+        .button-edit { -fx-background-color: #F97316; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; }
+        .button-reject { -fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; }
+        .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; -fx-font-size: 1.05em; }
+        .badge { -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: white; }
     """;
 
     public OrdenesPage() {
@@ -198,24 +114,20 @@ public class OrdenesPage extends BorderPane {
         Tab tabGestion = new Tab("Gestionar Órdenes", crearTabGestion());
         tabGestion.setClosable(false);
         tabGestion.setOnSelectionChanged(e -> {
-            if (tabGestion.isSelected()) {
-                cargarOrdenesPendientes();
-            }
+            if (tabGestion.isSelected()) cargarOrdenesPendientes();
         });
 
         Tab tabHistorial = new Tab("Historial", crearTabHistorial());
         tabHistorial.setClosable(false);
         tabHistorial.setOnSelectionChanged(e -> {
-            if (tabHistorial.isSelected()) {
-                cargarHistorial(historialContainer);
-            }
+            if (tabHistorial.isSelected()) cargarHistorial(historialContainer);
         });
 
         tabPane.getTabs().addAll(tabNueva, tabGestion, tabHistorial);
         return tabPane;
     }
 
-    // (crearTabNuevaOrden y configurarTablaItems sin cambios desde la última versión)
+    // --- PESTAÑA NUEVA ORDEN (Simplificada: Sin fechas aquí) ---
     private Node crearTabNuevaOrden() {
         VBox layout = new VBox(25);
         layout.getStyleClass().add("tab-content-area");
@@ -229,9 +141,8 @@ public class OrdenesPage extends BorderPane {
         Label cardTitle = new Label("Nueva Orden de Compra");
         cardTitle.getStyleClass().add("card-title");
         cardHeader.getChildren().addAll(icon, cardTitle);
-        Label cardDescription = new Label("Complete los detalles de la orden");
+        Label cardDescription = new Label("Complete los detalles de la orden (las fechas se asignan al recibir)");
         cardDescription.getStyleClass().add("card-description");
-        VBox cardHeaderBox = new VBox(5, cardHeader, cardDescription);
 
         GridPane gridSup = new GridPane();
         gridSup.setHgap(20);
@@ -240,7 +151,7 @@ public class OrdenesPage extends BorderPane {
         proveedorCombo.setMaxWidth(Double.MAX_VALUE);
         gridSup.add(crearCampo("Proveedor", proveedorCombo), 0, 0);
         fechaPicker.setMaxWidth(Double.MAX_VALUE);
-        gridSup.add(crearCampo("Fecha", fechaPicker), 1, 0);
+        gridSup.add(crearCampo("Fecha de Emisión", fechaPicker), 1, 0);
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(50);
         ColumnConstraints col2 = new ColumnConstraints();
@@ -252,6 +163,7 @@ public class OrdenesPage extends BorderPane {
         addItemsBox.setStyle("-fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-background-radius: 8;");
         Label addItemsTitle = new Label("Agregar Items");
         addItemsTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
+
         GridPane addItemsGrid = new GridPane();
         addItemsGrid.setHgap(15);
         addItemsGrid.setVgap(10);
@@ -262,15 +174,18 @@ public class OrdenesPage extends BorderPane {
         ColumnConstraints colBtn = new ColumnConstraints();
         colBtn.setPercentWidth(20);
         addItemsGrid.getColumnConstraints().addAll(colInsumo, colCant, colBtn);
+
         insumoCombo.setPromptText("Seleccionar producto");
         insumoCombo.setMaxWidth(Double.MAX_VALUE);
         insumoCombo.setDisable(true);
         insumoCombo.setCellFactory(lv -> new InsumoListCell());
         insumoCombo.setButtonCell(new InsumoListCell());
         addItemsGrid.add(crearCampo("Producto", insumoCombo), 0, 0);
+
         cantidadField.setPromptText("0");
         cantidadField.setMaxWidth(Double.MAX_VALUE);
         addItemsGrid.add(crearCampo("Cantidad", cantidadField), 1, 0);
+
         Button addButton = new Button("➕ Agregar");
         addButton.getStyleClass().add("button-add");
         addButton.setMaxWidth(Double.MAX_VALUE);
@@ -279,6 +194,7 @@ public class OrdenesPage extends BorderPane {
         btnBox.setAlignment(Pos.BOTTOM_CENTER);
         btnBox.setPadding(new Insets(19, 0, 0, 0));
         addItemsGrid.add(btnBox, 2, 0);
+
         addItemsBox.getChildren().addAll(addItemsTitle, addItemsGrid);
 
         proveedorCombo.setOnAction(e -> {
@@ -298,7 +214,6 @@ public class OrdenesPage extends BorderPane {
         HBox totalBox = new HBox(10);
         totalBox.setAlignment(Pos.CENTER_RIGHT);
         totalBox.setPadding(new Insets(15));
-        totalBox.setStyle("-fx-border-color: #E0E0E0; -fx-border-width: 0 1 1 1; -fx-background-color: #F9FAFB; -fx-border-radius: 0 0 8 8; -fx-background-radius: 0 0 8 8;");
         Label totalText = new Label("Total:");
         totalText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         totalLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
@@ -306,12 +221,12 @@ public class OrdenesPage extends BorderPane {
         tablaYTotal.getChildren().addAll(tablaItems, totalBox);
         VBox.setVgrow(tablaItems, Priority.ALWAYS);
 
-        Button crearOrdenBtn = new Button("🛒 Crear Orden de Compra");
+        Button crearOrdenBtn = new Button("🛒 Guardar Orden (Pendiente)");
         crearOrdenBtn.getStyleClass().add("button-primary");
         crearOrdenBtn.setMaxWidth(Double.MAX_VALUE);
         crearOrdenBtn.setOnAction(e -> guardarOrden());
 
-        card.getChildren().addAll(cardHeaderBox, gridSup, addItemsBox, tablaYTotal, crearOrdenBtn);
+        card.getChildren().addAll(new VBox(5, cardHeader.getChildren().toArray(new Node[0])), cardDescription, gridSup, addItemsBox, tablaYTotal, crearOrdenBtn);
         layout.getChildren().add(card);
         return layout;
     }
@@ -327,8 +242,7 @@ public class OrdenesPage extends BorderPane {
         TableColumn<ItemOrden, Double> precioCol = new TableColumn<>("Precio Unit.");
         precioCol.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
         precioCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double price, boolean empty) {
+            @Override protected void updateItem(Double price, boolean empty) {
                 super.updateItem(price, empty);
                 setText(empty ? null : String.format("$%.2f", price));
             }
@@ -337,8 +251,7 @@ public class OrdenesPage extends BorderPane {
         TableColumn<ItemOrden, Double> totalCol = new TableColumn<>("Subtotal");
         totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
         totalCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double total, boolean empty) {
+            @Override protected void updateItem(Double total, boolean empty) {
                 super.updateItem(total, empty);
                 setText(empty ? null : String.format("$%.2f", total));
             }
@@ -355,8 +268,7 @@ public class OrdenesPage extends BorderPane {
                     actualizarTotal(lista, totalLabel);
                 });
             }
-            @Override
-            protected void updateItem(Void item, boolean empty) {
+            @Override protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : deleteButton);
                 setAlignment(Pos.CENTER);
@@ -379,7 +291,7 @@ public class OrdenesPage extends BorderPane {
         card.getStyleClass().add("card");
         Label cardTitle = new Label("Órdenes de Compra Pendientes");
         cardTitle.getStyleClass().add("card-title");
-        Label cardDescription = new Label("Acepte, edite o rechace las órdenes pendientes de ingreso.");
+        Label cardDescription = new Label("Acepte (ingresando fechas) o rechace las órdenes.");
         cardDescription.getStyleClass().add("card-description");
 
         configurarTablaGestion();
@@ -407,8 +319,7 @@ public class OrdenesPage extends BorderPane {
         TableColumn<ItemOrdenGestion, Double> totalCol = new TableColumn<>("Total");
         totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
         totalCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double total, boolean empty) {
+            @Override protected void updateItem(Double total, boolean empty) {
                 super.updateItem(total, empty);
                 setText(empty ? null : String.format("$%.2f", total));
             }
@@ -430,22 +341,12 @@ public class OrdenesPage extends BorderPane {
                 btnReject.getStyleClass().add("button-reject");
                 pane.setAlignment(Pos.CENTER);
 
-                btnAccept.setOnAction(event -> {
-                    ItemOrdenGestion orden = getTableView().getItems().get(getIndex());
-                    accionAceptarOrden(orden);
-                });
-                btnEdit.setOnAction(event -> {
-                    ItemOrdenGestion orden = getTableView().getItems().get(getIndex());
-                    accionEditarOrden(orden);
-                });
-                btnReject.setOnAction(event -> {
-                    ItemOrdenGestion orden = getTableView().getItems().get(getIndex());
-                    accionRechazarOrden(orden);
-                });
+                btnAccept.setOnAction(event -> accionAceptarOrden(getTableView().getItems().get(getIndex())));
+                btnEdit.setOnAction(event -> accionEditarOrden(getTableView().getItems().get(getIndex())));
+                btnReject.setOnAction(event -> accionRechazarOrden(getTableView().getItems().get(getIndex())));
             }
 
-            @Override
-            protected void updateItem(Void item, boolean empty) {
+            @Override protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : pane);
             }
@@ -468,21 +369,243 @@ public class OrdenesPage extends BorderPane {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while(rs.next()) {
+                String fechaStr = rs.getString("Fecha_de_Compra");
+                Date fecha = null;
+                try { if(fechaStr!=null) fecha=Date.valueOf(fechaStr); } catch(Exception e){}
+
                 listaOrdenesPendientes.add(new ItemOrdenGestion(
                         rs.getInt("IdCompra"),
                         rs.getString("Nombre_comercial"),
-                        rs.getDate("Fecha_de_Compra"),
+                        fecha,
                         rs.getDouble("Precio_total"),
                         rs.getString("Estado")
                 ));
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
             mostrarAlerta("Error de BD", "No se pudo cargar las órdenes pendientes: " + e.getMessage());
         }
     }
 
+    // --- LÓGICA DE NEGOCIO: ACEPTAR (Con Diálogo de Fechas) ---
+
+    private void accionAceptarOrden(ItemOrdenGestion orden) {
+        ObservableList<ItemOrden> itemsOrden = FXCollections.observableArrayList();
+        cargarItemsDeOrden(orden.getId(), itemsOrden);
+
+        if (itemsOrden.isEmpty()) {
+            mostrarAlerta("Error", "Esta orden no tiene detalles.");
+            return;
+        }
+
+        // Diálogo para pedir fechas
+        Dialog<HashMap<Integer, LocalDate>> dialog = new Dialog<>();
+        dialog.setTitle("Confirmar Recepción - Orden #" + orden.getId());
+        dialog.setHeaderText("Ingrese la fecha de vencimiento para cada producto:");
+        dialog.getDialogPane().setMinWidth(600);
+        ButtonType okButtonType = new ButtonType("Confirmar Recepción", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15); grid.setVgap(10); grid.setPadding(new Insets(20));
+        grid.add(new Label("Producto"), 0, 0);
+        grid.add(new Label("Cantidad"), 1, 0);
+        grid.add(new Label("Fecha Vencimiento"), 2, 0);
+        grid.add(new Label("No Aplica"), 3, 0);
+
+        List<DatePicker> datePickers = new ArrayList<>();
+        List<CheckBox> checkBoxes = new ArrayList<>();
+
+        for (int i = 0; i < itemsOrden.size(); i++) {
+            ItemOrden item = itemsOrden.get(i);
+            int row = i + 1;
+            grid.add(new Label(item.getNombre()), 0, row);
+            grid.add(new Label(String.valueOf(item.getCantidad())), 1, row);
+
+            DatePicker picker = new DatePicker(LocalDate.now().plusMonths(6));
+            CheckBox check = new CheckBox();
+            picker.disableProperty().bind(check.selectedProperty());
+
+            grid.add(picker, 2, row);
+            grid.add(check, 3, row);
+            datePickers.add(picker);
+            checkBoxes.add(check);
+        }
+
+        ScrollPane scroll = new ScrollPane(grid);
+        scroll.setFitToWidth(true);
+        scroll.setMaxHeight(400);
+        dialog.getDialogPane().setContent(scroll);
+
+        dialog.setResultConverter(btn -> {
+            if (btn == okButtonType) {
+                HashMap<Integer, LocalDate> mapaFechas = new HashMap<>();
+                for (int i = 0; i < itemsOrden.size(); i++) {
+                    if (!checkBoxes.get(i).isSelected() && datePickers.get(i).getValue() == null) return null;
+                    LocalDate fecha = checkBoxes.get(i).isSelected() ? null : datePickers.get(i).getValue();
+                    mapaFechas.put(itemsOrden.get(i).getInsumoId(), fecha);
+                }
+                return mapaFechas;
+            }
+            return null;
+        });
+
+        Optional<HashMap<Integer, LocalDate>> result = dialog.showAndWait();
+
+        if (result.isPresent()) {
+            procesarAceptacionFinal(orden, itemsOrden, result.get());
+        }
+    }
+
+    private void procesarAceptacionFinal(ItemOrdenGestion orden, List<ItemOrden> items, HashMap<Integer, LocalDate> fechas) {
+        Connection conn = null;
+        try {
+            conn = ConexionBD.getConnection();
+            conn.setAutoCommit(false);
+
+            // A. Insertar en LOTES
+            String sqlLote = "INSERT INTO lotes (IdProducto, CantidadActual, FechaVencimiento, FechaIngreso, IdCompra) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlLote)) {
+                for (ItemOrden item : items) {
+                    LocalDate fVenc = fechas.get(item.getInsumoId());
+                    stmt.setInt(1, item.getInsumoId());
+                    stmt.setDouble(2, item.getCantidad());
+                    if (fVenc != null) stmt.setString(3, fVenc.toString()); else stmt.setNull(3, Types.VARCHAR);
+                    stmt.setString(4, LocalDate.now().toString());
+                    stmt.setInt(5, orden.getId());
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+            }
+
+            // B. Actualizar Stock Total
+            String sqlUpdateStock = "UPDATE producto SET Stock = Stock + ? WHERE IdProducto = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateStock)) {
+                for (ItemOrden item : items) {
+                    stmt.setDouble(1, item.getCantidad());
+                    stmt.setInt(2, item.getInsumoId());
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+            }
+
+            // C. Registrar en KARDEX
+            String sqlKardex = "INSERT INTO kardex (IdProducto, Fecha, Motivo, TipoMovimiento, IdEmpleado, Cantidad) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlKardex)) {
+                for (ItemOrden item : items) {
+                    stmt.setInt(1, item.getInsumoId());
+                    stmt.setString(2, LocalDate.now().toString());
+                    stmt.setString(3, "Recepción Orden #" + orden.getId());
+                    stmt.setString(4, "Entrada");
+                    stmt.setInt(5, 1);
+                    stmt.setDouble(6, item.getCantidad());
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+            }
+
+            // D. Cerrar Orden
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE orden_compra SET Estado = 'Completada' WHERE IdCompra = ?")) {
+                stmt.setInt(1, orden.getId());
+                stmt.executeUpdate();
+            }
+
+            conn.commit();
+            mostrarAlerta("Éxito", "Orden aceptada. Lotes creados y stock actualizado.");
+            cargarOrdenesPendientes();
+            cargarHistorial(historialContainer);
+
+        } catch (Exception e) {
+            if(conn!=null) try{conn.rollback();}catch(Exception ex){}
+            e.printStackTrace();
+            mostrarAlerta("Error", "Fallo al aceptar orden: " + e.getMessage());
+        } finally {
+            if(conn!=null) try{conn.setAutoCommit(true); conn.close();}catch(Exception ex){}
+        }
+    }
+
+    private void accionRechazarOrden(ItemOrdenGestion orden) {
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("UPDATE orden_compra SET Estado = 'Rechazada' WHERE IdCompra = ?")) {
+            stmt.setInt(1, orden.getId());
+            stmt.executeUpdate();
+            mostrarAlerta("Éxito", "Orden rechazada.");
+            cargarOrdenesPendientes();
+            cargarHistorial(historialContainer);
+        } catch (SQLException e) {
+            mostrarAlerta("Error", e.getMessage());
+        }
+    }
+
+    // --- LÓGICA: EDITAR (CON VALIDACIÓN) ---
+    private void accionEditarOrden(ItemOrdenGestion orden) {
+        Dialog<Boolean> dialog = new Dialog<>();
+        dialog.setTitle("Editar Orden #" + orden.getId());
+        dialog.setHeaderText("Modificar orden pendiente");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setPrefWidth(800);
+
+        VBox layout = new VBox(20); layout.setPadding(new Insets(20));
+
+        ComboBox<String> editProv = new ComboBox<>(); cargarProveedores(editProv); editProv.setValue(orden.getProveedorNombre());
+        DatePicker editFecha = new DatePicker(); if(orden.getFecha() != null) editFecha.setValue(orden.getFecha().toLocalDate());
+        HBox top = new HBox(20, crearCampo("Proveedor", editProv), crearCampo("Fecha", editFecha));
+
+        TableView<ItemOrden> editTable = new TableView<>();
+        ObservableList<ItemOrden> editItems = FXCollections.observableArrayList();
+        Label editTotal = new Label();
+        configurarTablaItems(editTable, editItems, editTotal);
+        cargarItemsDeOrden(orden.getId(), editItems);
+        actualizarTotal(editItems, editTotal);
+
+        ComboBox<Insumo> cInsumo = new ComboBox<>();
+        cInsumo.setCellFactory(lv->new InsumoListCell()); cInsumo.setButtonCell(new InsumoListCell());
+        int idProv = obtenerIdProveedor(orden.getProveedorNombre());
+        filtrarInsumosPorProveedor(cInsumo, idProv);
+        editProv.setOnAction(e -> filtrarInsumosPorProveedor(cInsumo, obtenerIdProveedor(editProv.getValue())));
+
+        TextField cCant = new TextField();
+        Button btnAdd = new Button("Agregar");
+        btnAdd.setOnAction(e -> agregarItemLogica(cInsumo, cCant, editItems, editTotal));
+
+        HBox addBox = new HBox(10, crearCampo("Producto", cInsumo), crearCampo("Cant.", cCant), btnAdd);
+        addBox.setAlignment(Pos.BOTTOM_LEFT); HBox.setHgrow(addBox.getChildren().get(0), Priority.ALWAYS);
+
+        layout.getChildren().addAll(top, addBox, editTable, new HBox(new Label("Total: "), editTotal));
+        dialog.getDialogPane().setContent(layout);
+
+        dialog.setResultConverter(btn -> {
+            if(btn==ButtonType.OK) {
+                if(editItems.isEmpty()) { mostrarAlerta("Error", "Mínimo 1 item"); return false; }
+                return actualizarOrdenEnBD(orden.getId(), obtenerIdProveedor(editProv.getValue()), editFecha.getValue(), editItems);
+            } return false;
+        });
+
+        if(dialog.showAndWait().orElse(false)) {
+            mostrarAlerta("Éxito", "Orden actualizada.");
+            cargarOrdenesPendientes();
+        }
+    }
+
+    private boolean actualizarOrdenEnBD(int idOrden, int idProv, LocalDate fecha, ObservableList<ItemOrden> nuevosItems) {
+        try(Connection conn = ConexionBD.getConnection()) {
+            conn.setAutoCommit(false);
+            try(PreparedStatement ps = conn.prepareStatement("UPDATE orden_compra SET IdProveedor=?, Fecha_de_Compra=?, Precio_total=? WHERE IdCompra=?")) {
+                ps.setInt(1, idProv); ps.setString(2, fecha.toString());
+                ps.setDouble(3, nuevosItems.stream().mapToDouble(ItemOrden::getTotal).sum());
+                ps.setInt(4, idOrden); ps.executeUpdate();
+            }
+            conn.createStatement().executeUpdate("DELETE FROM detalle_compra WHERE IdCompra=" + idOrden);
+            try(PreparedStatement ps = conn.prepareStatement("INSERT INTO detalle_compra (IdCompra, IdProducto, Cantidad, PrecioUnitario, SubTotal) VALUES (?, ?, ?, ?, ?)")) {
+                for(ItemOrden i : nuevosItems) {
+                    ps.setInt(1, idOrden); ps.setInt(2, i.getInsumoId()); ps.setDouble(3, i.getCantidad());
+                    ps.setDouble(4, i.getPrecioUnitario()); ps.setDouble(5, i.getTotal()); ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+            conn.commit(); return true;
+        } catch(Exception e) { return false; }
+    }
 
     // --- PESTAÑA "HISTORIAL" ---
 
@@ -532,10 +655,9 @@ public class OrdenesPage extends BorderPane {
 
             while (rs.next()) {
                 int idOrden = rs.getInt("IdCompra");
-                String proveedor = rs.getString("Nombre_comercial");
-                Date fecha = rs.getDate("Fecha_de_Compra");
-                double total = rs.getDouble("Precio_total");
-                String estado = rs.getString("Estado");
+                String fechaStr = rs.getString("Fecha_de_Compra");
+                Date fecha = null;
+                try { if(fechaStr!=null) fecha=Date.valueOf(fechaStr); } catch(Exception e){}
 
                 List<ItemHistorial> itemsHistorial = new ArrayList<>();
                 try (PreparedStatement stmtDet = conn.prepareStatement(sqlDetalle)) {
@@ -550,7 +672,7 @@ public class OrdenesPage extends BorderPane {
                     }
                 }
 
-                OrdenHistorial orden = new OrdenHistorial(idOrden, proveedor, fecha, total, estado, itemsHistorial);
+                OrdenHistorial orden = new OrdenHistorial(idOrden, rs.getString("Nombre_comercial"), fecha, rs.getDouble("Precio_total"), rs.getString("Estado"), itemsHistorial);
                 container.getChildren().add(crearCardOrden(orden));
             }
 
@@ -569,7 +691,7 @@ public class OrdenesPage extends BorderPane {
         VBox tituloFecha = new VBox(2);
         Label titulo = new Label(String.format("Orden #%d - %s", orden.getId(), orden.getProveedor()));
         titulo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-        Label fecha = new Label(orden.getFecha().toLocalDate().toString());
+        Label fecha = new Label(orden.getFecha() != null ? orden.getFecha().toString() : "Sin Fecha");
         fecha.getStyleClass().add("card-description");
         tituloFecha.getChildren().addAll(titulo, fecha);
         header.setLeft(tituloFecha);
@@ -667,10 +789,35 @@ public class OrdenesPage extends BorderPane {
         combo.setItems(FXCollections.observableArrayList(filtrados));
     }
 
+    private void cargarItemsDeOrden(int idCompra, ObservableList<ItemOrden> lista) {
+        lista.clear();
+        String sql = "SELECT d.IdProducto, d.Cantidad, p.IdProveedor, p.Tipo_de_Producto, p.PrecioUnitario, p.Unidad_de_medida FROM detalle_compra d JOIN producto p ON d.IdProducto = p.IdProducto WHERE d.IdCompra = ?";
+        try (Connection conn = ConexionBD.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idCompra);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Insumo insumo = new Insumo(rs.getInt(1), rs.getInt(3), rs.getString(4), rs.getDouble(5), rs.getString(6));
+                lista.add(new ItemOrden(insumo, rs.getDouble(2)));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
 
     // --- Métodos de Lógica de UI ---
 
     private VBox crearCampo(String labelText, Control input) {
+        // IMPORTANTE: Cambiado a Node para aceptar HBox también si fuera necesario,
+        // aunque aquí uso Control porque paso ComboBox/TextField.
+        // Si pasas HBox, cambia 'Control' a 'Node'.
+        VBox vbox = new VBox(5);
+        Label label = new Label(labelText);
+        label.getStyleClass().add("label");
+        vbox.getChildren().addAll(label, input);
+        return vbox;
+    }
+
+    // Sobrecarga para aceptar HBox
+    private VBox crearCampo(String labelText, Node input) {
         VBox vbox = new VBox(5);
         Label label = new Label(labelText);
         label.getStyleClass().add("label");
@@ -759,7 +906,7 @@ public class OrdenesPage extends BorderPane {
             try (PreparedStatement stmtOrden = conn.prepareStatement(sqlOrden, Statement.RETURN_GENERATED_KEYS)) {
                 stmtOrden.setInt(1, idProveedor);
                 stmtOrden.setInt(2, 1); // TODO: Cambiar por ID de sesión
-                stmtOrden.setDate(3, java.sql.Date.valueOf(fecha));
+                stmtOrden.setString(3, fecha.toString()); // Guardar como texto para SQLite
                 stmtOrden.setDouble(4, total);
 
                 stmtOrden.executeUpdate();
@@ -806,240 +953,6 @@ public class OrdenesPage extends BorderPane {
         }
     }
 
-
-    // --- ACCIONES DE GESTIÓN (CORREGIDAS PARA LOTES) ---
-
-    /**
-     * CORREGIDO: Abre un diálogo para pedir fecha de vencimiento POR PRODUCTO.
-     */
-    private void accionAceptarOrden(ItemOrdenGestion orden) {
-        // 1. Cargar los detalles de la orden primero
-        ObservableList<ItemOrden> itemsDeLaOrden = FXCollections.observableArrayList();
-        cargarItemsDeOrden(orden.getId(), itemsDeLaOrden);
-
-        if (itemsDeLaOrden.isEmpty()) {
-            mostrarAlerta("Error", "Esta orden no tiene detalles y no puede ser procesada.");
-            return;
-        }
-
-        // 2. Crear Diálogo
-        Dialog<HashMap<Integer, LocalDate>> dialog = new Dialog<>();
-        dialog.setTitle("Confirmar Recepción de Lotes");
-        dialog.setHeaderText("Orden #" + orden.getId() + ". Ingrese las fechas de vencimiento:");
-        dialog.getDialogPane().setMinWidth(500);
-
-        ButtonType okButtonType = new ButtonType("Aceptar Lotes", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
-
-        // 3. Crear Layout del Diálogo (un GridPane)
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 20, 10, 10));
-
-        grid.add(new Label("Producto"), 0, 0);
-        grid.add(new Label("Fecha Vencimiento"), 1, 0);
-        grid.add(new Label("No Aplica"), 2, 0);
-
-        // Listas para guardar los controles creados
-        List<DatePicker> datePickers = new ArrayList<>();
-        List<CheckBox> checkBoxes = new ArrayList<>();
-
-        // 4. Poblar el GridPane con los items de la orden
-        for (int i = 0; i < itemsDeLaOrden.size(); i++) {
-            ItemOrden item = itemsDeLaOrden.get(i);
-
-            Label itemLabel = new Label(item.getNombre());
-            DatePicker picker = new DatePicker(LocalDate.now().plusMonths(6));
-            CheckBox noVenceCheck = new CheckBox();
-
-            // Lógica del CheckBox
-            picker.disableProperty().bind(noVenceCheck.selectedProperty());
-
-            grid.add(itemLabel, 0, i + 1);
-            grid.add(picker, 1, i + 1);
-            grid.add(noVenceCheck, 2, i + 1);
-
-            datePickers.add(picker);
-            checkBoxes.add(noVenceCheck);
-        }
-
-        dialog.getDialogPane().setContent(new ScrollPane(grid));
-
-        // 5. Convertir resultado (Crear un Mapa de [IdProducto -> FechaVencimiento])
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == okButtonType) {
-                HashMap<Integer, LocalDate> fechasVencimiento = new HashMap<>();
-                for (int i = 0; i < itemsDeLaOrden.size(); i++) {
-                    int idProducto = itemsDeLaOrden.get(i).getInsumoId();
-                    LocalDate fecha = null;
-
-                    if (!checkBoxes.get(i).isSelected()) {
-                        fecha = datePickers.get(i).getValue();
-                        if (fecha == null) {
-                            mostrarAlerta("Error", "Debe seleccionar una fecha para '" + itemsDeLaOrden.get(i).getNombre() + "' o marcar 'No Aplica'.");
-                            return null; // Devuelve null para no cerrar el diálogo
-                        }
-                    }
-                    fechasVencimiento.put(idProducto, fecha);
-                }
-                return fechasVencimiento;
-            }
-            return null; // Cancela
-        });
-
-        Optional<HashMap<Integer, LocalDate>> result = dialog.showAndWait();
-
-        // 6. Procesar si el usuario presionó OK y los datos son válidos
-        if (result.isPresent()) {
-            procesarAceptacion(orden, itemsDeLaOrden, result.get());
-        }
-    }
-
-    /**
-     * CORREGIDO: Lógica de BD que recibe el Mapa de fechas.
-     */
-    private void procesarAceptacion(ItemOrdenGestion orden, ObservableList<ItemOrden> detalles, HashMap<Integer, LocalDate> fechasVencimiento) {
-        Connection conn = null;
-        try {
-            conn = ConexionBD.getConnection();
-            conn.setAutoCommit(false); // Iniciar Transacción
-
-            // 1. Insertar en la tabla 'lotes'
-            String sqlInsertLote = "INSERT INTO lotes (IdProducto, CantidadActual, FechaVencimiento, FechaIngreso, IdCompra) " +
-                    "VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement stmtLote = conn.prepareStatement(sqlInsertLote)) {
-                for (ItemOrden d : detalles) {
-                    LocalDate fechaVencimiento = fechasVencimiento.get(d.getInsumoId());
-
-                    stmtLote.setInt(1, d.getInsumoId());
-                    stmtLote.setDouble(2, d.getCantidad());
-
-                    if (fechaVencimiento != null) {
-                        stmtLote.setDate(3, Date.valueOf(fechaVencimiento));
-                    } else {
-                        stmtLote.setNull(3, java.sql.Types.DATE);
-                    }
-
-                    stmtLote.setDate(4, Date.valueOf(LocalDate.now())); // Fecha de hoy
-                    stmtLote.setInt(5, orden.getId());
-                    stmtLote.addBatch();
-                }
-                stmtLote.executeBatch();
-            }
-
-            // 2. Registrar en el Kardex (Esto sigue igual, está bien)
-            String sqlKardex = "INSERT INTO kardex (IdProducto, Fecha, Motivo, TipoMovimiento, IdEmpleado, Cantidad) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement stmtKardex = conn.prepareStatement(sqlKardex)) {
-                for (ItemOrden d : detalles) {
-                    stmtKardex.setInt(1, d.getInsumoId());
-                    stmtKardex.setDate(2, java.sql.Date.valueOf(LocalDate.now()));
-                    stmtKardex.setString(3, "Recepción Orden #" + orden.getId());
-                    stmtKardex.setString(4, "Entrada");
-                    stmtKardex.setInt(5, 1); // TODO: Usar ID de empleado de sesión
-                    stmtKardex.setDouble(6, d.getCantidad());
-                    stmtKardex.addBatch();
-                }
-                stmtKardex.executeBatch();
-            }
-
-            // 3. Actualizar el estado de la orden
-            String sqlUpdateOrden = "UPDATE orden_compra SET Estado = 'Completada' WHERE IdCompra = ?";
-            try (PreparedStatement stmtOrden = conn.prepareStatement(sqlUpdateOrden)) {
-                stmtOrden.setInt(1, orden.getId());
-                stmtOrden.executeUpdate();
-            }
-
-            // 4. Confirmar transacción
-            conn.commit();
-            mostrarAlerta("Éxito", "Orden #" + orden.getId() + " aceptada. Los lotes han sido creados.");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            mostrarAlerta("Error de Transacción", "No se pudo aceptar la orden: " + e.getMessage());
-        } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-
-            // 5. Recargar ambas tablas
-            cargarOrdenesPendientes();
-            cargarHistorial(historialContainer);
-        }
-    }
-
-    private void accionRechazarOrden(ItemOrdenGestion orden) {
-        String sql = "UPDATE orden_compra SET Estado = 'Rechazada' WHERE IdCompra = ?";
-        try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, orden.getId());
-            stmt.executeUpdate();
-
-            mostrarAlerta("Éxito", "Orden #" + orden.getId() + " ha sido rechazada.");
-
-            cargarOrdenesPendientes();
-            cargarHistorial(historialContainer);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "No se pudo rechazar la orden: " + e.getMessage());
-        }
-    }
-
-    /**
-     * CAMBIO: Deshabilitado temporalmente.
-     */
-    private void accionEditarOrden(ItemOrdenGestion orden) {
-        mostrarAlerta("Información", "La edición de órdenes pendientes ha sido deshabilitada\ndebido a la complejidad del sistema de Lotes.");
-    }
-
-
-    /**
-     * Carga los items de una orden específica en una lista observable.
-     */
-    private void cargarItemsDeOrden(int idCompra, ObservableList<ItemOrden> lista) {
-        lista.clear();
-        String sql = "SELECT d.IdProducto, d.Cantidad, p.IdProveedor, p.Tipo_de_Producto, p.PrecioUnitario, p.Unidad_de_medida " +
-                "FROM detalle_compra d " +
-                "JOIN producto p ON d.IdProducto = p.IdProducto " +
-                "WHERE d.IdCompra = ?";
-
-        try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, idCompra);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Insumo insumo = new Insumo(
-                        rs.getInt("IdProducto"),
-                        rs.getInt("IdProveedor"),
-                        rs.getString("Tipo_de_Producto"),
-                        rs.getDouble("PrecioUnitario"),
-                        rs.getString("Unidad_de_medida")
-                );
-                double cantidad = rs.getDouble("Cantidad");
-                lista.add(new ItemOrden(insumo, cantidad));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "No se pudieron cargar los detalles de la orden: " + e.getMessage());
-        }
-    }
-
-    /**
-     * (Este método está actualmente deshabilitado por accionEditarOrden)
-     */
-    private boolean actualizarOrdenEnBD(int idCompra, int idProveedor, LocalDate fecha, double total, ObservableList<ItemOrden> nuevosItems) {
-        // Esta lógica es ahora incorrecta porque no maneja Lotes.
-        // Requiere una reimplementación completa que está fuera del alcance
-        // de la función de "Editar" simple.
-        mostrarAlerta("Error", "La lógica de edición no está implementada para el sistema de lotes.");
-        return false;
-    }
-
-
     private void mostrarAlerta(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         if (titulo.startsWith("Error")) {
@@ -1061,15 +974,23 @@ public class OrdenesPage extends BorderPane {
         private final String unidad;
 
         public Insumo(int id, int idProveedor, String nombre, double precio, String unidad) {
-            this.id = id; this.idProveedor = idProveedor; this.nombre = nombre; this.precioUnitario = precio;
+            this.id = id;
+            this.idProveedor = idProveedor;
+            this.nombre = nombre;
+            this.precioUnitario = precio;
             this.unidad = (unidad != null) ? unidad : "Unidad";
         }
+
         public int getId() { return id; }
         public int getIdProveedor() { return idProveedor; }
         public String getNombre() { return nombre; }
         public double getPrecioUnitario() { return precioUnitario; }
         public String getUnidad() { return unidad; }
-        @Override public String toString() { return String.format("%s - $%.2f (%s)", nombre, precioUnitario, unidad); }
+
+        @Override
+        public String toString() {
+            return String.format("%s - $%.2f (%s)", nombre, precioUnitario, unidad);
+        }
     }
 
     private static class InsumoListCell extends ListCell<Insumo> {
@@ -1088,9 +1009,13 @@ public class OrdenesPage extends BorderPane {
         private double total;
 
         public ItemOrden(Insumo insumo, double cantidad) {
-            this.insumoId = insumo.getId(); this.nombre = insumo.getNombre(); this.cantidad = cantidad;
-            this.precioUnitario = insumo.getPrecioUnitario(); this.total = cantidad * this.precioUnitario;
+            this.insumoId = insumo.getId();
+            this.nombre = insumo.getNombre();
+            this.cantidad = cantidad;
+            this.precioUnitario = insumo.getPrecioUnitario();
+            this.total = cantidad * this.precioUnitario;
         }
+
         public int getInsumoId() { return insumoId; }
         public String getNombre() { return nombre; }
         public double getCantidad() { return cantidad; }
@@ -1108,7 +1033,12 @@ public class OrdenesPage extends BorderPane {
         private final List<ItemHistorial> items;
 
         public OrdenHistorial(int id, String proveedor, Date fecha, double total, String estado, List<ItemHistorial> items) {
-            this.id = id; this.proveedor = proveedor; this.fecha = fecha; this.total = total; this.estado = estado; this.items = items;
+            this.id = id;
+            this.proveedor = proveedor;
+            this.fecha = fecha;
+            this.total = total;
+            this.estado = estado;
+            this.items = items;
         }
         public int getId() { return id; }
         public String getProveedor() { return proveedor; }
@@ -1122,9 +1052,13 @@ public class OrdenesPage extends BorderPane {
         private final String nombre;
         private final double cantidad;
         private final double precioUnitario;
+
         public ItemHistorial(String nombre, double cantidad, double precioUnitario) {
-            this.nombre = nombre; this.cantidad = cantidad; this.precioUnitario = precioUnitario;
+            this.nombre = nombre;
+            this.cantidad = cantidad;
+            this.precioUnitario = precioUnitario;
         }
+
         public String getNombre() { return nombre; }
         public double getCantidad() { return cantidad; }
         public double getPrecioUnitario() { return precioUnitario; }
@@ -1139,7 +1073,11 @@ public class OrdenesPage extends BorderPane {
         private final String estado;
 
         public ItemOrdenGestion(int id, String proveedorNombre, Date fecha, double total, String estado) {
-            this.id = id; this.proveedorNombre = proveedorNombre; this.fecha = fecha; this.total = total; this.estado = estado;
+            this.id = id;
+            this.proveedorNombre = proveedorNombre;
+            this.fecha = fecha;
+            this.total = total;
+            this.estado = estado;
         }
         public int getId() { return id; }
         public String getProveedorNombre() { return proveedorNombre; }
