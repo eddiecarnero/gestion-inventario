@@ -12,8 +12,8 @@ public class ProductoDAO {
     // 1. Método para obtener todos los productos
     public List<Producto> obtenerTodosLosProductos() {
         List<Producto> productos = new ArrayList<>();
-        // La consulta SQL sigue siendo la misma, usando los nombres de columna de la BD
-        String sql = "SELECT IdProducto, Tipo_de_Producto, Stock, Stock_Minimo, Stock_Maximo, Estado_Stock, Fecha_de_caducidad, Unidad_de_medida, Ubicacion FROM producto";
+        // --- CAMBIO: Agregamos Contenido ---
+        String sql = "SELECT IdProducto, Tipo_de_Producto, Stock, Stock_Minimo, Stock_Maximo, Estado_Stock, Fecha_de_caducidad, Unidad_de_medida, Ubicacion, PrecioUnitario, IdProveedor, Contenido FROM producto";
 
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
@@ -21,50 +21,46 @@ public class ProductoDAO {
 
             while (rs.next()) {
                 Producto p = new Producto();
-
-                // *** CORRECCIÓN ***
-                // Mapeamos las columnas de la BD (String) a los setters de Java (camelCase)
                 p.setIdProducto(rs.getInt("IdProducto"));
-                p.setTipoDeProducto(rs.getString("Tipo_de_Producto")); // Corregido
+                p.setTipoDeProducto(rs.getString("Tipo_de_Producto"));
                 p.setStock(rs.getInt("Stock"));
-                p.setStockMinimo(rs.getInt("Stock_Minimo"));           // Corregido
-                p.setStockMaximo(rs.getInt("Stock_Maximo"));           // Corregido
-                p.setEstadoStock(rs.getString("Estado_Stock"));        // Corregido
-                p.setFechaDeCaducidad(rs.getDate("Fecha_de_caducidad"));// Corregido
-                p.setUnidadDeMedida(rs.getString("Unidad_de_medida"));  // Corregido
+                p.setStockMinimo(rs.getInt("Stock_Minimo"));
+                p.setStockMaximo(rs.getInt("Stock_Maximo"));
+                p.setEstadoStock(rs.getString("Estado_Stock"));
+                p.setFechaDeCaducidad(rs.getDate("Fecha_de_caducidad"));
+                p.setUnidadDeMedida(rs.getString("Unidad_de_medida"));
                 p.setUbicacion(rs.getString("Ubicacion"));
+                p.setPrecioUnitario(rs.getDouble("PrecioUnitario"));
+                p.setIdProveedor(rs.getInt("IdProveedor"));
+                // --- NUEVO ---
+                double cont = rs.getDouble("Contenido");
+                p.setContenido(cont <= 0 ? 1 : cont); // Evitar división por cero
 
                 productos.add(p);
             }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener productos: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return productos;
     }
 
     // 2. Método para agregar un producto nuevo
     public boolean agregarProducto(Producto producto) {
-        // La consulta SQL sigue siendo la misma
-        String sql = "INSERT INTO producto (Tipo_de_Producto, Stock, Stock_Minimo, Stock_Maximo, Estado_Stock, Fecha_de_caducidad, Unidad_de_medida, Ubicacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        // --- CAMBIO: Agregamos Contenido ---
+        String sql = "INSERT INTO producto (Tipo_de_Producto, Stock_Minimo, Unidad_de_medida, Ubicacion, IdProveedor, PrecioUnitario, Contenido) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            // *** CORRECCIÓN ***
-            // Usamos los getters de Java (camelCase) para poblar la consulta
-            pstmt.setString(1, producto.getTipoDeProducto()); // Corregido
-            pstmt.setInt(2, producto.getStock());
-            pstmt.setInt(3, producto.getStockMinimo());        // Corregido
-            pstmt.setInt(4, producto.getStockMaximo());        // Corregido
-            pstmt.setString(5, producto.getEstadoStock());     // Corregido
-            pstmt.setDate(6, producto.getFechaDeCaducidad()); // Corregido
-            pstmt.setString(7, producto.getUnidadDeMedida()); // Corregido
-            pstmt.setString(8, producto.getUbicacion());
+            pstmt.setString(1, producto.getTipoDeProducto());
+            pstmt.setInt(2, producto.getStockMinimo());
+            pstmt.setString(3, producto.getUnidadDeMedida());
+            pstmt.setString(4, producto.getUbicacion());
+            pstmt.setInt(5, producto.getIdProveedor());
+            pstmt.setDouble(6, producto.getPrecioUnitario());
+            pstmt.setDouble(7, producto.getContenido()); // Nuevo
 
             return pstmt.executeUpdate() > 0;
-
         } catch (SQLException e) {
-            System.err.println("Error al agregar producto: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -153,5 +149,20 @@ public class ProductoDAO {
             System.err.println("Error al actualizar stock y estado: " + e.getMessage());
             return false;
         }
+    }
+
+    public boolean actualizarProductoCompleto(Producto producto) {
+        String sql = "UPDATE producto SET Tipo_de_Producto=?, Stock_Minimo=?, Unidad_de_medida=?, Ubicacion=?, IdProveedor=?, PrecioUnitario=?, Contenido=? WHERE IdProducto=?";
+        try (Connection conn = ConexionBD.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, producto.getTipoDeProducto());
+            pstmt.setInt(2, producto.getStockMinimo());
+            pstmt.setString(3, producto.getUnidadDeMedida());
+            pstmt.setString(4, producto.getUbicacion());
+            pstmt.setInt(5, producto.getIdProveedor());
+            pstmt.setDouble(6, producto.getPrecioUnitario());
+            pstmt.setDouble(7, producto.getContenido());
+            pstmt.setInt(8, producto.getIdProducto());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 }

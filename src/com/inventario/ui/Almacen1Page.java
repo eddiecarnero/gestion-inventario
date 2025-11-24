@@ -18,10 +18,8 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.function.Consumer;
 
 public class Almacen1Page extends BorderPane {
@@ -177,8 +175,106 @@ public class Almacen1Page extends BorderPane {
             }
         });
 
-        tablaInsumos.getColumns().addAll(nombreCol, stockCol, unidadCol, precioCol, minCol, provCol, estadoCol);
+        TableColumn<InsumoAlmacen, Void> accionesCol = new TableColumn<>("Detalle");
+        accionesCol.setCellFactory(param -> new TableCell<>() {
+            private final Button btnVer = new Button("👁 Ver Lotes");
+
+            {
+                btnVer.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-cursor: hand; -fx-font-size: 0.9em;");
+                btnVer.setOnAction(event -> {
+                    InsumoAlmacen insumo = getTableView().getItems().get(getIndex());
+                    mostrarDialogoLotes(insumo);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(btnVer);
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+
+        // Asegúrate de agregar accionesCol a la lista de columnas
+        tablaInsumos.getColumns().addAll(nombreCol, stockCol, unidadCol, precioCol, minCol, provCol, estadoCol, accionesCol);
         tablaInsumos.setPlaceholder(new Label("No hay insumos registrados."));
+    }
+
+    private void mostrarDialogoLotes(InsumoAlmacen insumo) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Lotes de: " + insumo.getNombre());
+        dialog.setHeaderText("Desglose de lotes y vencimientos");
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        TableView<LoteInfo> tablaLotes = new TableView<>();
+        tablaLotes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        TableColumn<LoteInfo, Integer> colId = new TableColumn<>("ID Lote");
+        colId.setCellValueFactory(new PropertyValueFactory<>("idLote"));
+
+        TableColumn<LoteInfo, Double> colCant = new TableColumn<>("Cantidad");
+        colCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+
+        TableColumn<LoteInfo, String> colIngreso = new TableColumn<>("Ingreso");
+        colIngreso.setCellValueFactory(new PropertyValueFactory<>("fechaIngreso"));
+
+        TableColumn<LoteInfo, String> colVenc = new TableColumn<>("Vencimiento");
+        colVenc.setCellValueFactory(new PropertyValueFactory<>("fechaVencimiento"));
+
+        TableColumn<LoteInfo, String> colEstado = new TableColumn<>("Estado");
+        colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+
+        // Colorear filas según estado
+        colEstado.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                if (item == null || empty) {
+                    setStyle("");
+                } else if (item.equals("VENCIDO")) {
+                    setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                } else if (item.equals("Por Vencer")) {
+                    setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
+                } else {
+                    setStyle("-fx-text-fill: green;");
+                }
+            }
+        });
+
+        tablaLotes.getColumns().addAll(colId, colCant, colIngreso, colVenc, colEstado);
+
+        // Cargar datos
+        ObservableList<LoteInfo> datosLotes = FXCollections.observableArrayList();
+        String sql = "SELECT IdLote, CantidadActual, FechaIngreso, FechaVencimiento FROM lotes WHERE IdProducto = ? AND CantidadActual > 0 ORDER BY FechaVencimiento ASC";
+
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, insumo.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                datosLotes.add(new LoteInfo(
+                        rs.getInt("IdLote"),
+                        rs.getDouble("CantidadActual"),
+                        rs.getString("FechaIngreso"),
+                        rs.getString("FechaVencimiento")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        tablaLotes.setItems(datosLotes);
+        tablaLotes.setPlaceholder(new Label("No hay lotes activos para este producto."));
+        tablaLotes.setPrefWidth(600);
+        tablaLotes.setPrefHeight(300);
+
+        dialog.getDialogPane().setContent(tablaLotes);
+        dialog.showAndWait();
     }
 
     private void cargarDatos() {
@@ -249,4 +345,50 @@ public class Almacen1Page extends BorderPane {
         public boolean esStockBajo() { return stock <= stockMinimo; }
         public String getEstado() { return stock <= stockMinimo ? "Bajo Stock" : (stock <= stockMinimo * 1.5 ? "Medio" : "Normal"); }
     }
+
+    public static class LoteInfo {
+        private final int idLote;
+        private final double cantidad;
+        private final String fechaIngreso;
+        private final String fechaVencimiento;
+        private final String estado;
+
+        public LoteInfo(int id, double cant, String ingreso, String vencimiento) {
+            String estado1;
+            this.idLote = id;
+            this.cantidad = cant;
+            this.fechaIngreso = ingreso;
+            this.fechaVencimiento = vencimiento;
+
+            if (vencimiento == null || vencimiento.isEmpty()) {
+                estado1 = "No Vence";
+            } else {
+                try {
+                    LocalDate fechaVenc = LocalDate.parse(vencimiento);
+                    LocalDate hoy = LocalDate.now();
+
+                    if (fechaVenc.isBefore(hoy)) {
+                        estado1 = "VENCIDO";
+                    } else if (fechaVenc.isBefore(hoy.plusDays(7))) { // Alerta 7 días antes
+                        estado1 = "Por Vencer";
+                    } else {
+                        estado1 = "Ok";
+                    }
+                } catch (Exception e) {
+                    estado1 = "Error Fecha";
+                }
+            }
+            this.estado = estado1;
+        }
+
+        public int getIdLote() { return idLote; }
+        public double getCantidad() { return cantidad; }
+        public String getFechaIngreso() { return fechaIngreso; }
+        public String getFechaVencimiento() { return fechaVencimiento; }
+        public String getEstado() { return estado; }
+    }
+
+
+
+
 }

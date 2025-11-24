@@ -245,46 +245,90 @@ public class Almacen2Page extends BorderPane {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void procesarProduccion(RecetaSimple receta, int lotes, LocalDate fecha) {
-        try (Connection conn = ConexionBD.getConnection()) {
+    private void procesarProduccion(RecetaSimple receta, int lotesAProducir, LocalDate fechaVencimiento) {
+        Connection conn = null;
+        try {
+            conn = ConexionBD.getConnection();
             conn.setAutoCommit(false);
 
-            // 1. Ingredientes necesarios
+            // 1. ¿Qué ingredientes necesito? (AHORA CON CONVERSIÓN)
+            // Obtenemos la unidad que pide la receta (i.unidad) y la que tiene el stock (p.Unidad_de_medida)
+            String sqlIngredientes = "SELECT i.IdProducto, i.cantidad, i.unidad as UnidadReceta, p.Unidad_de_medida as UnidadStock " +
+                    "FROM ingredientes i " +
+                    "JOIN producto p ON i.IdProducto = p.IdProducto " +
+                    "WHERE i.receta_id = ?";
+
             HashMap<Integer, Double> requisitos = new HashMap<>();
-            try(PreparedStatement ps = conn.prepareStatement("SELECT IdProducto, cantidad FROM ingredientes WHERE receta_id = ?")) {
-                ps.setInt(1, receta.getId()); ResultSet rs = ps.executeQuery();
-                while(rs.next()) requisitos.put(rs.getInt(1), rs.getDouble(2) * lotes);
+
+            try (PreparedStatement stmt = conn.prepareStatement(sqlIngredientes)) {
+                stmt.setInt(1, receta.getId());
+                ResultSet rs = stmt.executeQuery();
+
+                while (rs.next()) {
+                    int idProd = rs.getInt("IdProducto");
+                    double cantReceta = rs.getDouble("cantidad");
+                    String unidadReceta = rs.getString("UnidadReceta");
+                    String unidadStock = rs.getString("UnidadStock");
+
+                    // ¡MAGIA! Convertimos lo que pide la receta a la unidad que usa el almacén
+                    double cantidadRealNecesaria = com.inventario.util.ConversorUnidades.convertir(cantReceta, unidadReceta, unidadStock);
+
+                    // Multiplicamos por los lotes a producir
+                    requisitos.put(idProd, cantidadRealNecesaria * lotesAProducir);
+                }
             }
 
-            // 2. Consumir FEFO
-            for(Integer idProd : requisitos.keySet()) {
-                double falta = requisitos.get(idProd);
-                try(PreparedStatement ps = conn.prepareStatement("SELECT IdLote, CantidadActual FROM lotes WHERE IdProducto = ? AND CantidadActual > 0 ORDER BY FechaVencimiento ASC")) {
-                    ps.setInt(1, idProd); ResultSet rs = ps.executeQuery();
-                    while(rs.next() && falta > 0) {
-                        int idLote = rs.getInt(1); double cantLote = rs.getDouble(2);
-                        double consumo = Math.min(cantLote, falta);
-                        // Update lote
-                        if(consumo >= cantLote) conn.createStatement().executeUpdate("DELETE FROM lotes WHERE IdLote=" + idLote);
-                        else conn.createStatement().executeUpdate("UPDATE lotes SET CantidadActual=CantidadActual-" + consumo + " WHERE IdLote=" + idLote);
-                        // Update stock total
-                        conn.createStatement().executeUpdate("UPDATE producto SET Stock=Stock-" + consumo + " WHERE IdProducto=" + idProd);
-                        falta -= consumo;
+            // 2. CONSUMIR INGREDIENTES (Lógica FEFO con cantidades convertidas)
+            for (Integer idProd : requisitos.keySet()) {
+                double cantidadNecesaria = requisitos.get(idProd); // Esta cantidad ya está en la unidad correcta (ej. ml)
+
+                // Buscar lotes ordenados por fecha de vencimiento
+                String sqlLotes = "SELECT IdLote, CantidadActual FROM lotes WHERE IdProducto = ? AND CantidadActual > 0 ORDER BY FechaVencimiento ASC";
+
+                try (PreparedStatement stmtLotes = conn.prepareStatement(sqlLotes)) {
+                    stmtLotes.setInt(1, idProd);
+                    ResultSet rsLotes = stmtLotes.executeQuery();
+
+                    while (rsLotes.next() && cantidadNecesaria > 0) {
+                        int idLote = rsLotes.getInt("IdLote");
+                        double cantidadLote = rsLotes.getDouble("CantidadActual");
+
+                        // Aquí la resta es segura porque ambas cantidades están en la misma unidad
+                        double aConsumir = Math.min(cantidadLote, cantidadNecesaria);
+
+                        // Restar del lote específico
+                        String sqlUpdateLote;
+                        if (aConsumir >= cantidadLote) {
+                            sqlUpdateLote = "DELETE FROM lotes WHERE IdLote = " + idLote;
+                        } else {
+                            sqlUpdateLote = "UPDATE lotes SET CantidadActual = CantidadActual - " + aConsumir + " WHERE IdLote = " + idLote;
+                        }
+                        conn.createStatement().executeUpdate(sqlUpdateLote);
+
+                        // Restar del Stock Total (Producto)
+                        String sqlUpdateStock = "UPDATE producto SET Stock = Stock - ? WHERE IdProducto = ?";
+                        try(PreparedStatement ps = conn.prepareStatement(sqlUpdateStock)) {
+                            ps.setDouble(1, aConsumir);
+                            ps.setInt(2, idProd);
+                            ps.executeUpdate();
+                        }
+
+                        cantidadNecesaria -= aConsumir;
                     }
                 }
-                if(falta > 0) throw new SQLException("Stock insuficiente de ingrediente ID " + idProd);
+
+                if (cantidadNecesaria > 0.001) { // Usamos un margen pequeño por errores de punto flotante
+                    throw new SQLException("Stock insuficiente para el ingrediente ID: " + idProd + ". Faltan: " + String.format("%.2f", cantidadNecesaria));
+                }
             }
 
-            // 3. Crear Producto Intermedio
-            // Si la receta no tiene un producto intermedio asignado, intentamos buscarlo por nombre o crearlo
+            // 3. CREAR PRODUCTO INTERMEDIO
             int idIntermedio = receta.getIdProductoIntermedio();
             if (idIntermedio == 0) {
-                // Buscar por nombre
                 try(PreparedStatement ps = conn.prepareStatement("SELECT IdProductoIntermedio FROM productos_intermedios WHERE Nombre = ?")) {
                     ps.setString(1, receta.getNombre()); ResultSet rs = ps.executeQuery();
                     if(rs.next()) idIntermedio = rs.getInt(1);
                     else {
-                        // Crear si no existe
                         try(PreparedStatement psIn = conn.prepareStatement("INSERT INTO productos_intermedios (Nombre, Unidad_de_medida) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                             psIn.setString(1, receta.getNombre()); psIn.setString(2, receta.getUnidad()); psIn.executeUpdate();
                             ResultSet rsk = psIn.getGeneratedKeys(); if(rsk.next()) idIntermedio = rsk.getInt(1);
@@ -293,18 +337,27 @@ public class Almacen2Page extends BorderPane {
                 }
             }
 
-            double cantFinal = receta.getCantidadBase() * lotes;
+            double cantFinal = receta.getCantidadBase() * lotesAProducir;
             try(PreparedStatement ps = conn.prepareStatement("INSERT INTO lotes_intermedios (IdProductoIntermedio, CantidadActual, FechaVencimiento, FechaIngreso) VALUES (?, ?, ?, ?)")) {
                 ps.setInt(1, idIntermedio); ps.setDouble(2, cantFinal);
-                if(fecha!=null) ps.setString(3, fecha.toString()); else ps.setNull(3, Types.VARCHAR);
+                if(fechaVencimiento!=null) ps.setString(3, fechaVencimiento.toString()); else ps.setNull(3, Types.VARCHAR);
                 ps.setString(4, LocalDate.now().toString());
                 ps.executeUpdate();
             }
 
-            conn.commit(); mostrarAlerta("Éxito", "Producción registrada."); cargarDatos(); actualizarUIConDatos();
-        } catch(Exception e) { e.printStackTrace(); mostrarAlerta("Error", e.getMessage()); }
-    }
+            conn.commit();
+            mostrarAlerta("Producción Exitosa", "Se han consumido los ingredientes y creado el producto.");
+            cargarDatos();
+            actualizarUIConDatos();
 
+        } catch (Exception e) {
+            if (conn != null) try { conn.rollback(); } catch (Exception ex) {}
+            mostrarAlerta("Error", e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (Exception ex) {}
+        }
+    }
     private void mostrarAlerta(String t, String m) { Alert a=new Alert(Alert.AlertType.INFORMATION); if(t.startsWith("Error")) a.setAlertType(Alert.AlertType.ERROR); a.setTitle(t); a.setContentText(m); a.showAndWait(); }
 
     // CLASES INTERNAS
