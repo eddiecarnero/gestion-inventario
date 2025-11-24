@@ -1,12 +1,10 @@
 package com.inventario.dao;
 
 import com.inventario.config.ConexionBD;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VentaDAO {
 
@@ -41,19 +39,12 @@ public class VentaDAO {
             return true;
 
         } catch (SQLException e) {
-            if (conn != null) try {
-                conn.rollback();
-            } catch (Exception ex) {
-            }
+            if (conn != null) try { conn.rollback(); } catch (Exception ex) {}
             e.printStackTrace();
             System.err.println("Error al registrar venta: " + e.getMessage());
             return false;
         } finally {
-            if (conn != null) try {
-                conn.setAutoCommit(true);
-                conn.close();
-            } catch (Exception ex) {
-            }
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (Exception ex) {}
         }
     }
 
@@ -111,9 +102,7 @@ public class VentaDAO {
             ps.setString(1, nombre.trim());
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt(1);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
 
@@ -123,9 +112,8 @@ public class VentaDAO {
              PreparedStatement ps = conn.prepareStatement("SELECT PrecioVenta FROM productos_terminados WHERE IdProductoTerminado=?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getDouble(1);
-        } catch (Exception e) {
-        }
+            if(rs.next()) return rs.getDouble(1);
+        } catch(Exception e){}
         return 0.0;
     }
 }

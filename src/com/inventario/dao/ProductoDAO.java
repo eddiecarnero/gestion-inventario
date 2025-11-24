@@ -1,7 +1,7 @@
 package com.inventario.dao;
 
-import com.inventario.config.ConexionBD;
 import com.inventario.model.Producto;
+import com.inventario.config.ConexionBD;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -38,9 +38,7 @@ public class ProductoDAO {
 
                 productos.add(p);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return productos;
     }
 
@@ -165,9 +163,6 @@ public class ProductoDAO {
             pstmt.setDouble(7, producto.getContenido());
             pstmt.setInt(8, producto.getIdProducto());
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 }
