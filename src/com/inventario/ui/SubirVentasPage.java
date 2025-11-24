@@ -9,6 +9,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 
 import java.io.*;
@@ -21,32 +23,34 @@ public class SubirVentasPage extends BorderPane {
 
     // --- ESTILOS CSS ---
     private static final String CSS_STYLES = """
-                .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
-                .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-                .tab-content-area { -fx-padding: 20 0 0 0; }
-                .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
-                .tab-pane .tab { -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 8 15 8 15; -fx-font-size: 1.1em; }
-                .tab-pane .tab:selected { -fx-background-color: transparent; -fx-border-color: #4A90E2; -fx-border-width: 0 0 3 0; -fx-text-fill: #4A90E2; -fx-font-weight: bold; }
-                .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
-                .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-                .label { -fx-font-size: 1.05em; -fx-font-weight: 500; -fx-text-fill: #333333; }
-                .combo-box, .text-field, .date-picker { -fx-font-size: 1.05em; -fx-pref-height: 38px; -fx-border-color: #CCCCCC; -fx-border-radius: 5; }
-                .button-primary { -fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 40px; -fx-background-radius: 5; -fx-cursor: hand; }
-                .button-secondary { -fx-background-color: #777777; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 38px; -fx-cursor: hand; -fx-background-radius: 5; }
-                .button-success { -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 38px; -fx-cursor: hand; -fx-background-radius: 5; }
-                .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; }
-            """;
+        .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
+        .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+        .tab-content-area { -fx-padding: 20 0 0 0; }
+        .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
+        .tab-pane .tab { -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 8 15 8 15; -fx-font-size: 1.1em; }
+        .tab-pane .tab:selected { -fx-background-color: transparent; -fx-border-color: #4A90E2; -fx-border-width: 0 0 3 0; -fx-text-fill: #4A90E2; -fx-font-weight: bold; }
+        .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
+        .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+        .label { -fx-font-size: 1.05em; -fx-font-weight: 500; -fx-text-fill: #333333; }
+        .combo-box, .text-field, .date-picker { -fx-font-size: 1.05em; -fx-pref-height: 38px; -fx-border-color: #CCCCCC; -fx-border-radius: 5; }
+        .button-primary { -fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 40px; -fx-background-radius: 5; -fx-cursor: hand; }
+        .button-secondary { -fx-background-color: #777777; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 38px; -fx-cursor: hand; -fx-background-radius: 5; }
+        .button-success { -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 38px; -fx-cursor: hand; -fx-background-radius: 5; }
+        .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; }
+    """;
 
     private final VentaDAO ventaDAO = new VentaDAO();
     private final ObservableList<ProductoVenta> productosDisponibles = FXCollections.observableArrayList();
-    private final ObservableList<FilaCarga> datosCarga = FXCollections.observableArrayList();
+
     // UI Manual
     private ComboBox<ProductoVenta> comboProducto;
     private TextField txtCantidad, txtCliente;
     private DatePicker dateVenta;
     private Label lblPrecio, lblTotal;
+
     // UI Masiva
     private TableView<FilaCarga> tablaPreview;
+    private ObservableList<FilaCarga> datosCarga = FXCollections.observableArrayList();
 
     public SubirVentasPage() {
         // Cargar estilos
@@ -86,8 +90,7 @@ public class SubirVentasPage extends BorderPane {
         cardTitle.getStyleClass().add("card-title");
 
         GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(15);
+        grid.setHgap(20); grid.setVgap(15);
 
         comboProducto = new ComboBox<>();
         comboProducto.setPromptText("Seleccione Producto");
@@ -110,14 +113,10 @@ public class SubirVentasPage extends BorderPane {
         dateVenta.setMaxWidth(Double.MAX_VALUE);
 
         // Añadir al grid usando helper o directamente
-        grid.add(crearLabel("Producto:"), 0, 0);
-        grid.add(comboProducto, 1, 0);
-        grid.add(crearLabel("Fecha:"), 0, 1);
-        grid.add(dateVenta, 1, 1);
-        grid.add(crearLabel("Cliente:"), 0, 2);
-        grid.add(txtCliente, 1, 2);
-        grid.add(crearLabel("Cantidad:"), 0, 3);
-        grid.add(txtCantidad, 1, 3);
+        grid.add(crearLabel("Producto:"), 0, 0); grid.add(comboProducto, 1, 0);
+        grid.add(crearLabel("Fecha:"), 0, 1);    grid.add(dateVenta, 1, 1);
+        grid.add(crearLabel("Cliente:"), 0, 2);  grid.add(txtCliente, 1, 2);
+        grid.add(crearLabel("Cantidad:"), 0, 3); grid.add(txtCantidad, 1, 3);
         grid.add(lblPrecio, 1, 4);
         grid.add(lblTotal, 1, 5);
 
@@ -288,10 +287,7 @@ public class SubirVentasPage extends BorderPane {
                 String line;
                 boolean first = true;
                 while ((line = br.readLine()) != null) {
-                    if (first) {
-                        first = false;
-                        continue;
-                    } // Saltar cabecera
+                    if (first) { first = false; continue; } // Saltar cabecera
                     String[] data = line.split(";");
                     if (data.length >= 2) {
                         String prod = data[0].trim();
@@ -350,75 +346,36 @@ public class SubirVentasPage extends BorderPane {
     // --- UTILS ---
     private void cargarProductos() {
         productosDisponibles.clear();
-        try (Connection c = ConexionBD.getConnection(); ResultSet rs = c.createStatement().executeQuery("SELECT IdProductoTerminado, Nombre, PrecioVenta FROM productos_terminados")) {
+        try (Connection c = ConexionBD.getConnection();
+             ResultSet rs = c.createStatement().executeQuery("SELECT IdProductoTerminado, Nombre, PrecioVenta FROM productos_terminados")) {
             while (rs.next()) {
                 productosDisponibles.add(new ProductoVenta(rs.getInt(1), rs.getString(2), rs.getDouble(3)));
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
     }
 
     private void mostrarAlerta(String t, String m) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
         if (t.startsWith("Error")) a.setAlertType(Alert.AlertType.ERROR);
-        a.setTitle(t);
-        a.setContentText(m);
-        a.showAndWait();
+        a.setTitle(t); a.setContentText(m); a.showAndWait();
     }
 
     // --- CLASES MODELO INTERNAS ---
     public static class ProductoVenta {
-        int id;
-        String nombre;
-        double precio;
-
-        public ProductoVenta(int id, String n, double p) {
-            this.id = id;
-            this.nombre = n;
-            this.precio = p;
-        }
-
-        @Override
-        public String toString() {
-            return nombre;
-        }
+        int id; String nombre; double precio;
+        public ProductoVenta(int id, String n, double p) { this.id=id; this.nombre=n; this.precio=p; }
+        @Override public String toString() { return nombre; }
     }
 
     public static class FilaCarga {
-        String nombreProducto;
-        int cantidad;
-        String fecha;
-        String cliente;
-        String estado;
-        Integer idProducto;
-
+        String nombreProducto; int cantidad; String fecha; String cliente; String estado; Integer idProducto;
         public FilaCarga(String n, int c, String f, String cl, String e, Integer id) {
-            this.nombreProducto = n;
-            this.cantidad = c;
-            this.fecha = f;
-            this.cliente = cl;
-            this.estado = e;
-            this.idProducto = id;
+            this.nombreProducto=n; this.cantidad=c; this.fecha=f; this.cliente=cl; this.estado=e; this.idProducto=id;
         }
-
-        public String getNombreProducto() {
-            return nombreProducto;
-        }
-
-        public int getCantidad() {
-            return cantidad;
-        }
-
-        public String getFecha() {
-            return fecha;
-        }
-
-        public String getEstado() {
-            return estado;
-        }
-
-        public void setEstado(String e) {
-            this.estado = e;
-        }
+        public String getNombreProducto() { return nombreProducto; }
+        public int getCantidad() { return cantidad; }
+        public String getFecha() { return fecha; }
+        public String getEstado() { return estado; }
+        public void setEstado(String e) { this.estado = e; }
     }
 }

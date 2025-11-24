@@ -1,12 +1,23 @@
 package com.inventario.dao;
 
 import com.inventario.config.ConexionBD;
-
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.List;
 
 public class IngresoInsumosDAO {
+
+    // Clase auxiliar para transportar los datos
+    public static class ItemIngreso {
+        public int idProducto;
+        public double cantidad;
+        public double costo;
+        public LocalDate fechaVencimiento;
+
+        public ItemIngreso(int id, double c, double costo, LocalDate v) {
+            this.idProducto = id; this.cantidad = c; this.costo = costo; this.fechaVencimiento = v;
+        }
+    }
 
     public boolean registrarIngresoMasivo(int idProveedor, List<ItemIngreso> items, String observacion) {
         Connection conn = null;
@@ -90,18 +101,11 @@ public class IngresoInsumosDAO {
             return true;
 
         } catch (SQLException e) {
-            if (conn != null) try {
-                conn.rollback();
-            } catch (Exception ex) {
-            }
+            if (conn != null) try { conn.rollback(); } catch (Exception ex) {}
             e.printStackTrace();
             return false;
         } finally {
-            if (conn != null) try {
-                conn.setAutoCommit(true);
-                conn.close();
-            } catch (Exception ex) {
-            }
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (Exception ex) {}
         }
     }
 
@@ -111,23 +115,7 @@ public class IngresoInsumosDAO {
             ps.setString(1, nombre.trim());
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt(1);
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
         return null;
-    }
-
-    // Clase auxiliar para transportar los datos
-    public static class ItemIngreso {
-        public int idProducto;
-        public double cantidad;
-        public double costo;
-        public LocalDate fechaVencimiento;
-
-        public ItemIngreso(int id, double c, double costo, LocalDate v) {
-            this.idProducto = id;
-            this.cantidad = c;
-            this.costo = costo;
-            this.fechaVencimiento = v;
-        }
     }
 }
