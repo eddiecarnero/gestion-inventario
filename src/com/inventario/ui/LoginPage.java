@@ -117,19 +117,24 @@ public class LoginPage {
             String contrasena = pass.getText().trim();
 
             if (usuario.isEmpty() || contrasena.isEmpty()) {
-                mostrarAlerta("Por favor, complete todos los campos.");
-                return;
+                mostrarAlerta("Complete todos los campos."); return;
             }
 
+            // 1. Verificar Usuario Hardcoded (Admin/1234)
             if (usuario.equals("admin") && contrasena.equals("1234")) {
-                SideBar dashboard = new SideBar(stage, "Admin Local");
+                // REGLA: Si ya existe un admin en BD, este usuario especial SE BLOQUEA.
+                if (AuthService.existeAdministradorEnBD()) {
+                    mostrarAlerta("ACCESO DENEGADO: Ya existe un Administrador registrado.\nEl usuario de recuperación 'admin' ha sido deshabilitado por seguridad.");
+                    return;
+                }
+                // Si no hay admin, dejamos pasar para crear uno
+                SideBar dashboard = new SideBar(stage, "admin");
                 stage.setScene(dashboard.getScene());
                 return;
             }
 
-            boolean valido = AuthService.validarUsuario(usuario, contrasena);
-
-            if (valido) {
+            // 2. Verificar Usuario de Base de Datos
+            if (AuthService.validarUsuario(usuario, contrasena)) {
                 SideBar dashboard = new SideBar(stage, usuario);
                 stage.setScene(dashboard.getScene());
             } else {
