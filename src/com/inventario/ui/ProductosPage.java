@@ -83,11 +83,11 @@ public class ProductosPage extends BorderPane {
         idProductoLabel = new Label();
 
         VBox mainContent = new VBox(20);
-        Node header = crearHeader();
+        //Node header = crearHeader();
         Node formularioCard = crearFormulario();
         Node tablaCard = crearTablaProductos();
 
-        mainContent.getChildren().addAll(header, formularioCard, tablaCard);
+        mainContent.getChildren().addAll(formularioCard, tablaCard);
         setCenter(mainContent);
 
         cargarProveedores();
@@ -103,13 +103,13 @@ public class ProductosPage extends BorderPane {
         guardarButton.setOnAction(e -> guardarProducto());
     }
 
-    private Node crearHeader() {
+    /*private Node crearHeader() {
         VBox headerBox = new VBox(5);
         Label header = new Label("Gestión de Productos"); header.getStyleClass().add("header-title");
         Label description = new Label("Definir los productos maestros del inventario (insumos)"); description.getStyleClass().add("header-description");
         headerBox.getChildren().addAll(header, description);
         return headerBox;
-    }
+    }*/
 
     private Node crearFormulario() {
         VBox card = new VBox(15); card.getStyleClass().add("card");

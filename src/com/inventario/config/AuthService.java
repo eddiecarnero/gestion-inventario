@@ -36,10 +36,10 @@ public class AuthService {
 
             if (rs.next()) {
                 String nombre = rs.getString("Nombre_y_Apellido");
-                System.out.println("🔹 Nombre obtenido desde BD: " + nombre);
+                System.out.println("Nombre obtenido desde BD: " + nombre);
                 return nombre;
             } else {
-                System.out.println("⚠️ No se encontró registro para el usuario: " + usuario);
+                System.out.println("No se encontró registro para el usuario: " + usuario);
             }
 
         } catch (SQLException e) {
@@ -68,7 +68,6 @@ public class AuthService {
             e.printStackTrace();
         }
 
-        // Si no encuentra el usuario o ocurre error, devuelve "Empleado" por defecto
         return "Empleado";
     }
 
