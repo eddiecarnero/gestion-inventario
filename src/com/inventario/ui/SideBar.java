@@ -22,8 +22,10 @@ public class SideBar {
     private StackPane mainContent; // <-- Este es el panel donde irá el contenido
     private Scene scene;
 
-    public SideBar(Stage stage, String usuario) {
+    private final String usuarioActualSesion;
 
+    public SideBar(Stage stage, String usuario) {
+        this.usuarioActualSesion = usuario;
         // --- Estilos y Fuentes ---
         Color turquesa = Color.web("#1F9B7F");
         Color crema = Color.web("#F9F1E6");
@@ -210,9 +212,6 @@ public class SideBar {
             case "recetas":
                 pagina = new RecetasPage();
                 break;
-            case "perfil":
-                pagina = new PerfilPage();
-                break;
             case "almacen3":
                 pagina = new Almacen3Page(this::navegar);
                 break;
@@ -224,6 +223,9 @@ public class SideBar {
                 break;
             case "gestion-insumos":
                 pagina = new GestionInsumosPage();
+                break;
+            case "perfil":
+                pagina = new PerfilPage(usuarioActualSesion);
                 break;
             default:
                 System.out.println("Navegación a página no implementada: " + pageName);
