@@ -183,7 +183,7 @@ public class LoginPage {
     private ImageView crearIcono(String ruta) {
         java.net.URL url = getClass().getResource(ruta);
         if (url == null) {
-            System.err.println("❌ No se encontró la imagen: " + ruta);
+            System.err.println("No se encontró la imagen: " + ruta);
             return new ImageView();
         }
 

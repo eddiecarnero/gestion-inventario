@@ -78,17 +78,17 @@ public class OrdenesPage extends BorderPane {
         cargarTodosLosInsumos();
 
         VBox mainContent = new VBox();
-        mainContent.getChildren().addAll(crearHeader(), crearTabPane());
+        mainContent.getChildren().addAll(crearTabPane());
         setCenter(mainContent);
     }
 
-    private Node crearHeader() {
+    /*private Node crearHeader() {
         VBox headerBox = new VBox(5);
         headerBox.setPadding(new Insets(0, 0, 20, 0));
         Label header = new Label("Orden de Compra"); header.getStyleClass().add("header-title");
         headerBox.getChildren().addAll(header, new Label("Gestión de compras y stock"));
         return headerBox;
-    }
+    }*/
 
     private Node crearTabPane() {
         TabPane tabPane = new TabPane(); tabPane.setStyle("-fx-background-color: transparent;");

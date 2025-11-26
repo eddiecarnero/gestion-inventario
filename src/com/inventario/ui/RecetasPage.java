@@ -1,6 +1,7 @@
 package com.inventario.ui;
 
 import com.inventario.config.ConexionBD;
+import com.inventario.util.ConversorUnidades;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -150,9 +151,13 @@ public class RecetasPage extends BorderPane {
         ingredienteCombo.setOnAction(e -> {
             IngredienteSeleccionable prod = ingredienteCombo.getValue();
             if (prod != null && prod.getUnidad() != null) {
-                if (!unidadIngredienteCombo.getItems().contains(prod.getUnidad())) {
-                    unidadIngredienteCombo.getItems().add(prod.getUnidad());
-                }
+                // 1. Obtener solo las unidades válidas para este producto
+                List<String> compatibles = ConversorUnidades.obtenerUnidadesCompatibles(prod.getUnidad());
+
+                // 2. Actualizar el combo de unidades
+                unidadIngredienteCombo.getItems().setAll(compatibles);
+
+                // 3. Seleccionar la unidad base por defecto
                 unidadIngredienteCombo.setValue(prod.getUnidad());
             }
         });
