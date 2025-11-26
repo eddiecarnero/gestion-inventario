@@ -6,30 +6,32 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
 public class GestionInsumosPage extends BorderPane {
 
     // Estilos CSS unificados
     private static final String CSS_STYLES = """
-                .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
-                .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-                .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; }
-                .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
-                .tab-pane .tab { 
-                    -fx-background-color: transparent; 
-                    -fx-border-color: transparent; 
-                    -fx-padding: 10 20 10 20; 
-                    -fx-font-size: 1.1em; 
-                    -fx-font-weight: bold;
-                    -fx-text-fill: #777;
-                }
-                .tab-pane .tab:selected { 
-                    -fx-border-color: #4A90E2; 
-                    -fx-border-width: 0 0 3 0; 
-                    -fx-text-fill: #4A90E2; 
-                }
-                .tab-content-area { -fx-padding: 20 0 0 0; }
-            """;
+        .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
+        .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+        .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; }
+        .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
+        .tab-pane .tab { 
+            -fx-background-color: transparent; 
+            -fx-border-color: transparent; 
+            -fx-padding: 10 20 10 20; 
+            -fx-font-size: 1.1em; 
+            -fx-font-weight: bold;
+            -fx-text-fill: #777;
+        }
+        .tab-pane .tab:selected { 
+            -fx-border-color: #4A90E2; 
+            -fx-border-width: 0 0 3 0; 
+            -fx-text-fill: #4A90E2; 
+        }
+        .tab-content-area { -fx-padding: 20 0 0 0; }
+    """;
 
     public GestionInsumosPage() {
         this.getStylesheets().add("data:text/css," + CSS_STYLES.replace("\n", ""));

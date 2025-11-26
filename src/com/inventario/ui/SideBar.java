@@ -93,6 +93,7 @@ public class SideBar {
         Button btnPerfilUsuario = new Button("Perfil de Usuario", iconUsuarios);
         // Button btnKardex = new Button("Kardex", iconKardex);
         Button btnSubirInsumos = new Button("Ingreso Insumos", iconSubirInsumos);
+        Button btnGestionInsumos = new Button("Gestionar Insumos", iconIngrediente);
 
         // --- LÓGICA DE NAVEGACIÓN CENTRALIZADA ---
         mainContent = new StackPane();
@@ -111,6 +112,7 @@ public class SideBar {
         btnSubirVenta.setOnAction(e -> navegar("subir-ventas"));
         btnPerfilUsuario.setOnAction(e -> navegar("perfil"));
         btnSubirInsumos.setOnAction(e -> navegar("subir-insumos"));
+        btnGestionInsumos.setOnAction(e -> navegar("gestion-insumos"));
 
         // btnKardex.setOnAction(e -> navegar("kardex"));
 
@@ -151,10 +153,8 @@ public class SideBar {
         VBox sidebarcontent = new VBox(2);
 
         for (Button btn : new Button[]{
-                btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3,
-                btnIngrediente, btnRecetas, btnOrdenCompra,
-                btnSubirVenta, btnPerfilUsuario, btnSubirInsumos
-                //btnKardex, // Descomentar cuando lo tengas
+                btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnGestionInsumos,
+                btnRecetas, btnSubirVenta, btnPerfilUsuario
         }) {
             aplicarEstiloBoton(btn);
             sidebarcontent.getChildren().add(btn);
@@ -222,7 +222,9 @@ public class SideBar {
             case "subir-insumos":
                 pagina = new SubirInsumosPage();
                 break;
-
+            case "gestion-insumos":
+                pagina = new GestionInsumosPage();
+                break;
             default:
                 System.out.println("Navegación a página no implementada: " + pageName);
                 Label label = new Label("Página '" + pageName + "' no encontrada.");
