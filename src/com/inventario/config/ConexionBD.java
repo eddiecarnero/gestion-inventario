@@ -7,7 +7,6 @@ import java.sql.Statement;
 
 public class ConexionBD {
 
-    // --- IMPORTANTE: La URL debe ser EXACTAMENTE así, sin parámetros extra ---
     private static final String URL = "jdbc:sqlite:mamatania_inventario.db";
 
     public static Connection getConnection() throws SQLException {

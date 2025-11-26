@@ -14,7 +14,6 @@ import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -28,7 +27,7 @@ import java.util.function.Consumer;
 
 public class DashboardPage extends BorderPane {
 
-    // --- Estilos ---
+    // --- Estilos Mejorados ---
     private static final String CSS_STYLES = """
         .root {
             -fx-background-color: #FDF8F0;
@@ -50,6 +49,7 @@ public class DashboardPage extends BorderPane {
             -fx-border-radius: 8;
             -fx-background-radius: 8;
             -fx-padding: 20px;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
         }
         .card-title {
             -fx-font-size: 1.4em;
@@ -60,22 +60,28 @@ public class DashboardPage extends BorderPane {
             -fx-font-size: 1em;
             -fx-text-fill: #555555;
         }
+        /* --- ALERTA MEJORADA --- */
         .alert-box-warning {
-            -fx-background-color: #FFF7ED; /* orange-50 */
-            -fx-border-color: #FEEBCF; /* orange-200 */
-            -fx-border-width: 1;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
+            -fx-background-color: #FFF4E5; /* Naranja muy suave */
+            -fx-border-color: #FFCC80;      /* Naranja borde */
+            -fx-border-width: 0 0 0 4px;    /* Borde izquierdo más grueso */
+            -fx-border-radius: 4;
+            -fx-background-radius: 4;
             -fx-padding: 15px;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
         }
-        .alert-text-warning {
-            -fx-fill: #9A3412; /* orange-900 */
-            -fx-font-weight: 500;
-        }
-        .alert-text-warning-bold {
-            -fx-fill: #9A3412; /* orange-900 */
+        .alert-title {
+            -fx-text-fill: #D84315; /* Naranja Oscuro Intenso */
             -fx-font-weight: bold;
+            -fx-font-size: 1.1em;
         }
+        .alert-body {
+            -fx-text-fill: #BF360C; /* Marrón rojizo */
+            -fx-font-weight: normal;
+            -fx-font-size: 1.0em;
+        }
+        /* ----------------------- */
+        
         .stats-card-clickable {
             -fx-background-color: white;
             -fx-border-color: #E0E0E0;
@@ -83,13 +89,14 @@ public class DashboardPage extends BorderPane {
             -fx-border-radius: 8;
             -fx-background-radius: 8;
             -fx-padding: 15px 20px;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
         }
-        /* Estilo separado para los que sí son clicables */
         .stats-card-navigable {
             -fx-cursor: hand;
         }
         .stats-card-navigable:hover {
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.15, 0, 3);
+            -fx-background-color: #FAFAFA;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 3);
         }
         
         .stats-card-border-primary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #4A90E2; }
@@ -98,101 +105,125 @@ public class DashboardPage extends BorderPane {
         
         .stats-card-title {
             -fx-font-size: 0.95em;
-            -fx-font-weight: 500;
-            -fx-text-fill: #333333;
+            -fx-font-weight: 600;
+            -fx-text-fill: #555555;
         }
         .stats-card-content {
-            -fx-font-size: 1.8em;
+            -fx-font-size: 2.0em;
             -fx-font-weight: bold;
-            -fx-text-fill: #111827;
+            -fx-text-fill: #222222;
         }
         .stats-card-desc {
-            -fx-font-size: 0.85em;
-            -fx-text-fill: #555555;
+            -fx-font-size: 0.9em;
+            -fx-text-fill: #666666;
         }
         
         .badge {
-            -fx-padding: 4 10 4 10;
-            -fx-background-radius: 12;
-            -fx-font-size: 0.9em;
+            -fx-padding: 2 8 2 8;
+            -fx-background-radius: 10;
+            -fx-font-size: 0.85em;
             -fx-font-weight: bold;
             -fx-text-fill: white;
         }
         .badge-destructive {
-            -fx-background-color: #EF4444; /* red-500 */
-        }
-        .badge-secondary {
-            -fx-background-color: #6D4C41;
+            -fx-background-color: #EF4444; 
         }
         
         .quick-action-button {
             -fx-background-color: white;
             -fx-text-fill: #333333;
-            -fx-font-weight: 500;
+            -fx-font-weight: 600;
             -fx-font-size: 1.0em;
-            -fx-pref-height: 40px;
-            -fx-background-radius: 5;
-            -fx-border-color: #CCCCCC;
-            -fx-border-radius: 5;
+            -fx-pref-height: 45px;
+            -fx-background-radius: 6;
+            -fx-border-color: #DDDDDD;
+            -fx-border-radius: 6;
             -fx-cursor: hand;
             -fx-alignment: center-left;
+            -fx-padding: 0 15;
         }
         .quick-action-button:hover {
-            -fx-background-color: #F9FAFB; /* gray-50 */
+            -fx-background-color: #F3F4F6; 
+            -fx-border-color: #BBBBBB;
+        }
+        .sales-item {
+            -fx-padding: 10;
+            -fx-border-color: #EEEEEE;
+            -fx-border-width: 0 0 1 0;
         }
     """;
 
     // --- UI Elementos Dinámicos ---
     private final HBox alertBoxContainer;
+
+    // Almacén 1
     private final Label countInsumosLabel;
     private final Label descInsumosLabel;
     private final Label badgeInsumosLabel;
-    private final Label countRecetasLabel; // Sigue siendo la label, pero mostrará 0
-    private final Label descRecetasLabel; // Sigue siendo la label, pero mostrará "N/A"
+
+    // Almacén 2
+    private final Label countIntermediosLabel;
+    private final Label descIntermediosLabel;
+
+    // Almacén 3
     private final Label countTerminadosLabel;
     private final Label descTerminadosLabel;
 
+    // Ventas
+    private final VBox ventasListContainer;
+
     // --- Datos ---
     private List<String> insumosLowStock;
+
     private int totalInsumos;
     private double totalStockInsumos;
-    // private int totalRecetas; // Ya no se necesita cargar
+
+    private int totalIntermedios;
+    private double totalStockIntermedios;
+
+    private int totalTerminados;
+    private double totalStockTerminados;
+
+    private final List<String> topVentas = new ArrayList<>();
 
     // --- Navegación ---
     private final Consumer<String> onNavigate;
 
     public DashboardPage(Consumer<String> onNavigate) {
         this.onNavigate = onNavigate;
+        // Cargar estilos
         this.getStylesheets().add("data:text/css," + CSS_STYLES.replace("\n", ""));
         this.getStyleClass().add("root");
 
         // Inicializar UI Labels
         alertBoxContainer = new HBox();
+        alertBoxContainer.setAlignment(Pos.CENTER_LEFT);
+        alertBoxContainer.setFillHeight(true);
+
         countInsumosLabel = new Label("0");
-        descInsumosLabel = new Label("Total en stock: 0 unidades");
+        descInsumosLabel = new Label("Cargando...");
         badgeInsumosLabel = new Label();
         badgeInsumosLabel.setVisible(false);
 
-        countRecetasLabel = new Label("0");
-        descRecetasLabel = new Label("N/A - No implementado");
+        countIntermediosLabel = new Label("0");
+        descIntermediosLabel = new Label("Cargando...");
 
         countTerminadosLabel = new Label("0");
-        descTerminadosLabel = new Label("N/A - No implementado");
+        descTerminadosLabel = new Label("Cargando...");
+
+        ventasListContainer = new VBox(10);
 
         // --- Layout Principal ---
         VBox mainContent = new VBox(25);
         mainContent.setPadding(new Insets(30, 40, 30, 40));
 
-        // 1. Header
-        Node header = crearHeader();
-
-        // 2. Rejilla de Estadísticas
+        // Rejilla de Estadísticas
         Node statsGrid = crearStatsGrid();
 
-        // 3. Acciones
+        // Acciones y Ventas
         Node actionsGrid = crearActionsGrid();
 
-        mainContent.getChildren().addAll(header, alertBoxContainer, statsGrid, actionsGrid);
+        mainContent.getChildren().addAll(alertBoxContainer, statsGrid, actionsGrid);
 
         ScrollPane scrollPane = new ScrollPane(mainContent);
         scrollPane.setFitToWidth(true);
@@ -205,35 +236,32 @@ public class DashboardPage extends BorderPane {
         actualizarUIConDatos();
     }
 
-    private Node crearHeader() {
-        VBox headerBox = new VBox(5);
-        Label header = new Label("Dashboard Principal");
-        header.getStyleClass().add("header-title");
-        Label description = new Label("Resumen general del inventario de Mamatania");
-        description.getStyleClass().add("header-description");
-        return headerBox;
-    }
-
     private HBox crearAlertBox(List<String> lowStockItems) {
         HBox alertBox = new HBox(15);
         alertBox.getStyleClass().add("alert-box-warning");
         alertBox.setAlignment(Pos.CENTER_LEFT);
+        alertBox.setMaxWidth(Double.MAX_VALUE); // Ocupar ancho disponible
 
-        Text icon = new Text("⚠️");
-        icon.setFont(Font.font(20));
-        icon.setFill(Color.web("#D97706"));
+        // Icono más visual
+        Label iconLabel = new Label("⚠️");
+        iconLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: #EF6C00;");
 
-        VBox textBox = new VBox(3);
-        Label title = new Label(lowStockItems.size() + " insumo(s) por debajo del stock mínimo");
-        title.getStyleClass().add("alert-text-warning-bold");
+        VBox textBox = new VBox(4);
+
+        Label title = new Label("¡Atención! " + lowStockItems.size() + " insumo(s) con stock crítico");
+        title.getStyleClass().add("alert-title");
 
         String items = String.join(", ", lowStockItems);
-        if (items.length() > 100) items = items.substring(0, 100) + "...";
-        Label itemsLabel = new Label(items);
-        itemsLabel.getStyleClass().add("alert-text-warning");
+        if (items.length() > 120) items = items.substring(0, 120) + "...";
+
+        Label itemsLabel = new Label("Revisar: " + items);
+        itemsLabel.getStyleClass().add("alert-body");
+        itemsLabel.setWrapText(true); // Permitir que el texto baje si es muy largo
 
         textBox.getChildren().addAll(title, itemsLabel);
-        alertBox.getChildren().addAll(icon, textBox);
+        alertBox.getChildren().addAll(iconLabel, textBox);
+        HBox.setHgrow(textBox, Priority.ALWAYS); // Que el texto ocupe el espacio restante
+
         return alertBox;
     }
 
@@ -250,23 +278,23 @@ public class DashboardPage extends BorderPane {
         Node cardInsumos = createStatCard(
                 "Almacén 1 - Insumos", "📦",
                 countInsumosLabel, descInsumosLabel, badgeInsumosLabel,
-                "stats-card-border-primary", "almacen1" // "almacen1" -> Navega
+                "stats-card-border-primary", "almacen1"
         );
         grid.add(cardInsumos, 0, 0);
 
-        // --- Card 2: Intermedios (No Clicable) ---
+        // --- Card 2: Intermedios (Clicable) ---
         Node cardIntermedios = createStatCard(
                 "Almacén 2 - Intermedios", "🧪",
-                countRecetasLabel, descRecetasLabel, null,
-                "stats-card-border-secondary", null // null -> No navega
+                countIntermediosLabel, descIntermediosLabel, null,
+                "stats-card-border-secondary", "almacen2"
         );
         grid.add(cardIntermedios, 1, 0);
 
-        // --- Card 3: Terminados (No Clicable) ---
+        // --- Card 3: Terminados (Clicable) ---
         Node cardTerminados = createStatCard(
                 "Almacén 3 - Terminados", "🍦",
                 countTerminadosLabel, descTerminadosLabel, null,
-                "stats-card-border-tertiary", null // null -> No navega
+                "stats-card-border-tertiary", "almacen3"
         );
         grid.add(cardTerminados, 2, 0);
 
@@ -274,38 +302,42 @@ public class DashboardPage extends BorderPane {
     }
 
     private Node createStatCard(String title, String icon, Label countLabel, Label descLabel, Label badgeLabel, String styleClass, String pageName) {
-        VBox card = new VBox(5);
-        card.getStyleClass().addAll("stats-card-clickable", styleClass); // Mantiene el borde de color
+        VBox card = new VBox(8); // Spacing entre elementos
+        card.getStyleClass().addAll("stats-card-clickable", styleClass);
 
         // Header
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("stats-card-title");
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        Text iconText = new Text(icon);
-        iconText.setFont(Font.font(16));
-        header.getChildren().addAll(titleLabel, spacer, iconText);
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("-fx-font-size: 1.5em;"); // Icono como Label para mejor renderizado
+
+        header.getChildren().addAll(titleLabel, spacer, iconLabel);
 
         // Content
-        VBox content = new VBox(5);
+        VBox content = new VBox(2);
         countLabel.getStyleClass().add("stats-card-content");
         descLabel.getStyleClass().add("stats-card-desc");
         content.getChildren().addAll(countLabel, descLabel);
 
         if (badgeLabel != null) {
-            content.getChildren().add(badgeLabel);
             badgeLabel.getStyleClass().add("badge");
             badgeLabel.getStyleClass().add("badge-destructive");
-            VBox.setMargin(badgeLabel, new Insets(5, 0, 0, 0));
+            // Contenedor para el badge para margen
+            HBox badgeContainer = new HBox(badgeLabel);
+            badgeContainer.setPadding(new Insets(5, 0, 0, 0));
+            content.getChildren().add(badgeContainer);
         }
 
         card.getChildren().addAll(header, content);
 
-        // --- CORREGIDO: Añadir la acción solo si pageName existe ---
         if (pageName != null && !pageName.isEmpty()) {
-            card.getStyleClass().add("stats-card-navigable"); // Añade cursor y hover
+            card.getStyleClass().add("stats-card-navigable");
             card.setOnMouseClicked(e -> onNavigate.accept(pageName));
         }
 
@@ -325,36 +357,36 @@ public class DashboardPage extends BorderPane {
 
         Label titleAcciones = new Label("Acciones Rápidas");
         titleAcciones.getStyleClass().add("card-title");
-        Label descAcciones = new Label("Operaciones comunes del sistema");
+        Label descAcciones = new Label("Accesos directos a operaciones frecuentes");
         descAcciones.getStyleClass().add("card-description");
 
         VBox buttonsBox = new VBox(10);
         buttonsBox.getChildren().addAll(
                 crearQuickActionButton("📦 Nueva Orden de Compra", "orden-compra"),
-                crearQuickActionButton("📈 Registrar Ventas Diarias", "subir-ventas"),
-                crearQuickActionButton("📋 Ver Kardex General", "kardex")
+                crearQuickActionButton("⬇ Ingreso Rápido Insumos", "gestion-insumos"),
+                crearQuickActionButton("📈 Registrar Ventas", "subir-ventas"),
+                crearQuickActionButton("🍳 Crear Receta", "recetas")
         );
 
         cardAcciones.getChildren().addAll(titleAcciones, descAcciones, new Separator(), buttonsBox);
 
-        // --- Card 2: Placeholder para "Más Vendidos" ---
-        VBox cardPlaceholder = new VBox(15);
-        cardPlaceholder.getStyleClass().add("card");
-        Label titleVentas = new Label("Productos Más Vendidos");
+        // --- Card 2: Más Vendidos ---
+        VBox cardVentas = new VBox(15);
+        cardVentas.getStyleClass().add("card");
+        Label titleVentas = new Label("Top Productos Vendidos");
         titleVentas.getStyleClass().add("card-title");
-        Label descVentas = new Label("Top productos de esta semana");
+        Label descVentas = new Label("Ranking global por cantidad vendida");
         descVentas.getStyleClass().add("card-description");
 
-        Label placeholderText = new Label("Módulo de ventas no implementado.\nSe requiere una tabla 'ventas' para esta función.");
-        placeholderText.setWrapText(true);
-        VBox placeholderBox = new VBox(placeholderText);
-        placeholderBox.setAlignment(Pos.CENTER);
-        placeholderBox.setMinHeight(150);
+        ScrollPane scrollVentas = new ScrollPane(ventasListContainer);
+        scrollVentas.setFitToWidth(true);
+        scrollVentas.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        scrollVentas.setMinHeight(180); // Altura fija mínima
 
-        cardPlaceholder.getChildren().addAll(titleVentas, descVentas, new Separator(), placeholderBox);
+        cardVentas.getChildren().addAll(titleVentas, descVentas, new Separator(), scrollVentas);
 
         grid.add(cardAcciones, 0, 0);
-        grid.add(cardPlaceholder, 1, 0);
+        grid.add(cardVentas, 1, 0);
         return grid;
     }
 
@@ -368,114 +400,105 @@ public class DashboardPage extends BorderPane {
 
     // --- Carga de Datos ---
     private void cargarDatos() {
-        // Inicializar
         insumosLowStock = new ArrayList<>();
-        totalInsumos = 0; // Total de *tipos* de producto
-        totalStockInsumos = 0; // Suma de *stock* de lotes
-        // totalRecetas = 0; // (Ya está comentado, bien)
-
-        // --- SQL CORREGIDO ---
-        // 1. Obtener el total de *tipos* de producto (ej. "Harina", "Arroz" -> 2)
-        String sqlTiposProducto = "SELECT COUNT(*) as count FROM producto";
-
-        // 2. Obtener la suma total de *stock* de todos los lotes
-        String sqlTotalStock = "SELECT SUM(CantidadActual) as total_stock FROM lotes";
-
-        // 3. Obtener los nombres de los productos que están por debajo del stock mínimo
-        //    (Compara la suma de los lotes de un producto con su Stock_Minimo)
-        String sqlLowStock = "SELECT p.Tipo_de_Producto " +
-                "FROM producto p " +
-                "LEFT JOIN (SELECT IdProducto, SUM(CantidadActual) as total_stock " +
-                "           FROM lotes " +
-                "           GROUP BY IdProducto) as LoteSum " +
-                "ON p.IdProducto = LoteSum.IdProducto " +
-                "WHERE COALESCE(LoteSum.total_stock, 0) <= p.Stock_Minimo";
-        // (Uso COALESCE para incluir productos con 0 stock que están por debajo del mínimo)
-
+        topVentas.clear();
+        totalInsumos = 0; totalStockInsumos = 0;
+        totalIntermedios = 0; totalStockIntermedios = 0;
+        totalTerminados = 0; totalStockTerminados = 0;
 
         try (Connection conn = ConexionBD.getConnection();
-             Statement stmt = conn.createStatement()) { // Un solo Statement es suficiente
+             Statement stmt = conn.createStatement()) {
 
-            // 1. Cargar total de *tipos* de producto
-            try (ResultSet rs = stmt.executeQuery(sqlTiposProducto)) {
-                if (rs.next()) {
-                    totalInsumos = rs.getInt("count");
-                }
+            // ALM 1
+            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM producto")) { if (rs.next()) totalInsumos = rs.getInt(1); }
+            try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes")) { if (rs.next()) totalStockInsumos = rs.getDouble(1); }
+            try (ResultSet rs = stmt.executeQuery("SELECT p.Tipo_de_Producto FROM producto p LEFT JOIN (SELECT IdProducto, SUM(CantidadActual) as total FROM lotes GROUP BY IdProducto) l ON p.IdProducto=l.IdProducto WHERE COALESCE(l.total,0) <= p.Stock_Minimo")) {
+                while(rs.next()) insumosLowStock.add(rs.getString(1));
             }
 
-            // 2. Cargar suma de *stock* de lotes
-            try (ResultSet rs = stmt.executeQuery(sqlTotalStock)) {
-                if (rs.next()) {
-                    totalStockInsumos = rs.getDouble("total_stock");
-                }
-            }
+            // ALM 2
+            try {
+                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM productos_intermedios")) { if (rs.next()) totalIntermedios = rs.getInt(1); }
+                try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes_intermedios")) { if (rs.next()) totalStockIntermedios = rs.getDouble(1); }
+            } catch(SQLException ignored) {}
 
-            // 3. Cargar Insumos con Stock Bajo
-            try (ResultSet rs = stmt.executeQuery(sqlLowStock)) {
-                while (rs.next()) {
-                    insumosLowStock.add(rs.getString("Tipo_de_Producto"));
-                }
-            }
+            // ALM 3
+            try {
+                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM productos_terminados")) { if (rs.next()) totalTerminados = rs.getInt(1); }
+                try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes_terminados")) { if (rs.next()) totalStockTerminados = rs.getDouble(1); }
+            } catch(SQLException ignored) {}
 
-            // (La consulta de recetas ya estaba comentada, lo cual es correcto)
+            // TOP VENTAS
+            try {
+                String sqlTop = "SELECT p.Nombre, SUM(v.Cantidad) as total FROM ventas v JOIN productos_terminados p ON v.IdProductoTerminado = p.IdProductoTerminado GROUP BY v.IdProductoTerminado ORDER BY total DESC LIMIT 5";
+                try (ResultSet rs = stmt.executeQuery(sqlTop)) {
+                    while (rs.next()) {
+                        topVentas.add(rs.getString(1) + " (" + rs.getInt(2) + " unid.)");
+                    }
+                }
+            } catch(SQLException ignored) {}
 
         } catch (SQLException e) {
             e.printStackTrace();
-            mostrarAlerta("Error de BD", "No se pudo cargar el dashboard: " + e.getMessage());
         }
     }
 
-
-
     private void actualizarUIConDatos() {
-        // --- Actualizar Alerta ---
+        // --- Alertas ---
         alertBoxContainer.getChildren().clear();
         if (insumosLowStock != null && !insumosLowStock.isEmpty()) {
             alertBoxContainer.getChildren().add(crearAlertBox(insumosLowStock));
         }
 
-        // --- Actualizar Card 1 (Insumos) ---
+        // --- Card 1 ---
         countInsumosLabel.setText(String.valueOf(totalInsumos));
-        descInsumosLabel.setText(String.format("Total en stock: %.1f unidades", totalStockInsumos));
-        if (insumosLowStock != null && !insumosLowStock.isEmpty()) {
+        descInsumosLabel.setText(String.format("Total en stock: %.1f", totalStockInsumos));
+        if (!insumosLowStock.isEmpty()) {
             badgeInsumosLabel.setText(insumosLowStock.size() + " bajo stock");
             badgeInsumosLabel.setVisible(true);
         } else {
             badgeInsumosLabel.setVisible(false);
         }
 
-        // --- CORREGIDO: Actualizar Card 2 (Intermedios) ---
-        countRecetasLabel.setText("0");
-        descRecetasLabel.setText("N/A - No implementado");
+        // --- Card 2 ---
+        countIntermediosLabel.setText(String.valueOf(totalIntermedios));
+        descIntermediosLabel.setText(String.format("Stock en proceso: %.1f", totalStockIntermedios));
 
-        // --- Actualizar Card 3 (Terminados) ---
-        countTerminadosLabel.setText("0");
-        descTerminadosLabel.setText("N/A - No implementado");
+        // --- Card 3 ---
+        countTerminadosLabel.setText(String.valueOf(totalTerminados));
+        descTerminadosLabel.setText(String.format("Listo para venta: %.0f", totalStockTerminados));
+
+        // --- Top Ventas ---
+        ventasListContainer.getChildren().clear();
+        if(topVentas.isEmpty()) {
+            Label l = new Label("No hay ventas registradas aún.");
+            l.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
+            ventasListContainer.getChildren().add(l);
+        } else {
+            int rank = 1;
+            for(String v : topVentas) {
+                HBox row = new HBox(10);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.getStyleClass().add("sales-item");
+
+                Label lblRank = new Label("#" + rank);
+                lblRank.setStyle("-fx-font-weight: bold; -fx-text-fill: #4A90E2; -fx-font-size: 1.1em;");
+
+                Label lblName = new Label(v);
+                lblName.setStyle("-fx-text-fill: #333;");
+
+                row.getChildren().addAll(lblRank, lblName);
+                ventasListContainer.getChildren().add(row);
+                rank++;
+            }
+        }
     }
 
-    private void mostrarAlerta(String titulo, String mensaje) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensaje);
-        alert.showAndWait();
-    }
-
-    // --- Clase de Test para Ejecutar ---
     public static class TestApp extends Application {
         @Override
         public void start(Stage stage) {
-            Consumer<String> navigationHandler = (page) -> {
-                System.out.println("Navegando a: " + page);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Navegación");
-                alert.setHeaderText(null);
-                alert.setContentText("Se solicitó ir a: " + page);
-                alert.showAndWait();
-            };
-
             stage.setTitle("Dashboard - JavaFX");
-            stage.setScene(new Scene(new DashboardPage(navigationHandler), 1300, 900));
+            stage.setScene(new Scene(new DashboardPage(s -> System.out.println(s)), 1300, 900));
             stage.show();
         }
     }
