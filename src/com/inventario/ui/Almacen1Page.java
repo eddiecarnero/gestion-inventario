@@ -1,22 +1,14 @@
 package com.inventario.ui;
 
 import com.inventario.config.ConexionBD;
-import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -40,10 +32,13 @@ public class Almacen1Page extends BorderPane {
         .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; -fx-font-size: 1.05em; }
     """;
 
-    private Label totalInsumosLabel, stockBajoLabel, valorTotalLabel, totalProveedoresLabel;
-    private TableView<InsumoAlmacen> tablaInsumos;
-    private TextField searchField;
-    private ObservableList<InsumoAlmacen> todosLosInsumos = FXCollections.observableArrayList();
+    private final Label totalInsumosLabel;
+    private final Label stockBajoLabel;
+    private final Label valorTotalLabel;
+    private final Label totalProveedoresLabel;
+    private final TableView<InsumoAlmacen> tablaInsumos;
+    private final TextField searchField;
+    private final ObservableList<InsumoAlmacen> todosLosInsumos = FXCollections.observableArrayList();
     private FilteredList<InsumoAlmacen> filteredInsumos;
     private int lowStockCount = 0;
     private final Consumer<String> onNavigate;
@@ -160,7 +155,7 @@ public class Almacen1Page extends BorderPane {
         TableColumn<InsumoAlmacen, String> estadoCol = new TableColumn<>("Estado");
         estadoCol.setCellValueFactory(new PropertyValueFactory<>("estado"));
         estadoCol.setCellFactory(col -> new TableCell<>() {
-            Label badge = new Label();
+            final Label badge = new Label();
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) { setGraphic(null); return; }
@@ -206,7 +201,7 @@ public class Almacen1Page extends BorderPane {
 
     private void mostrarDialogoLotes(InsumoAlmacen insumo) {
         Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Lotes de: " + insumo.getNombre());
+        dialog.setTitle("Lotes de: " + insumo.nombre());
         dialog.setHeaderText("Desglose de lotes y vencimientos");
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
@@ -254,7 +249,7 @@ public class Almacen1Page extends BorderPane {
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, insumo.getId());
+            stmt.setInt(1, insumo.id());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 datosLotes.add(new LoteInfo(
@@ -294,7 +289,7 @@ public class Almacen1Page extends BorderPane {
                         rs.getString("Unidad_de_medida"), rs.getDouble("PrecioUnitario"), rs.getString("Nombre_comercial")
                 );
                 todosLosInsumos.add(insumo);
-                valorTotal += insumo.getStock() * insumo.getPrecioUnitario();
+                valorTotal += insumo.stock() * insumo.precioUnitario();
                 if (insumo.esStockBajo()) lowStockCount++;
             }
             // Contar proveedores
@@ -321,7 +316,7 @@ public class Almacen1Page extends BorderPane {
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
             filteredInsumos.setPredicate(i -> {
                 if (newVal == null || newVal.isEmpty()) return true;
-                return i.getNombre().toLowerCase().contains(newVal.toLowerCase());
+                return i.nombre().toLowerCase().contains(newVal.toLowerCase());
             });
         });
         tablaInsumos.setItems(filteredInsumos);
@@ -331,20 +326,26 @@ public class Almacen1Page extends BorderPane {
         // La carga de datos ya actualiza las etiquetas
     }
 
-    public static class InsumoAlmacen {
-        private final int id, stock, stockMinimo;
-        private final String nombre, unidad, proveedorNombre;
-        private final double precioUnitario;
+    public record InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precioUnitario,
+                                String proveedorNombre) {
+            public InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precioUnitario, String proveedorNombre) {
+                this.id = id;
+                this.nombre = nombre;
+                this.stock = stock;
+                this.stockMinimo = stockMinimo;
+                this.unidad = unidad;
+                this.precioUnitario = precioUnitario;
+                this.proveedorNombre = proveedorNombre != null ? proveedorNombre : "N/A";
+            }
 
-        public InsumoAlmacen(int id, String n, int s, int sm, String u, double p, String prov) {
-            this.id = id; this.nombre = n; this.stock = s; this.stockMinimo = sm; this.unidad = u; this.precioUnitario = p; this.proveedorNombre = prov != null ? prov : "N/A";
+        public boolean esStockBajo() {
+            return stock <= stockMinimo;
         }
-        public int getId() { return id; } public String getNombre() { return nombre; } public int getStock() { return stock; }
-        public int getStockMinimo() { return stockMinimo; } public String getUnidad() { return unidad; } public double getPrecioUnitario() { return precioUnitario; }
-        public String getProveedorNombre() { return proveedorNombre; }
-        public boolean esStockBajo() { return stock <= stockMinimo; }
-        public String getEstado() { return stock <= stockMinimo ? "Bajo Stock" : (stock <= stockMinimo * 1.5 ? "Medio" : "Normal"); }
-    }
+
+        public String getEstado() {
+            return stock <= stockMinimo ? "Bajo Stock" : (stock <= stockMinimo * 1.5 ? "Medio" : "Normal");
+        }
+        }
 
     public static class LoteInfo {
         private final int idLote;
@@ -381,11 +382,21 @@ public class Almacen1Page extends BorderPane {
             this.estado = estado1;
         }
 
-        public int getIdLote() { return idLote; }
-        public double getCantidad() { return cantidad; }
-        public String getFechaIngreso() { return fechaIngreso; }
-        public String getFechaVencimiento() { return fechaVencimiento; }
-        public String getEstado() { return estado; }
+        public int getIdLote() {
+            return idLote;
+        }
+        public double getCantidad() {
+            return cantidad;
+        }
+        public String getFechaIngreso() {
+            return fechaIngreso;
+        }
+        public String getFechaVencimiento() {
+            return fechaVencimiento;
+        }
+        public String getEstado() {
+            return estado;
+        }
     }
 
 

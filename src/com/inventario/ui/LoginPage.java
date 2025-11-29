@@ -18,7 +18,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 public class LoginPage {
-    private Scene scene;
+    private final Scene scene;
 
     public LoginPage(Stage stage) {
         Font poppins = Font.loadFont(
@@ -120,20 +120,16 @@ public class LoginPage {
                 mostrarAlerta("Complete todos los campos."); return;
             }
 
-            // 1. Verificar Usuario Hardcoded (Admin/1234)
             if (usuario.equals("admin") && contrasena.equals("1234")) {
-                // REGLA: Si ya existe un admin en BD, este usuario especial SE BLOQUEA.
                 if (AuthService.existeAdministradorEnBD()) {
                     mostrarAlerta("ACCESO DENEGADO: Ya existe un Administrador registrado.\nEl usuario de recuperación 'admin' ha sido deshabilitado por seguridad.");
                     return;
                 }
-                // Si no hay admin, dejamos pasar para crear uno
                 SideBar dashboard = new SideBar(stage, "admin");
                 stage.setScene(dashboard.getScene());
                 return;
             }
 
-            // 2. Verificar Usuario de Base de Datos
             if (AuthService.validarUsuario(usuario, contrasena)) {
                 SideBar dashboard = new SideBar(stage, usuario);
                 stage.setScene(dashboard.getScene());
@@ -165,10 +161,10 @@ public class LoginPage {
         // StackPane para centrar el contenido
         StackPane root = new StackPane();
         root.setBackground(new Background(backgroundFill));
-        root.getChildren().add(main); // el VBox queda centrado automáticamente
+        root.getChildren().add(main); //q el VBox queda centrado automáticamente
 
         // Escena
-        scene = new Scene(root, 1551, 862);
+        scene = new Scene(root, 1200, 720);
         stage.setScene(scene);
         stage.show();
     }

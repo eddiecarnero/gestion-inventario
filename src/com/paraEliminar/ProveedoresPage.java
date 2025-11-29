@@ -252,8 +252,13 @@ public class ProveedoresPage extends BorderPane  {
     // CLASE MODELO INTERNA
     // ==========================================
     public static class Proveedor {
-        private int id;
-        private String nombre, ruc, tipo, telefono, email, direccion;
+        private final int id;
+        private final String nombre;
+        private final String ruc;
+        private final String tipo;
+        private final String telefono;
+        private final String email;
+        private final String direccion;
 
         public Proveedor(int id, String nombre, String ruc, String tipo, String telefono, String email, String direccion) {
             this.id = id;

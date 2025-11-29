@@ -23,11 +23,16 @@ public class ProveedorPage extends BorderPane {
         .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; }
     """;
 
-    private TextField txtNombre, txtRuc, txtTelefono, txtEmail, txtDireccion;
-    private ComboBox<String> cmbTipo;
-    private TableView<ProveedorModel> tabla;
-    private ObservableList<ProveedorModel> listaProveedores;
-    private Button btnGuardar, btnEliminar;
+    private final TextField txtNombre;
+    private final TextField txtRuc;
+    private final TextField txtTelefono;
+    private final TextField txtEmail;
+    private final TextField txtDireccion;
+    private final ComboBox<String> cmbTipo;
+    private final TableView<ProveedorModel> tabla;
+    private final ObservableList<ProveedorModel> listaProveedores;
+    private final Button btnGuardar;
+    private final Button btnEliminar;
 
     // Variable para saber si estamos editando (guarda el ID)
     private Integer idProveedorEditando = null;
@@ -135,13 +140,13 @@ public class ProveedorPage extends BorderPane {
     }
 
     private void cargarEnFormulario(ProveedorModel p) {
-        idProveedorEditando = p.getId();
-        txtNombre.setText(p.getNombre());
-        txtRuc.setText(p.getRuc());
-        cmbTipo.setValue(p.getTipo());
-        txtTelefono.setText(p.getTelefono());
-        txtEmail.setText(p.getEmail());
-        txtDireccion.setText(p.getDireccion());
+        idProveedorEditando = p.id();
+        txtNombre.setText(p.nombre());
+        txtRuc.setText(p.ruc());
+        cmbTipo.setValue(p.tipo());
+        txtTelefono.setText(p.telefono());
+        txtEmail.setText(p.email());
+        txtDireccion.setText(p.direccion());
 
         btnGuardar.setText("Actualizar");
         btnEliminar.setDisable(false);
@@ -207,16 +212,7 @@ public class ProveedorPage extends BorderPane {
     private void mostrarAlerta(String t, String m) { new Alert(Alert.AlertType.INFORMATION, m).show(); }
 
     // Clase Modelo Interna
-    public static class ProveedorModel {
-        private final int id;
-        private final String nombre, ruc, tipo, telefono, email, direccion;
-        public ProveedorModel(int id, String n, String r, String t, String tel, String e, String d) {
-            this.id=id; this.nombre=n; this.ruc=r; this.tipo=t; this.telefono=tel; this.email=e; this.direccion=d;
-        }
-        // Getters
-        public int getId() { return id; } public String getNombre() { return nombre; }
-        public String getRuc() { return ruc; } public String getTipo() { return tipo; }
-        public String getTelefono() { return telefono; } public String getEmail() { return email; }
-        public String getDireccion() { return direccion; }
+        public record ProveedorModel(int id, String nombre, String ruc, String tipo, String telefono, String email,
+                                     String direccion) {
     }
 }

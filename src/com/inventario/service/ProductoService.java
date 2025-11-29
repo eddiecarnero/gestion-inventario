@@ -6,7 +6,7 @@ import com.inventario.model.Producto;
 import java.util.List;
 
 public class ProductoService {
-    private ProductoDAO productoDAO;
+    private final ProductoDAO productoDAO;
 
     public ProductoService() {
         this.productoDAO = new ProductoDAO();

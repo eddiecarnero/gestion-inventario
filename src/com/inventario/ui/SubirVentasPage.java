@@ -50,7 +50,7 @@ public class SubirVentasPage extends BorderPane {
 
     // UI Masiva
     private TableView<FilaCarga> tablaPreview;
-    private ObservableList<FilaCarga> datosCarga = FXCollections.observableArrayList();
+    private final ObservableList<FilaCarga> datosCarga = FXCollections.observableArrayList();
 
     public SubirVentasPage() {
         // Cargar estilos

@@ -14,10 +14,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -177,7 +174,7 @@ public class OrdenesPage extends BorderPane {
 
         TableColumn<ItemOrden, Void> c5 = new TableColumn<>("");
         c5.setCellFactory(p -> new TableCell<>(){
-            Button b = new Button("🗑️"); { b.getStyleClass().add("button-danger"); b.setOnAction(e->{ list.remove(getIndex()); actualizarTotal(list, lblTotal); }); }
+            final Button b = new Button("🗑️"); { b.getStyleClass().add("button-danger"); b.setOnAction(e->{ list.remove(getIndex()); actualizarTotal(list, lblTotal); }); }
             @Override protected void updateItem(Void i, boolean e){super.updateItem(i,e); setGraphic(e?null:b); setAlignment(Pos.CENTER);}
         });
 
@@ -202,12 +199,12 @@ public class OrdenesPage extends BorderPane {
         TableColumn<ItemOrdenGestion, Void> c6 = new TableColumn<>("Acciones");
         c6.setCellFactory(p -> new TableCell<>(){
             // Botones de Acción
-            Button b1 = new Button("✔"); // Aceptar
-            Button b2 = new Button("✏"); // Editar
-            Button b3 = new Button("✖"); // Rechazar
-            Button b4 = new Button("📄"); // Imprimir PDF (Nuevo)
+            final Button b1 = new Button("✔"); // Aceptar
+            final Button b2 = new Button("✏"); // Editar
+            final Button b3 = new Button("✖"); // Rechazar
+            final Button b4 = new Button("📄"); // Imprimir PDF (Nuevo)
 
-            HBox box = new HBox(5, b1, b2, b3, b4);
+            final HBox box = new HBox(5, b1, b2, b3, b4);
             {
                 b1.getStyleClass().add("button-accept"); b1.setTooltip(new Tooltip("Recibir Mercadería"));
                 b2.getStyleClass().add("button-edit");   b2.setTooltip(new Tooltip("Editar Orden"));
@@ -239,7 +236,7 @@ public class OrdenesPage extends BorderPane {
         // 1. Obtener detalles completos de la orden
         List<ItemOrden> detalles = new ArrayList<>();
         ObservableList<ItemOrden> obsList = FXCollections.observableArrayList(); // solo para reusar metodo cargar
-        cargarItemsDeOrden(orden.getId(), obsList);
+        cargarItemsDeOrden(orden.id(), obsList);
         detalles.addAll(obsList);
 
         if (detalles.isEmpty()) {
@@ -268,14 +265,14 @@ public class OrdenesPage extends BorderPane {
         info.setStyle("-fx-padding: 20 0 20 0; -fx-border-width: 1 0 1 0; -fx-border-color: #EEE;");
 
         info.add(new Label("Orden N°:"), 0, 0);
-        Label lblId = new Label(String.valueOf(orden.getId())); lblId.setFont(Font.font("System", FontWeight.BOLD, 12));
+        Label lblId = new Label(String.valueOf(orden.id())); lblId.setFont(Font.font("System", FontWeight.BOLD, 12));
         info.add(lblId, 1, 0);
 
         info.add(new Label("Fecha:"), 0, 1);
-        info.add(new Label(orden.getFechaTexto()), 1, 1);
+        info.add(new Label(orden.fechaTexto()), 1, 1);
 
         info.add(new Label("Proveedor:"), 2, 0);
-        Label lblProv = new Label(orden.getProveedorNombre()); lblProv.setFont(Font.font("System", FontWeight.BOLD, 12));
+        Label lblProv = new Label(orden.proveedorNombre()); lblProv.setFont(Font.font("System", FontWeight.BOLD, 12));
         info.add(lblProv, 3, 0);
 
         // Tabla Detalles (Construida manualmente para impresión)
@@ -310,7 +307,7 @@ public class OrdenesPage extends BorderPane {
         footer.setPadding(new Insets(20, 0, 0, 0));
         Label lblTotalTxt = new Label("TOTAL:");
         lblTotalTxt.setFont(Font.font("System", FontWeight.BOLD, 14));
-        Label lblTotalVal = new Label(String.format("$%.2f", orden.getTotal()));
+        Label lblTotalVal = new Label(String.format("$%.2f", orden.total()));
         lblTotalVal.setFont(Font.font("System", FontWeight.BOLD, 16));
         footer.getChildren().addAll(lblTotalTxt, lblTotalVal);
 
@@ -350,7 +347,7 @@ public class OrdenesPage extends BorderPane {
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sqlDet)) {
-            stmt.setInt(1, orden.getId());
+            stmt.setInt(1, orden.id());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 itemsParaRecibir.add(new ItemRecepcion(
@@ -368,7 +365,7 @@ public class OrdenesPage extends BorderPane {
 
         // 2. Diálogo para confirmar Vencimientos
         Dialog<Boolean> dialog = new Dialog<>();
-        dialog.setTitle("Recepción de Mercadería - Orden #" + orden.getId());
+        dialog.setTitle("Recepción de Mercadería - Orden #" + orden.id());
         dialog.setHeaderText("Confirme las fechas de vencimiento para los lotes.");
 
         ButtonType btnConfirmar = new ButtonType("Confirmar Ingreso", ButtonBar.ButtonData.OK_DONE);
@@ -403,7 +400,7 @@ public class OrdenesPage extends BorderPane {
         dialog.getDialogPane().setContent(new VBox(10, new Label("Ajuste las fechas si es necesario:"), tableRecepcion));
 
         dialog.setResultConverter(btn -> {
-            if (btn == btnConfirmar) return procesarIngresoEnBD(orden.getId(), itemsParaRecibir);
+            if (btn == btnConfirmar) return procesarIngresoEnBD(orden.id(), itemsParaRecibir);
             return false;
         });
 
@@ -459,7 +456,7 @@ public class OrdenesPage extends BorderPane {
 
     private void accionRechazarOrden(ItemOrdenGestion o) {
         try(Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement("UPDATE orden_compra SET Estado='Rechazada' WHERE IdCompra=?")) {
-            ps.setInt(1, o.getId()); ps.executeUpdate();
+            ps.setInt(1, o.id()); ps.executeUpdate();
             mostrarAlerta("Info", "Orden rechazada."); cargarOrdenesPendientes();
         } catch(Exception e) { mostrarAlerta("Error", e.getMessage()); }
     }
@@ -467,28 +464,28 @@ public class OrdenesPage extends BorderPane {
     // --- ACCIÓN: EDITAR ---
     private void accionEditarOrden(ItemOrdenGestion orden) {
         Dialog<Boolean> dialog = new Dialog<>();
-        dialog.setTitle("Editar Orden #" + orden.getId());
+        dialog.setTitle("Editar Orden #" + orden.id());
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setPrefWidth(900);
 
         VBox layout = new VBox(20); layout.setPadding(new Insets(20));
 
         // Cargar cabecera
-        ComboBox<String> cProv = new ComboBox<>(); cargarProveedores(cProv); cProv.setValue(orden.getProveedorNombre());
-        DatePicker cFecha = new DatePicker(); try{cFecha.setValue(LocalDate.parse(orden.getFechaTexto()));}catch(Exception e){}
+        ComboBox<String> cProv = new ComboBox<>(); cargarProveedores(cProv); cProv.setValue(orden.proveedorNombre());
+        DatePicker cFecha = new DatePicker(); try{cFecha.setValue(LocalDate.parse(orden.fechaTexto()));}catch(Exception e){}
 
         // Cargar tabla temporal
         TableView<ItemOrden> tbl = new TableView<>(); Label lblTot = new Label();
         ObservableList<ItemOrden> lst = FXCollections.observableArrayList();
         configurarTablaItems(tbl, lst, lblTot);
-        cargarItemsDeOrden(orden.getId(), lst); actualizarTotal(lst, lblTot);
+        cargarItemsDeOrden(orden.id(), lst); actualizarTotal(lst, lblTot);
 
         // Formulario para agregar MÁS items
         ComboBox<Insumo> cIns = new ComboBox<>();
         cIns.setCellFactory(lv->new InsumoListCell()); cIns.setButtonCell(new InsumoListCell());
 
         // Filtro inicial y listener
-        int idProv = obtenerIdProveedor(orden.getProveedorNombre());
+        int idProv = obtenerIdProveedor(orden.proveedorNombre());
         filtrarInsumosPorProveedor(cIns, idProv);
         cProv.setOnAction(e -> filtrarInsumosPorProveedor(cIns, obtenerIdProveedor(cProv.getValue())));
 
@@ -505,7 +502,7 @@ public class OrdenesPage extends BorderPane {
         dialog.setResultConverter(btn -> {
             if(btn == ButtonType.OK) {
                 if(lst.isEmpty()) { mostrarAlerta("Error", "Mínimo 1 item"); return false; }
-                return actualizarOrdenEnBD(orden.getId(), obtenerIdProveedor(cProv.getValue()), cFecha.getValue(), lst);
+                return actualizarOrdenEnBD(orden.id(), obtenerIdProveedor(cProv.getValue()), cFecha.getValue(), lst);
             } return false;
         });
 
@@ -648,7 +645,8 @@ public class OrdenesPage extends BorderPane {
         public void setCantidad(double c){ this.cantidad=c; }
     }
 
-    public static class ItemOrdenGestion { private final int id; private final String proveedorNombre; private final String fechaTexto; private final double total; private final String estado; public ItemOrdenGestion(int i, String p, String f, double t, String e){id=i;proveedorNombre=p;fechaTexto=f;total=t;estado=e;} public int getId(){return id;} public String getProveedorNombre(){return proveedorNombre;} public String getFechaTexto(){return fechaTexto;} public double getTotal(){return total;} public String getEstado(){return estado;} }
+    public record ItemOrdenGestion(int id, String proveedorNombre, String fechaTexto, double total, String estado) {
+    }
 
     // Aux para Recepcion
     public static class ItemRecepcion {

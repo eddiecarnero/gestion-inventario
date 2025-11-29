@@ -17,10 +17,10 @@ import javafx.scene.image.Image;
 import java.util.function.Consumer;
 
 public class SideBar {
-    private BorderPane root;
-    private VBox sidebar;
-    private StackPane mainContent; // <-- Este es el panel donde irá el contenido
-    private Scene scene;
+    private final BorderPane root;
+    private final VBox sidebar;
+    private final StackPane mainContent; // <-- Este es el panel donde irá el contenido
+    private final Scene scene;
 
     private final String usuarioActualSesion;
 
@@ -81,7 +81,7 @@ public class SideBar {
         VBox header = new VBox(2);
         header.getChildren().addAll(logo, texto, separator1);
         header.setPadding(new Insets(0, 24, 0, 24));
-        header.setMargin(texto, new Insets(4, 0, 0, 0));
+        VBox.setMargin(texto, new Insets(4, 0, 0, 0));
 
         // --- Botones del Menú ---
         Button btnDashboard = new Button("Dashboard", iconDashboard);
@@ -184,7 +184,7 @@ public class SideBar {
         root.setLeft(scrollSidebar);
         root.setCenter(mainContent);
 
-        scene = new Scene(root, 1551, 862);
+        scene = new Scene(root, 1200, 720);
         stage.setScene(scene);
         stage.show();
     }
