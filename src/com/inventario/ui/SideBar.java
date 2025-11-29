@@ -5,16 +5,17 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.Image;
-
-import java.util.function.Consumer;
 
 public class SideBar {
     private final BorderPane root;
@@ -30,9 +31,7 @@ public class SideBar {
         Color turquesa = Color.web("#1F9B7F");
         Color crema = Color.web("#F9F1E6");
         Color marron = Color.web("#736049");
-        Font poppins = Font.loadFont(
-                getClass().getResourceAsStream("/com/images/global.ttf"), 14
-        );
+        Font poppins = Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 14);
 
         // --- Iconos ---
         ImageView iconDashboard = crearIcono("/com/images/iconos/monitor.png");
@@ -48,7 +47,6 @@ public class SideBar {
         // ImageView iconKardex = crearIcono("/com/images/iconos/portapapeles.png");
 
 
-
         sidebar = new VBox(0);
         sidebar.setPrefWidth(250);
         sidebar.setStyle("-fx-background-color: #736049; -fx-text-fill: white; -fx-font-size: 14px;");
@@ -61,11 +59,11 @@ public class SideBar {
         scrollSidebar.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollSidebar.setPannable(true);
         scrollSidebar.setStyle("""
-            -fx-background-color: transparent;
-            -fx-background: transparent;
-            -fx-border-color: transparent;
-            -fx-padding: 0;
-        """);
+                    -fx-background-color: transparent;
+                    -fx-background: transparent;
+                    -fx-border-color: transparent;
+                    -fx-padding: 0;
+                """);
 
         // --- Header del Sidebar ---
         Label logo = new Label("MamaTania");
@@ -154,13 +152,10 @@ public class SideBar {
         // --- Ensamblaje del Sidebar ---
         VBox sidebarcontent = new VBox(2);
 
-        for (Button btn : new Button[]{
-                btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnGestionInsumos,
-                btnRecetas, btnSubirVenta, btnPerfilUsuario
-        }) {
+        for (Button btn : new Button[]{btnDashboard, btnAlmacen1, btnAlmacen2, btnAlmacen3, btnGestionInsumos, btnRecetas, btnSubirVenta, btnPerfilUsuario}) {
             aplicarEstiloBoton(btn);
             sidebarcontent.getChildren().add(btn);
-            VBox.setMargin(btn, new Insets(0,0,8,0));
+            VBox.setMargin(btn, new Insets(0, 0, 8, 0));
         }
         sidebarcontent.setPadding(new Insets(16));
 
@@ -255,16 +250,7 @@ public class SideBar {
         icon.setFitHeight(18);
         icon.setPreserveRatio(true);
 
-        javafx.scene.effect.Blend blend = new javafx.scene.effect.Blend(
-                javafx.scene.effect.BlendMode.SRC_ATOP,
-                null,
-                new javafx.scene.effect.ColorInput(
-                        0, 0,
-                        icon.getFitWidth(),
-                        icon.getFitHeight(),
-                        Color.web("#FFFFFF")
-                )
-        );
+        javafx.scene.effect.Blend blend = new javafx.scene.effect.Blend(javafx.scene.effect.BlendMode.SRC_ATOP, null, new javafx.scene.effect.ColorInput(0, 0, icon.getFitWidth(), icon.getFitHeight(), Color.web("#FFFFFF")));
         icon.setEffect(blend);
 
         return icon;
@@ -275,14 +261,12 @@ public class SideBar {
         btn.setMinHeight(44);
         btn.setFont(Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 15));
         btn.setGraphicTextGap(20);
-        btn.setPadding(new Insets(12,16,12,16));
+        btn.setPadding(new Insets(12, 16, 12, 16));
         btn.setAlignment(Pos.CENTER_LEFT);
         btn.setContentDisplay(ContentDisplay.LEFT);
 
-        String normal = "-fx-background-color: #736049; -fx-text-fill: white;" +
-                "-fx-border-radius: 10; -fx-background-radius: 15;";
-        String hover = "-fx-background-color: rgba(255,255,255,0.3);" +
-                "-fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 15;";
+        String normal = "-fx-background-color: #736049; -fx-text-fill: white;" + "-fx-border-radius: 10; -fx-background-radius: 15;";
+        String hover = "-fx-background-color: rgba(255,255,255,0.3);" + "-fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 15;";
 
         btn.setStyle(normal);
         btn.setWrapText(true);

@@ -6,15 +6,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.sql.Connection;
@@ -29,129 +25,129 @@ public class DashboardPage extends BorderPane {
 
     // --- Estilos Mejorados ---
     private static final String CSS_STYLES = """
-        .root {
-            -fx-background-color: #FDF8F0;
-            -fx-font-family: 'Segoe UI';
-        }
-        .header-title {
-            -fx-font-size: 2.2em;
-            -fx-font-weight: bold;
-            -fx-text-fill: #333333;
-        }
-        .header-description {
-            -fx-font-size: 1.1em;
-            -fx-text-fill: #555555;
-        }
-        .card {
-            -fx-background-color: white;
-            -fx-border-color: #E0E0E0;
-            -fx-border-width: 1;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-padding: 20px;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
-        }
-        .card-title {
-            -fx-font-size: 1.4em;
-            -fx-font-weight: bold;
-            -fx-text-fill: #333333;
-        }
-        .card-description {
-            -fx-font-size: 1em;
-            -fx-text-fill: #555555;
-        }
-        /* --- ALERTA MEJORADA --- */
-        .alert-box-warning {
-            -fx-background-color: #FFF4E5; /* Naranja muy suave */
-            -fx-border-color: #FFCC80;      /* Naranja borde */
-            -fx-border-width: 0 0 0 4px;    /* Borde izquierdo más grueso */
-            -fx-border-radius: 4;
-            -fx-background-radius: 4;
-            -fx-padding: 15px;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
-        }
-        .alert-title {
-            -fx-text-fill: #D84315; /* Naranja Oscuro Intenso */
-            -fx-font-weight: bold;
-            -fx-font-size: 1.1em;
-        }
-        .alert-body {
-            -fx-text-fill: #BF360C; /* Marrón rojizo */
-            -fx-font-weight: normal;
-            -fx-font-size: 1.0em;
-        }
-        /* ----------------------- */
-        
-        .stats-card-clickable {
-            -fx-background-color: white;
-            -fx-border-color: #E0E0E0;
-            -fx-border-width: 1 1 1 4px;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-padding: 15px 20px;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
-        }
-        .stats-card-navigable {
-            -fx-cursor: hand;
-        }
-        .stats-card-navigable:hover {
-            -fx-background-color: #FAFAFA;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 3);
-        }
-        
-        .stats-card-border-primary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #4A90E2; }
-        .stats-card-border-secondary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #6D4C41; }
-        .stats-card-border-tertiary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #B8956A; }
-        
-        .stats-card-title {
-            -fx-font-size: 0.95em;
-            -fx-font-weight: 600;
-            -fx-text-fill: #555555;
-        }
-        .stats-card-content {
-            -fx-font-size: 2.0em;
-            -fx-font-weight: bold;
-            -fx-text-fill: #222222;
-        }
-        .stats-card-desc {
-            -fx-font-size: 0.9em;
-            -fx-text-fill: #666666;
-        }
-        
-        .badge {
-            -fx-padding: 2 8 2 8;
-            -fx-background-radius: 10;
-            -fx-font-size: 0.85em;
-            -fx-font-weight: bold;
-            -fx-text-fill: white;
-        }
-        .badge-destructive {
-            -fx-background-color: #EF4444; 
-        }
-        
-        .quick-action-button {
-            -fx-background-color: white;
-            -fx-text-fill: #333333;
-            -fx-font-weight: 600;
-            -fx-font-size: 1.0em;
-            -fx-pref-height: 45px;
-            -fx-background-radius: 6;
-            -fx-border-color: #DDDDDD;
-            -fx-border-radius: 6;
-            -fx-cursor: hand;
-            -fx-alignment: center-left;
-            -fx-padding: 0 15;
-        }
-        .quick-action-button:hover {
-            -fx-background-color: #F3F4F6; 
-            -fx-border-color: #BBBBBB;
-        }
-        .sales-item {
-            -fx-padding: 10;
-            -fx-border-color: #EEEEEE;
-            -fx-border-width: 0 0 1 0;
-        }
-    """;
+                .root {
+                    -fx-background-color: #FDF8F0;
+                    -fx-font-family: 'Segoe UI';
+                }
+                .header-title {
+                    -fx-font-size: 2.2em;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: #333333;
+                }
+                .header-description {
+                    -fx-font-size: 1.1em;
+                    -fx-text-fill: #555555;
+                }
+                .card {
+                    -fx-background-color: white;
+                    -fx-border-color: #E0E0E0;
+                    -fx-border-width: 1;
+                    -fx-border-radius: 8;
+                    -fx-background-radius: 8;
+                    -fx-padding: 20px;
+                    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
+                }
+                .card-title {
+                    -fx-font-size: 1.4em;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: #333333;
+                }
+                .card-description {
+                    -fx-font-size: 1em;
+                    -fx-text-fill: #555555;
+                }
+                /* --- ALERTA MEJORADA --- */
+                .alert-box-warning {
+                    -fx-background-color: #FFF4E5; /* Naranja muy suave */
+                    -fx-border-color: #FFCC80;      /* Naranja borde */
+                    -fx-border-width: 0 0 0 4px;    /* Borde izquierdo más grueso */
+                    -fx-border-radius: 4;
+                    -fx-background-radius: 4;
+                    -fx-padding: 15px;
+                    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
+                }
+                .alert-title {
+                    -fx-text-fill: #D84315; /* Naranja Oscuro Intenso */
+                    -fx-font-weight: bold;
+                    -fx-font-size: 1.1em;
+                }
+                .alert-body {
+                    -fx-text-fill: #BF360C; /* Marrón rojizo */
+                    -fx-font-weight: normal;
+                    -fx-font-size: 1.0em;
+                }
+                /* ----------------------- */
+            
+                .stats-card-clickable {
+                    -fx-background-color: white;
+                    -fx-border-color: #E0E0E0;
+                    -fx-border-width: 1 1 1 4px;
+                    -fx-border-radius: 8;
+                    -fx-background-radius: 8;
+                    -fx-padding: 15px 20px;
+                    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
+                }
+                .stats-card-navigable {
+                    -fx-cursor: hand;
+                }
+                .stats-card-navigable:hover {
+                    -fx-background-color: #FAFAFA;
+                    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 3);
+                }
+            
+                .stats-card-border-primary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #4A90E2; }
+                .stats-card-border-secondary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #6D4C41; }
+                .stats-card-border-tertiary { -fx-border-color: #E0E0E0 #E0E0E0 #E0E0E0 #B8956A; }
+            
+                .stats-card-title {
+                    -fx-font-size: 0.95em;
+                    -fx-font-weight: 600;
+                    -fx-text-fill: #555555;
+                }
+                .stats-card-content {
+                    -fx-font-size: 2.0em;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: #222222;
+                }
+                .stats-card-desc {
+                    -fx-font-size: 0.9em;
+                    -fx-text-fill: #666666;
+                }
+            
+                .badge {
+                    -fx-padding: 2 8 2 8;
+                    -fx-background-radius: 10;
+                    -fx-font-size: 0.85em;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: white;
+                }
+                .badge-destructive {
+                    -fx-background-color: #EF4444; 
+                }
+            
+                .quick-action-button {
+                    -fx-background-color: white;
+                    -fx-text-fill: #333333;
+                    -fx-font-weight: 600;
+                    -fx-font-size: 1.0em;
+                    -fx-pref-height: 45px;
+                    -fx-background-radius: 6;
+                    -fx-border-color: #DDDDDD;
+                    -fx-border-radius: 6;
+                    -fx-cursor: hand;
+                    -fx-alignment: center-left;
+                    -fx-padding: 0 15;
+                }
+                .quick-action-button:hover {
+                    -fx-background-color: #F3F4F6; 
+                    -fx-border-color: #BBBBBB;
+                }
+                .sales-item {
+                    -fx-padding: 10;
+                    -fx-border-color: #EEEEEE;
+                    -fx-border-width: 0 0 1 0;
+                }
+            """;
 
     // --- UI Elementos Dinámicos ---
     private final HBox alertBoxContainer;
@@ -171,23 +167,17 @@ public class DashboardPage extends BorderPane {
 
     // Ventas
     private final VBox ventasListContainer;
-
-    // --- Datos ---
-    private List<String> insumosLowStock;
-
-    private int totalInsumos;
-    private double totalStockInsumos;
-
-    private int totalIntermedios;
-    private double totalStockIntermedios;
-
-    private int totalTerminados;
-    private double totalStockTerminados;
-
     private final List<String> topVentas = new ArrayList<>();
-
     // --- Navegación ---
     private final Consumer<String> onNavigate;
+    // --- Datos ---
+    private List<String> insumosLowStock;
+    private int totalInsumos;
+    private double totalStockInsumos;
+    private int totalIntermedios;
+    private double totalStockIntermedios;
+    private int totalTerminados;
+    private double totalStockTerminados;
 
     public DashboardPage(Consumer<String> onNavigate) {
         this.onNavigate = onNavigate;
@@ -236,6 +226,10 @@ public class DashboardPage extends BorderPane {
         actualizarUIConDatos();
     }
 
+    public static void main(String[] args) {
+        Application.launch(TestApp.class, args);
+    }
+
     private HBox crearAlertBox(List<String> lowStockItems) {
         HBox alertBox = new HBox(15);
         alertBox.getStyleClass().add("alert-box-warning");
@@ -275,27 +269,15 @@ public class DashboardPage extends BorderPane {
         grid.getColumnConstraints().addAll(col, col, col);
 
         // --- Card 1: Insumos (Clicable) ---
-        Node cardInsumos = createStatCard(
-                "Almacén 1 - Insumos", "📦",
-                countInsumosLabel, descInsumosLabel, badgeInsumosLabel,
-                "stats-card-border-primary", "almacen1"
-        );
+        Node cardInsumos = createStatCard("Almacén 1 - Insumos", "📦", countInsumosLabel, descInsumosLabel, badgeInsumosLabel, "stats-card-border-primary", "almacen1");
         grid.add(cardInsumos, 0, 0);
 
         // --- Card 2: Intermedios (Clicable) ---
-        Node cardIntermedios = createStatCard(
-                "Almacén 2 - Intermedios", "🧪",
-                countIntermediosLabel, descIntermediosLabel, null,
-                "stats-card-border-secondary", "almacen2"
-        );
+        Node cardIntermedios = createStatCard("Almacén 2 - Intermedios", "🧪", countIntermediosLabel, descIntermediosLabel, null, "stats-card-border-secondary", "almacen2");
         grid.add(cardIntermedios, 1, 0);
 
         // --- Card 3: Terminados (Clicable) ---
-        Node cardTerminados = createStatCard(
-                "Almacén 3 - Terminados", "🍦",
-                countTerminadosLabel, descTerminadosLabel, null,
-                "stats-card-border-tertiary", "almacen3"
-        );
+        Node cardTerminados = createStatCard("Almacén 3 - Terminados", "🍦", countTerminadosLabel, descTerminadosLabel, null, "stats-card-border-tertiary", "almacen3");
         grid.add(cardTerminados, 2, 0);
 
         return grid;
@@ -361,12 +343,7 @@ public class DashboardPage extends BorderPane {
         descAcciones.getStyleClass().add("card-description");
 
         VBox buttonsBox = new VBox(10);
-        buttonsBox.getChildren().addAll(
-                crearQuickActionButton("📦 Nueva Orden de Compra", "orden-compra"),
-                crearQuickActionButton("⬇ Ingreso Rápido Insumos", "gestion-insumos"),
-                crearQuickActionButton("📈 Registrar Ventas", "subir-ventas"),
-                crearQuickActionButton("🍳 Crear Receta", "recetas")
-        );
+        buttonsBox.getChildren().addAll(crearQuickActionButton("📦 Nueva Orden de Compra", "orden-compra"), crearQuickActionButton("⬇ Ingreso Rápido Insumos", "gestion-insumos"), crearQuickActionButton("📈 Registrar Ventas", "subir-ventas"), crearQuickActionButton("🍳 Crear Receta", "recetas"));
 
         cardAcciones.getChildren().addAll(titleAcciones, descAcciones, new Separator(), buttonsBox);
 
@@ -402,31 +379,47 @@ public class DashboardPage extends BorderPane {
     private void cargarDatos() {
         insumosLowStock = new ArrayList<>();
         topVentas.clear();
-        totalInsumos = 0; totalStockInsumos = 0;
-        totalIntermedios = 0; totalStockIntermedios = 0;
-        totalTerminados = 0; totalStockTerminados = 0;
+        totalInsumos = 0;
+        totalStockInsumos = 0;
+        totalIntermedios = 0;
+        totalStockIntermedios = 0;
+        totalTerminados = 0;
+        totalStockTerminados = 0;
 
-        try (Connection conn = ConexionBD.getConnection();
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = ConexionBD.getConnection(); Statement stmt = conn.createStatement()) {
 
             // ALM 1
-            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM producto")) { if (rs.next()) totalInsumos = rs.getInt(1); }
-            try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes")) { if (rs.next()) totalStockInsumos = rs.getDouble(1); }
+            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM producto")) {
+                if (rs.next()) totalInsumos = rs.getInt(1);
+            }
+            try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes")) {
+                if (rs.next()) totalStockInsumos = rs.getDouble(1);
+            }
             try (ResultSet rs = stmt.executeQuery("SELECT p.Tipo_de_Producto FROM producto p LEFT JOIN (SELECT IdProducto, SUM(CantidadActual) as total FROM lotes GROUP BY IdProducto) l ON p.IdProducto=l.IdProducto WHERE COALESCE(l.total,0) <= p.Stock_Minimo")) {
-                while(rs.next()) insumosLowStock.add(rs.getString(1));
+                while (rs.next()) insumosLowStock.add(rs.getString(1));
             }
 
             // ALM 2
             try {
-                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM productos_intermedios")) { if (rs.next()) totalIntermedios = rs.getInt(1); }
-                try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes_intermedios")) { if (rs.next()) totalStockIntermedios = rs.getDouble(1); }
-            } catch(SQLException ignored) {}
+                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM productos_intermedios")) {
+                    if (rs.next()) totalIntermedios = rs.getInt(1);
+                }
+                try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes_intermedios")) {
+                    if (rs.next()) totalStockIntermedios = rs.getDouble(1);
+                }
+            } catch (SQLException ignored) {
+            }
 
             // ALM 3
             try {
-                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM productos_terminados")) { if (rs.next()) totalTerminados = rs.getInt(1); }
-                try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes_terminados")) { if (rs.next()) totalStockTerminados = rs.getDouble(1); }
-            } catch(SQLException ignored) {}
+                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM productos_terminados")) {
+                    if (rs.next()) totalTerminados = rs.getInt(1);
+                }
+                try (ResultSet rs = stmt.executeQuery("SELECT SUM(CantidadActual) FROM lotes_terminados")) {
+                    if (rs.next()) totalStockTerminados = rs.getDouble(1);
+                }
+            } catch (SQLException ignored) {
+            }
 
             // TOP VENTAS
             try {
@@ -436,7 +429,8 @@ public class DashboardPage extends BorderPane {
                         topVentas.add(rs.getString(1) + " (" + rs.getInt(2) + " unid.)");
                     }
                 }
-            } catch(SQLException ignored) {}
+            } catch (SQLException ignored) {
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -470,13 +464,13 @@ public class DashboardPage extends BorderPane {
 
         // --- Top Ventas ---
         ventasListContainer.getChildren().clear();
-        if(topVentas.isEmpty()) {
+        if (topVentas.isEmpty()) {
             Label l = new Label("No hay ventas registradas aún.");
             l.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
             ventasListContainer.getChildren().add(l);
         } else {
             int rank = 1;
-            for(String v : topVentas) {
+            for (String v : topVentas) {
                 HBox row = new HBox(10);
                 row.setAlignment(Pos.CENTER_LEFT);
                 row.getStyleClass().add("sales-item");
@@ -501,9 +495,5 @@ public class DashboardPage extends BorderPane {
             stage.setScene(new Scene(new DashboardPage(s -> System.out.println(s)), 1300, 900));
             stage.show();
         }
-    }
-
-    public static void main(String[] args) {
-        Application.launch(TestApp.class, args);
     }
 }

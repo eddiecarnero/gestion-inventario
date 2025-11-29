@@ -22,21 +22,21 @@ import java.util.function.Consumer;
 public class Almacen3Page extends BorderPane {
 
     private static final String CSS_STYLES = """
-        .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
-        .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-        .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; }
-        .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
-        .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-        .stats-card { -fx-padding: 15px 20px; -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; }
-        .stats-card-title { -fx-font-size: 0.95em; -fx-font-weight: 500; -fx-text-fill: #333333; }
-        .stats-card-content { -fx-font-size: 1.8em; -fx-font-weight: bold; -fx-text-fill: #111827; }
-        .stats-card-content-danger { -fx-text-fill: #DC2626; }
-        .badge { -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: white; }
-        .badge-stock-low { -fx-background-color: #EF4444; }
-        .badge-stock-normal { -fx-background-color: #22C55E; }
-        .button-primary { -fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 40px; -fx-cursor: hand; -fx-background-radius: 5; }
-        .search-field { -fx-pref-height: 40px; -fx-border-color: #CCCCCC; -fx-border-radius: 5; }
-    """;
+                .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
+                .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+                .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; }
+                .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
+                .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+                .stats-card { -fx-padding: 15px 20px; -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; }
+                .stats-card-title { -fx-font-size: 0.95em; -fx-font-weight: 500; -fx-text-fill: #333333; }
+                .stats-card-content { -fx-font-size: 1.8em; -fx-font-weight: bold; -fx-text-fill: #111827; }
+                .stats-card-content-danger { -fx-text-fill: #DC2626; }
+                .badge { -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: white; }
+                .badge-stock-low { -fx-background-color: #EF4444; }
+                .badge-stock-normal { -fx-background-color: #22C55E; }
+                .button-primary { -fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-weight: bold; -fx-pref-height: 40px; -fx-cursor: hand; -fx-background-radius: 5; }
+                .search-field { -fx-pref-height: 40px; -fx-border-color: #CCCCCC; -fx-border-radius: 5; }
+            """;
 
     private final Consumer<String> onNavigate;
     private final TableView<ProductoTerminado> tablaTerminados;
@@ -57,7 +57,8 @@ public class Almacen3Page extends BorderPane {
 
         // Header
         VBox headerBox = new VBox(5);
-        Label header = new Label("Almacén 3 - Productos Terminados"); header.getStyleClass().add("header-title");
+        Label header = new Label("Almacén 3 - Productos Terminados");
+        header.getStyleClass().add("header-title");
         Label desc = new Label("Gestión de stock final basado en recetas de producción.");
         desc.getStyleClass().add("header-description");
         headerBox.getChildren().addAll(header, desc);
@@ -79,7 +80,8 @@ public class Almacen3Page extends BorderPane {
         // Stats Grid
         GridPane statsGrid = new GridPane();
         statsGrid.setHgap(20);
-        ColumnConstraints col = new ColumnConstraints(); col.setPercentWidth(33.33);
+        ColumnConstraints col = new ColumnConstraints();
+        col.setPercentWidth(33.33);
         statsGrid.getColumnConstraints().addAll(col, col, col);
 
         totalTerminadosLabel = new Label("0");
@@ -93,7 +95,8 @@ public class Almacen3Page extends BorderPane {
         // Tabla
         VBox tableCard = new VBox(15);
         tableCard.getStyleClass().add("card");
-        Label tableTitle = new Label("Inventario Disponible"); tableTitle.getStyleClass().add("card-title");
+        Label tableTitle = new Label("Inventario Disponible");
+        tableTitle.getStyleClass().add("card-title");
 
         tablaTerminados = new TableView<>();
         configurarTabla();
@@ -109,8 +112,10 @@ public class Almacen3Page extends BorderPane {
     }
 
     private VBox createStatCard(String title, Label value, String style) {
-        VBox card = new VBox(5); card.getStyleClass().add("stats-card");
-        Label lblTitle = new Label(title); lblTitle.getStyleClass().add("stats-card-title");
+        VBox card = new VBox(5);
+        card.getStyleClass().add("stats-card");
+        Label lblTitle = new Label(title);
+        lblTitle.getStyleClass().add("stats-card-title");
         value.getStyleClass().add("stats-card-content");
         if (style != null) value.getStyleClass().add(style);
         card.getChildren().addAll(lblTitle, value);
@@ -129,7 +134,8 @@ public class Almacen3Page extends BorderPane {
         TableColumn<ProductoTerminado, Double> cPrecio = new TableColumn<>("Precio Venta");
         cPrecio.setCellValueFactory(new PropertyValueFactory<>("precioVenta"));
         cPrecio.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(Double item, boolean empty) {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
                 setText((empty || item == null) ? null : String.format("$%.2f", item));
             }
@@ -139,9 +145,14 @@ public class Almacen3Page extends BorderPane {
         cEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         cEstado.setCellFactory(c -> new TableCell<>() {
             final Label badge = new Label();
-            @Override protected void updateItem(String item, boolean empty) {
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setGraphic(null); return; }
+                if (empty || item == null) {
+                    setGraphic(null);
+                    return;
+                }
                 badge.setText(item);
                 badge.getStyleClass().clear();
                 badge.getStyleClass().add("badge");
@@ -155,13 +166,21 @@ public class Almacen3Page extends BorderPane {
         TableColumn<ProductoTerminado, Void> cAccion = new TableColumn<>("Detalle");
         cAccion.setCellFactory(param -> new TableCell<>() {
             private final Button btnVer = new Button("👁 Lotes");
+
             {
                 btnVer.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-cursor: hand; -fx-font-size: 0.85em;");
                 btnVer.setOnAction(e -> mostrarDialogoLotes(getTableView().getItems().get(getIndex())));
             }
-            @Override protected void updateItem(Void item, boolean empty) {
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) { setGraphic(null); } else { setGraphic(btnVer); setAlignment(Pos.CENTER); }
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(btnVer);
+                    setAlignment(Pos.CENTER);
+                }
             }
         });
 
@@ -173,21 +192,11 @@ public class Almacen3Page extends BorderPane {
         int bajoStock = 0;
         double valorTotal = 0;
 
-        String sql = "SELECT p.IdProductoTerminado, p.Nombre, p.PrecioVenta, p.StockMinimo, " +
-                "COALESCE(SUM(l.CantidadActual), 0) as StockTotal " +
-                "FROM productos_terminados p " +
-                "LEFT JOIN lotes_terminados l ON p.IdProductoTerminado = l.IdProductoTerminado " +
-                "GROUP BY p.IdProductoTerminado";
+        String sql = "SELECT p.IdProductoTerminado, p.Nombre, p.PrecioVenta, p.StockMinimo, " + "COALESCE(SUM(l.CantidadActual), 0) as StockTotal " + "FROM productos_terminados p " + "LEFT JOIN lotes_terminados l ON p.IdProductoTerminado = l.IdProductoTerminado " + "GROUP BY p.IdProductoTerminado";
 
         try (Connection conn = ConexionBD.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                ProductoTerminado p = new ProductoTerminado(
-                        rs.getInt("IdProductoTerminado"),
-                        rs.getString("Nombre"),
-                        rs.getDouble("PrecioVenta"),
-                        rs.getInt("StockMinimo"),
-                        rs.getInt("StockTotal")
-                );
+                ProductoTerminado p = new ProductoTerminado(rs.getInt("IdProductoTerminado"), rs.getString("Nombre"), rs.getDouble("PrecioVenta"), rs.getInt("StockMinimo"), rs.getInt("StockTotal"));
                 listaTerminados.add(p);
                 valorTotal += p.getStock() * p.getPrecioVenta();
                 if (p.getStock() <= p.getStockMinimo()) bajoStock++;
@@ -220,7 +229,10 @@ public class Almacen3Page extends BorderPane {
         dialog.setHeaderText("Seleccione una receta para producir");
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-        GridPane grid = new GridPane(); grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(20));
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
 
         // 1. Seleccionar Receta (Solo las de tipo FINAL)
         ComboBox<RecetaSimple> cmbReceta = new ComboBox<>();
@@ -235,17 +247,22 @@ public class Almacen3Page extends BorderPane {
         cmbReceta.setOnAction(e -> actualizarInfoProduccion(lblInfo, cmbReceta.getValue(), txtMultiplicador.getText()));
         txtMultiplicador.textProperty().addListener((o, old, val) -> actualizarInfoProduccion(lblInfo, cmbReceta.getValue(), val));
 
-        TextField txtPrecio = new TextField(); txtPrecio.setPromptText("Precio Venta Sugerido ($)");
+        TextField txtPrecio = new TextField();
+        txtPrecio.setPromptText("Precio Venta Sugerido ($)");
         DatePicker dateVenc = new DatePicker(LocalDate.now().plusMonths(6)); // Defecto 6 meses
 
-        grid.add(new Label("Receta (Alm3):"), 0, 0); grid.add(cmbReceta, 1, 0);
-        grid.add(new Label("Multiplicador:"), 0, 1); grid.add(txtMultiplicador, 1, 1);
+        grid.add(new Label("Receta (Alm3):"), 0, 0);
+        grid.add(cmbReceta, 1, 0);
+        grid.add(new Label("Multiplicador:"), 0, 1);
+        grid.add(txtMultiplicador, 1, 1);
         grid.add(lblInfo, 1, 2);
 
         grid.add(new Separator(), 0, 3, 2, 1);
 
-        grid.add(new Label("Precio Venta Unit.:"), 0, 4); grid.add(txtPrecio, 1, 4);
-        grid.add(new Label("Fecha Vencimiento:"), 0, 5); grid.add(dateVenc, 1, 5);
+        grid.add(new Label("Precio Venta Unit.:"), 0, 4);
+        grid.add(txtPrecio, 1, 4);
+        grid.add(new Label("Fecha Vencimiento:"), 0, 5);
+        grid.add(dateVenc, 1, 5);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -259,7 +276,10 @@ public class Almacen3Page extends BorderPane {
                     if (multi <= 0) return false;
 
                     double precio = 0;
-                    try { precio = Double.parseDouble(txtPrecio.getText()); } catch(Exception ex) {} // Opcional
+                    try {
+                        precio = Double.parseDouble(txtPrecio.getText());
+                    } catch (Exception ex) {
+                    } // Opcional
 
                     return procesarProduccionFinal(receta, multi, precio, dateVenc.getValue());
 
@@ -274,7 +294,10 @@ public class Almacen3Page extends BorderPane {
     }
 
     private void actualizarInfoProduccion(Label lbl, RecetaSimple r, String multiStr) {
-        if (r == null) { lbl.setText("-"); return; }
+        if (r == null) {
+            lbl.setText("-");
+            return;
+        }
         try {
             double m = Double.parseDouble(multiStr);
             double total = r.cantidadBase() * m;
@@ -322,7 +345,7 @@ public class Almacen3Page extends BorderPane {
                 if (rs.next()) {
                     idTerminado = rs.getInt(1);
                     if (precioVenta > 0) { // Actualizar precio si se especificó
-                        try(PreparedStatement psUpdate = conn.prepareStatement("UPDATE productos_terminados SET PrecioVenta=? WHERE IdProductoTerminado=?")){
+                        try (PreparedStatement psUpdate = conn.prepareStatement("UPDATE productos_terminados SET PrecioVenta=? WHERE IdProductoTerminado=?")) {
                             psUpdate.setDouble(1, precioVenta);
                             psUpdate.setInt(2, idTerminado);
                             psUpdate.executeUpdate();
@@ -345,7 +368,7 @@ public class Almacen3Page extends BorderPane {
             int cantFinalInt = (int) Math.ceil(cantidadFinal);
 
             String sqlInsLote = "INSERT INTO lotes_terminados (IdProductoTerminado, CantidadActual, FechaProduccion, FechaVencimiento) VALUES (?, ?, ?, ?)";
-            try(PreparedStatement ps = conn.prepareStatement(sqlInsLote)) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlInsLote)) {
                 ps.setInt(1, idTerminado);
                 ps.setInt(2, cantFinalInt);
                 ps.setDate(3, Date.valueOf(LocalDate.now()));
@@ -359,20 +382,30 @@ public class Almacen3Page extends BorderPane {
             return true;
 
         } catch (Exception e) {
-            if(conn!=null) try{conn.rollback();}catch(Exception ex){ ex.printStackTrace(); }
+            if (conn != null) try {
+                conn.rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
             mostrarAlerta("Error de Producción", e.getMessage());
             return false;
         } finally {
-            if(conn!=null) try{conn.setAutoCommit(true); conn.close();}catch(Exception ex){ ex.printStackTrace(); }
+            if (conn != null) try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
     private void consumirDeAlmacen1(Connection conn, int idProducto, double cantidadNecesaria, String unidadReceta) throws SQLException {
         String unidadStock = "Unidad";
-        try(PreparedStatement ps = conn.prepareStatement("SELECT Unidad_de_medida FROM producto WHERE IdProducto=?")) {
-            ps.setInt(1, idProducto); ResultSet rs = ps.executeQuery();
-            if(rs.next()) unidadStock = rs.getString(1);
+        try (PreparedStatement ps = conn.prepareStatement("SELECT Unidad_de_medida FROM producto WHERE IdProducto=?")) {
+            ps.setInt(1, idProducto);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) unidadStock = rs.getString(1);
         }
 
         double cantidadReal = ConversorUnidades.convertir(cantidadNecesaria, unidadReceta, unidadStock);
@@ -388,18 +421,22 @@ public class Almacen3Page extends BorderPane {
                 double aDescontar = Math.min(cantLote, faltante);
 
                 if (Math.abs(cantLote - aDescontar) < 0.001) {
-                    try(PreparedStatement psDel = conn.prepareStatement("DELETE FROM lotes WHERE IdLote=?")) {
+                    try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM lotes WHERE IdLote=?")) {
                         psDel.setInt(1, idLote);
                         psDel.executeUpdate();
                     }
                 } else {
-                    try(PreparedStatement psUpdate = conn.prepareStatement("UPDATE lotes SET CantidadActual = CantidadActual - ? WHERE IdLote=?")) {
-                        psUpdate.setDouble(1, aDescontar); psUpdate.setInt(2, idLote); psUpdate.executeUpdate();
+                    try (PreparedStatement psUpdate = conn.prepareStatement("UPDATE lotes SET CantidadActual = CantidadActual - ? WHERE IdLote=?")) {
+                        psUpdate.setDouble(1, aDescontar);
+                        psUpdate.setInt(2, idLote);
+                        psUpdate.executeUpdate();
                     }
                 }
 
-                try(PreparedStatement psUpdateProd = conn.prepareStatement("UPDATE producto SET Stock = Stock - ? WHERE IdProducto=?")) {
-                    psUpdateProd.setDouble(1, aDescontar); psUpdateProd.setInt(2, idProducto); psUpdateProd.executeUpdate();
+                try (PreparedStatement psUpdateProd = conn.prepareStatement("UPDATE producto SET Stock = Stock - ? WHERE IdProducto=?")) {
+                    psUpdateProd.setDouble(1, aDescontar);
+                    psUpdateProd.setInt(2, idProducto);
+                    psUpdateProd.executeUpdate();
                 }
 
                 faltante -= aDescontar;
@@ -410,9 +447,10 @@ public class Almacen3Page extends BorderPane {
 
     private void consumirDeAlmacen2(Connection conn, int idIntermedio, double cantidadNecesaria, String unidadReceta) throws SQLException {
         String unidadStock = "Unidad";
-        try(PreparedStatement ps = conn.prepareStatement("SELECT Unidad_de_medida FROM productos_intermedios WHERE IdProductoIntermedio=?")) {
-            ps.setInt(1, idIntermedio); ResultSet rs = ps.executeQuery();
-            if(rs.next()) unidadStock = rs.getString(1);
+        try (PreparedStatement ps = conn.prepareStatement("SELECT Unidad_de_medida FROM productos_intermedios WHERE IdProductoIntermedio=?")) {
+            ps.setInt(1, idIntermedio);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) unidadStock = rs.getString(1);
         }
 
         double cantidadReal = ConversorUnidades.convertir(cantidadNecesaria, unidadReceta, unidadStock);
@@ -428,13 +466,15 @@ public class Almacen3Page extends BorderPane {
                 double aDescontar = Math.min(cantLote, faltante);
 
                 if (Math.abs(cantLote - aDescontar) < 0.001) {
-                    try(PreparedStatement psDel = conn.prepareStatement("DELETE FROM lotes_intermedios WHERE IdLote=?")) {
+                    try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM lotes_intermedios WHERE IdLote=?")) {
                         psDel.setInt(1, idLote);
                         psDel.executeUpdate();
                     }
                 } else {
-                    try(PreparedStatement psUpdate = conn.prepareStatement("UPDATE lotes_intermedios SET CantidadActual = CantidadActual - ? WHERE IdLote=?")) {
-                        psUpdate.setDouble(1, aDescontar); psUpdate.setInt(2, idLote); psUpdate.executeUpdate();
+                    try (PreparedStatement psUpdate = conn.prepareStatement("UPDATE lotes_intermedios SET CantidadActual = CantidadActual - ? WHERE IdLote=?")) {
+                        psUpdate.setDouble(1, aDescontar);
+                        psUpdate.setInt(2, idLote);
+                        psUpdate.executeUpdate();
                     }
                 }
                 faltante -= aDescontar;
@@ -448,19 +488,23 @@ public class Almacen3Page extends BorderPane {
         String sql = "SELECT id, nombre, cantidad_producida, unidad_producida FROM recetas WHERE tipo_destino = 'FINAL'";
         try (Connection c = ConexionBD.getConnection(); Statement stmt = c.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                lista.add(new RecetaSimple(
-                        rs.getInt("id"),
-                        rs.getString("nombre"),
-                        rs.getDouble("cantidad_producida"),
-                        rs.getString("unidad_producida")
-                ));
+                lista.add(new RecetaSimple(rs.getInt("id"), rs.getString("nombre"), rs.getDouble("cantidad_producida"), rs.getString("unidad_producida")));
             }
             cb.setItems(lista);
             cb.setConverter(new StringConverter<>() {
-                @Override public String toString(RecetaSimple r){return r!=null ? r.nombre() : null;}
-                @Override public RecetaSimple fromString(String s){return null;}
+                @Override
+                public String toString(RecetaSimple r) {
+                    return r != null ? r.nombre() : null;
+                }
+
+                @Override
+                public RecetaSimple fromString(String s) {
+                    return null;
+                }
             });
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void mostrarDialogoLotes(ProductoTerminado p) {
@@ -469,18 +513,21 @@ public class Almacen3Page extends BorderPane {
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         TableView<LoteTerminado> table = new TableView<>();
 
-        TableColumn<LoteTerminado, Integer> cId = new TableColumn<>("ID"); cId.setCellValueFactory(new PropertyValueFactory<>("idLote"));
-        TableColumn<LoteTerminado, Integer> cCant = new TableColumn<>("Cant."); cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        TableColumn<LoteTerminado, String> cVenc = new TableColumn<>("Vence"); cVenc.setCellValueFactory(new PropertyValueFactory<>("vencimiento"));
+        TableColumn<LoteTerminado, Integer> cId = new TableColumn<>("ID");
+        cId.setCellValueFactory(new PropertyValueFactory<>("idLote"));
+        TableColumn<LoteTerminado, Integer> cCant = new TableColumn<>("Cant.");
+        cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+        TableColumn<LoteTerminado, String> cVenc = new TableColumn<>("Vence");
+        cVenc.setCellValueFactory(new PropertyValueFactory<>("vencimiento"));
 
         table.getColumns().addAll(cId, cCant, cVenc);
 
         ObservableList<LoteTerminado> data = FXCollections.observableArrayList();
-        try(Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement("SELECT IdLoteTerminado, CantidadActual, FechaVencimiento FROM lotes_terminados WHERE IdProductoTerminado=? AND CantidadActual>0")) {
+        try (Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement("SELECT IdLoteTerminado, CantidadActual, FechaVencimiento FROM lotes_terminados WHERE IdProductoTerminado=? AND CantidadActual>0")) {
             ps.setInt(1, p.getId());
             ResultSet rs = ps.executeQuery();
-            while(rs.next()) data.add(new LoteTerminado(rs.getInt(1), rs.getInt(2), rs.getString(3)));
-        } catch(SQLException e){
+            while (rs.next()) data.add(new LoteTerminado(rs.getInt(1), rs.getInt(2), rs.getString(3)));
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -491,7 +538,7 @@ public class Almacen3Page extends BorderPane {
     }
 
     private void mostrarAlerta(String t, String m) {
-        Alert a=new Alert(Alert.AlertType.INFORMATION);
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
         a.setTitle(t);
         a.setHeaderText(null);
         a.setContentText(m);

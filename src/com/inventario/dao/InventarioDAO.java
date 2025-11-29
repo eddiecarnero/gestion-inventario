@@ -8,7 +8,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.sql.*;
-import java.time.LocalDate;
 
 public class InventarioDAO {
 
@@ -41,10 +40,10 @@ public class InventarioDAO {
     public ObservableList<LoteTerminado> getLotesPorProducto(int idProducto) throws SQLException {
         ObservableList<LoteTerminado> data = FXCollections.observableArrayList();
         String sql = "SELECT IdLoteTerminado, CantidadActual, FechaVencimiento FROM lotes_terminados WHERE IdProductoTerminado=? AND CantidadActual>0";
-        try(Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idProducto);
             ResultSet rs = ps.executeQuery();
-            while(rs.next()) {
+            while (rs.next()) {
                 data.add(new LoteTerminado(rs.getInt(1), rs.getInt(2), rs.getString(3)));
             }
         }

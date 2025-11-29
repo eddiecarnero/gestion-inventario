@@ -32,7 +32,9 @@ public class AuthService {
             stmt.setString(1, usuario);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) return rs.getString("Nombre_y_Apellido");
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return "Usuario";
     }
 
@@ -45,7 +47,9 @@ public class AuthService {
             stmt.setString(1, usuario);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) return rs.getString("Tipo_de_empleado");
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return "Empleado";
     }
 
@@ -58,7 +62,9 @@ public class AuthService {
             if (rs.next()) {
                 return rs.getInt(1) > 0; // Devuelve true si hay al menos 1 admin
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 }

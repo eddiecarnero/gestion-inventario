@@ -21,9 +21,7 @@ public class LoginPage {
     private final Scene scene;
 
     public LoginPage(Stage stage) {
-        Font poppins = Font.loadFont(
-                getClass().getResourceAsStream("/com/images/global.ttf"), 14
-        );
+        Font poppins = Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 14);
 
         DropShadow sombra = new DropShadow();
         sombra.setOffsetX(0);
@@ -44,13 +42,13 @@ public class LoginPage {
         VBox content = new VBox(10);
 
         VBox logo = new VBox(10);
-        logo.setPrefSize(64,64);
+        logo.setPrefSize(64, 64);
         logo.setMaxSize(64, 64);
         logo.setMinSize(64, 64);
         logo.setBackground(new Background(new BackgroundFill(Color.web("#736049"), new CornerRadii(100), Insets.EMPTY)));
         logo.setEffect(new DropShadow());
-        VBox.setMargin(logo,  new Insets(0,0,16,0));
-        header.setPadding(new Insets(24, 24 , 0 , 24));
+        VBox.setMargin(logo, new Insets(0, 0, 16, 0));
+        header.setPadding(new Insets(24, 24, 0, 24));
 
         ImageView iconLogo = crearIcono("/com/images/iconos/helado.png");
         logo.setAlignment(Pos.CENTER);
@@ -78,11 +76,10 @@ public class LoginPage {
         email.setPromptText("usuario@mamatania.com");
 
 
-
         email.setPrefSize(398, 36);
         email.setMaxSize(398, 36);
-        email.setMinSize(398,36);
-        email.setPadding(new Insets(4,12,4,12));
+        email.setMinSize(398, 36);
+        email.setPadding(new Insets(4, 12, 4, 12));
         email.setStyle("-fx-background-color: white; -fx-border-color: #D7CCC8; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 0;-fx-prompt-text-fill: #736049;");
         email.setFont(Font.loadFont(getClass().getResourceAsStream("/com/images/global.ttf"), 14));
 
@@ -94,20 +91,15 @@ public class LoginPage {
         PasswordField pass = new PasswordField();
         pass.setPrefSize(398, 36);
         pass.setMaxSize(398, 36);
-        pass.setMinSize(398,36);
-        pass.setPadding(new Insets(4,12,4,12));
+        pass.setMinSize(398, 36);
+        pass.setPadding(new Insets(4, 12, 4, 12));
         pass.setStyle("-fx-background-color: white; -fx-border-color: #D7CCC8; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 0;-fx-prompt-text-fill: #736049;");
 
         Button btnLogin = new Button("Iniciar Sesión");
         btnLogin.setPrefSize(398, 40);
         btnLogin.setMaxSize(398, 40);
         btnLogin.setMinSize(398, 40);
-        btnLogin.setStyle(
-                "-fx-background-color: #736049; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-background-radius: 8;"
-        );
+        btnLogin.setStyle("-fx-background-color: #736049; " + "-fx-text-fill: white; " + "-fx-font-weight: bold; " + "-fx-background-radius: 8;");
         btnLogin.setOnMouseEntered(e -> btnLogin.setStyle("-fx-background-color: rgba(115,96,73,0.6); -fx-text-fill: white; -fx-background-radius: 8;"));
         btnLogin.setOnMouseExited(e -> btnLogin.setStyle("-fx-background-color: #736049; -fx-text-fill: white; -fx-background-radius: 8;"));
         btnLogin.setFont(Font.font("Arial", FontWeight.BOLD, 16));
@@ -117,7 +109,8 @@ public class LoginPage {
             String contrasena = pass.getText().trim();
 
             if (usuario.isEmpty() || contrasena.isEmpty()) {
-                mostrarAlerta("Complete todos los campos."); return;
+                mostrarAlerta("Complete todos los campos.");
+                return;
             }
 
             if (usuario.equals("admin") && contrasena.equals("1234")) {
@@ -141,20 +134,15 @@ public class LoginPage {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        content.getChildren().addAll(lblemail, email,lblpass, pass, btnLogin, spacer);
-        content.setPadding(new Insets(0,24,24,24));
+        content.getChildren().addAll(lblemail, email, lblpass, pass, btnLogin, spacer);
+        content.setPadding(new Insets(0, 24, 24, 24));
         main.setEffect(sombra);
 
         main.getChildren().addAll(header, content);
 
         // Fondo con degradado
-        Stop[] stops = new Stop[] {
-                new Stop(0.4, Color.web("#736049")),
-                new Stop(1, Color.web("#1F9B7F"))
-        };
-        LinearGradient linearGradient = new LinearGradient(
-                0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops
-        );
+        Stop[] stops = new Stop[]{new Stop(0.4, Color.web("#736049")), new Stop(1, Color.web("#1F9B7F"))};
+        LinearGradient linearGradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
 
         BackgroundFill backgroundFill = new BackgroundFill(linearGradient, CornerRadii.EMPTY, Insets.EMPTY);
 
