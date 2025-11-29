@@ -30,14 +30,14 @@ public class RecetasPage extends BorderPane {
 
     // Botones y Control
     private Button btnGuardar;
-    private TabPane tabPane;
+    private final TabPane tabPane;
     private Integer idRecetaEditando = null; // Null = Nueva, ID = Editando
 
     // --- Variables para el Recetario ---
     private TableView<RecetaModel> tablaRecetas;
     private TableView<IngredienteItem> tablaDetalleReceta;
-    private ObservableList<RecetaModel> listaRecetas = FXCollections.observableArrayList();
-    private ObservableList<IngredienteItem> listaDetalleReceta = FXCollections.observableArrayList();
+    private final ObservableList<RecetaModel> listaRecetas = FXCollections.observableArrayList();
+    private final ObservableList<IngredienteItem> listaDetalleReceta = FXCollections.observableArrayList();
 
     // --- Listas de Datos ---
     private final ObservableList<IngredienteItem> items = FXCollections.observableArrayList();
@@ -104,7 +104,7 @@ public class RecetasPage extends BorderPane {
         VBox card = new VBox(25); card.getStyleClass().add("card");
 
         HBox cardHeader = new HBox(10, new Text("🍳"), new Label("Detalles de la Receta"));
-        ((Label)cardHeader.getChildren().get(1)).getStyleClass().add("card-title");
+        cardHeader.getChildren().get(1).getStyleClass().add("card-title");
         cardHeader.setAlignment(Pos.CENTER_LEFT);
 
         GridPane grid = new GridPane(); grid.setHgap(20); grid.setVgap(10);
@@ -139,10 +139,10 @@ public class RecetasPage extends BorderPane {
 
         ingredienteCombo.setOnAction(e -> {
             IngredienteSeleccionable prod = ingredienteCombo.getValue();
-            if (prod != null && prod.getUnidad() != null) {
-                List<String> compatibles = ConversorUnidades.obtenerUnidadesCompatibles(prod.getUnidad());
+            if (prod != null && prod.unidad() != null) {
+                List<String> compatibles = ConversorUnidades.obtenerUnidadesCompatibles(prod.unidad());
                 unidadIngredienteCombo.getItems().setAll(compatibles);
-                unidadIngredienteCombo.setValue(prod.getUnidad());
+                unidadIngredienteCombo.setValue(prod.unidad());
             }
         });
 
@@ -200,7 +200,7 @@ public class RecetasPage extends BorderPane {
 
         TableColumn<IngredienteItem, Void> c4 = new TableColumn<>("Acción");
         c4.setCellFactory(p -> new TableCell<>(){
-            Button b = new Button("🗑️");
+            final Button b = new Button("🗑️");
             {
                 b.setStyle("-fx-background-color: #EF4444; -fx-text-fill: white; -fx-cursor: hand;");
                 b.setOnAction(e -> items.remove(getIndex()));
@@ -304,7 +304,7 @@ public class RecetasPage extends BorderPane {
 
         tablaRecetas.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
             if (val != null) {
-                lblInfoExtra.setText("Produce: " + val.getCantidadProducida() + " " + val.getUnidadProducida());
+                lblInfoExtra.setText("Produce: " + val.cantidadProducida() + " " + val.unidadProducida());
                 lblInfoExtra.setStyle("-fx-text-fill: #4A90E2; -fx-font-weight: bold;");
             } else {
                 lblInfoExtra.setText("Selecciona una receta para ver detalles...");
@@ -331,7 +331,7 @@ public class RecetasPage extends BorderPane {
         listaDetalleReceta.clear();
         String sql = "SELECT p.Tipo_de_Producto, pi.Nombre, i.cantidad, i.unidad, i.tipo_origen FROM ingredientes i LEFT JOIN producto p ON i.IdProducto = p.IdProducto LEFT JOIN productos_intermedios pi ON i.IdIntermedio = pi.IdProductoIntermedio WHERE i.receta_id = ?";
         try(Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, receta.getId()); ResultSet rs = ps.executeQuery();
+            ps.setInt(1, receta.id()); ResultSet rs = ps.executeQuery();
             while(rs.next()) {
                 String nombre = "INSUMO".equals(rs.getString("tipo_origen")) ? rs.getString(1) : rs.getString(2);
                 listaDetalleReceta.add(new IngredienteItem(0, nombre, rs.getDouble("cantidad"), rs.getString("unidad"), rs.getString("tipo_origen")));
@@ -342,14 +342,14 @@ public class RecetasPage extends BorderPane {
     // Carga para edición (Tab 1)
     private void cargarParaEdicion(RecetaModel r) {
         limpiarFormulario(); // Resetear campos primero
-        idRecetaEditando = r.getId();
+        idRecetaEditando = r.id();
 
         // Llenar campos cabecera
-        nombreRecetaField.setText(r.getNombre());
-        cantidadProducidaField.setText(String.valueOf(r.getCantidadProducida()));
-        unidadProducidaCombo.setValue(r.getUnidadProducida());
+        nombreRecetaField.setText(r.nombre());
+        cantidadProducidaField.setText(String.valueOf(r.cantidadProducida()));
+        unidadProducidaCombo.setValue(r.unidadProducida());
 
-        if("INTERMEDIO".equals(r.getTipoDestino())) tipoDestinoCombo.getSelectionModel().select(0);
+        if("INTERMEDIO".equals(r.tipoDestino())) tipoDestinoCombo.getSelectionModel().select(0);
         else tipoDestinoCombo.getSelectionModel().select(1);
 
         // Cambiar UI a modo edición
@@ -359,7 +359,7 @@ public class RecetasPage extends BorderPane {
         String sql = "SELECT i.cantidad, i.unidad, i.tipo_origen, i.IdProducto, i.IdIntermedio, p.Tipo_de_Producto, pi.Nombre FROM ingredientes i LEFT JOIN producto p ON i.IdProducto = p.IdProducto LEFT JOIN productos_intermedios pi ON i.IdIntermedio = pi.IdProductoIntermedio WHERE i.receta_id = ?";
 
         try(Connection c = ConexionBD.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, r.getId());
+            ps.setInt(1, r.id());
             ResultSet rs = ps.executeQuery();
             while(rs.next()) {
                 String tipo = rs.getString("tipo_origen");
@@ -391,13 +391,13 @@ public class RecetasPage extends BorderPane {
     }
 
     private void eliminarReceta(RecetaModel r) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "¿Seguro que desea eliminar la receta '" + r.getNombre() + "'?", ButtonType.YES, ButtonType.NO);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "¿Seguro que desea eliminar la receta '" + r.nombre() + "'?", ButtonType.YES, ButtonType.NO);
         if (alert.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
             try (Connection conn = ConexionBD.getConnection(); PreparedStatement stmt = conn.prepareStatement("DELETE FROM recetas WHERE id = ?")) {
-                stmt.setInt(1, r.getId()); stmt.executeUpdate();
+                stmt.setInt(1, r.id()); stmt.executeUpdate();
                 cargarRecetas();
                 // Si estábamos editando esta misma receta, limpiar
-                if(idRecetaEditando != null && idRecetaEditando == r.getId()) limpiarFormulario();
+                if(idRecetaEditando != null && idRecetaEditando == r.id()) limpiarFormulario();
             } catch (SQLException e) { mostrarAlerta("Error", e.getMessage()); }
         }
     }
@@ -421,7 +421,7 @@ public class RecetasPage extends BorderPane {
             IngredienteSeleccionable s = ingredienteCombo.getValue();
             double q = Double.parseDouble(cantidadIngredienteField.getText());
             if (s != null && q > 0) {
-                items.add(new IngredienteItem(s.getId(), s.getNombre(), q, unidadIngredienteCombo.getValue(), s.getTipo()));
+                items.add(new IngredienteItem(s.id(), s.nombre(), q, unidadIngredienteCombo.getValue(), s.tipo()));
                 ingredienteCombo.getSelectionModel().clearSelection();
                 cantidadIngredienteField.clear();
             }
@@ -473,11 +473,11 @@ public class RecetasPage extends BorderPane {
             try (PreparedStatement ps = c.prepareStatement("INSERT INTO ingredientes (receta_id, IdProducto, IdIntermedio, cantidad, unidad, tipo_origen) VALUES (?,?,?,?,?,?)")) {
                 for (IngredienteItem i : items) {
                     ps.setInt(1, idReceta);
-                    if (i.getTipoOrigen().equals("INSUMO")) { ps.setInt(2, i.getIdReferencia()); ps.setNull(3, Types.INTEGER); }
-                    else { ps.setNull(2, Types.INTEGER); ps.setInt(3, i.getIdReferencia()); }
-                    ps.setDouble(4, i.getCantidad());
-                    ps.setString(5, i.getUnidad());
-                    ps.setString(6, i.getTipoOrigen());
+                    if (i.tipoOrigen().equals("INSUMO")) { ps.setInt(2, i.idReferencia()); ps.setNull(3, Types.INTEGER); }
+                    else { ps.setNull(2, Types.INTEGER); ps.setInt(3, i.idReferencia()); }
+                    ps.setDouble(4, i.cantidad());
+                    ps.setString(5, i.unidad());
+                    ps.setString(6, i.tipoOrigen());
                     ps.addBatch();
                 }
                 ps.executeBatch();
@@ -501,22 +501,17 @@ public class RecetasPage extends BorderPane {
     private void mostrarAlerta(String t, String m) { new Alert(Alert.AlertType.INFORMATION, m).showAndWait(); }
 
     // Clases Modelo (Inner)
-    public static class IngredienteSeleccionable {
-        private final int id; private final String nombre, unidad, tipo;
-        public IngredienteSeleccionable(int i, String n, String u, String t) { id=i; nombre=n; unidad=u; tipo=t; }
-        public int getId(){return id;} public String getNombre(){return nombre;} public String getUnidad(){return unidad;} public String getTipo(){return tipo;}
-        @Override public String toString() { return (tipo.equals("INSUMO")?"[Insumo] ":"[Inter] ") + nombre; }
+        public record IngredienteSeleccionable(int id, String nombre, String unidad, String tipo) {
+        @Override
+        public String toString() {
+            return (tipo.equals("INSUMO") ? "[Insumo] " : "[Inter] ") + nombre;
+        }
+        }
+
+    public record IngredienteItem(int idReferencia, String nombre, double cantidad, String unidad, String tipoOrigen) {
     }
 
-    public static class IngredienteItem {
-        private final int idReferencia; private final String nombre, unidad, tipoOrigen; private final double cantidad;
-        public IngredienteItem(int i, String n, double c, String u, String t) { idReferencia=i; nombre=n; cantidad=c; unidad=u; tipoOrigen=t; }
-        public int getIdReferencia(){return idReferencia;} public String getNombre(){return nombre;} public double getCantidad(){return cantidad;} public String getUnidad(){return unidad;} public String getTipoOrigen(){return tipoOrigen;}
-    }
-
-    public static class RecetaModel {
-        private final int id; private final String nombre, unidadProducida, tipoDestino; private final double cantidadProducida;
-        public RecetaModel(int i, String n, double c, String u, String t) { id=i; nombre=n; cantidadProducida=c; unidadProducida=u; tipoDestino=t; }
-        public int getId(){return id;} public String getNombre(){return nombre;} public double getCantidadProducida(){return cantidadProducida;} public String getUnidadProducida(){return unidadProducida;} public String getTipoDestino(){return tipoDestino;}
+    public record RecetaModel(int id, String nombre, double cantidadProducida, String unidadProducida,
+                              String tipoDestino) {
     }
 }

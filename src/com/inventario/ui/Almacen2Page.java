@@ -1,29 +1,23 @@
 package com.inventario.ui;
 
 import com.inventario.config.ConexionBD;
-import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -55,9 +49,11 @@ public class Almacen2Page extends BorderPane {
 
     private final VBox mainContent;
     private final HBox alertBoxContainer;
-    private Label totalIntermediosLabel, stockBajoLabel, valorTotalLabel;
-    private TableView<ProductoIntermedioAlmacen> tablaIntermedios;
-    private TextField searchField;
+    private final Label totalIntermediosLabel;
+    private final Label stockBajoLabel;
+    private final Label valorTotalLabel;
+    private final TableView<ProductoIntermedioAlmacen> tablaIntermedios;
+    private final TextField searchField;
     private final ObservableList<ProductoIntermedioAlmacen> todosLosIntermedios = FXCollections.observableArrayList();
     private FilteredList<ProductoIntermedioAlmacen> filteredIntermedios;
     private int lowStockCount = 0;
@@ -157,7 +153,7 @@ public class Almacen2Page extends BorderPane {
         col4.setCellFactory(c -> new TableCell<>(){ @Override protected void updateItem(Double p, boolean e){super.updateItem(p,e); setText(!e && p!=null ? String.format("$%.2f", p) : null);}});
         TableColumn<ProductoIntermedioAlmacen, Integer> col5 = new TableColumn<>("Stock Mín."); col5.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
         TableColumn<ProductoIntermedioAlmacen, String> col6 = new TableColumn<>("Estado"); col6.setCellValueFactory(new PropertyValueFactory<>("estado"));
-        col6.setCellFactory(c -> new TableCell<>(){ Label b=new Label(); @Override protected void updateItem(String s, boolean e){super.updateItem(s,e); if(!e && s!=null){b.setText(s); b.getStyleClass().clear(); b.getStyleClass().add("badge"); b.getStyleClass().add(s.equals("Bajo Stock")?"badge-stock-low":"badge-stock-normal"); setGraphic(b); setAlignment(Pos.CENTER_LEFT);} else setGraphic(null);}});
+        col6.setCellFactory(c -> new TableCell<>(){ final Label b=new Label(); @Override protected void updateItem(String s, boolean e){super.updateItem(s,e); if(!e && s!=null){b.setText(s); b.getStyleClass().clear(); b.getStyleClass().add("badge"); b.getStyleClass().add(s.equals("Bajo Stock")?"badge-stock-low":"badge-stock-normal"); setGraphic(b); setAlignment(Pos.CENTER_LEFT);} else setGraphic(null);}});
 
         tablaIntermedios.getColumns().setAll(col1, col2, col3, col4, col5, col6);
         tablaIntermedios.setPlaceholder(new Label("No se encontraron productos intermedios."));
@@ -228,7 +224,7 @@ public class Almacen2Page extends BorderPane {
         });
 
         Optional<RecetaProduccionResult> res = dialog.showAndWait();
-        res.ifPresent(r -> procesarProduccion(r.getReceta(), r.getCantidad(), r.getFechaVencimiento()));
+        res.ifPresent(r -> procesarProduccion(r.receta(), r.cantidad(), r.getFechaVencimiento()));
     }
 
     private void cargarRecetasParaDialog(ComboBox<RecetaSimple> combo) {
@@ -239,7 +235,7 @@ public class Almacen2Page extends BorderPane {
             while(rs.next()) lista.add(new RecetaSimple(rs.getInt(1), rs.getString(2), rs.getDouble(3), rs.getString(4), rs.getInt(5)));
             combo.setItems(lista);
             combo.setConverter(new StringConverter<>() {
-                @Override public String toString(RecetaSimple r) { return r!=null?r.getNombre():null; }
+                @Override public String toString(RecetaSimple r) { return r!=null?r.nombre():null; }
                 @Override public RecetaSimple fromString(String s) { return null; }
             });
         } catch (Exception e) { e.printStackTrace(); }
@@ -261,7 +257,7 @@ public class Almacen2Page extends BorderPane {
             HashMap<Integer, Double> requisitos = new HashMap<>();
 
             try (PreparedStatement stmt = conn.prepareStatement(sqlIngredientes)) {
-                stmt.setInt(1, receta.getId());
+                stmt.setInt(1, receta.id());
                 ResultSet rs = stmt.executeQuery();
 
                 while (rs.next()) {
@@ -326,11 +322,11 @@ public class Almacen2Page extends BorderPane {
             int idIntermedio = receta.getIdProductoIntermedio();
             if (idIntermedio == 0) {
                 try(PreparedStatement ps = conn.prepareStatement("SELECT IdProductoIntermedio FROM productos_intermedios WHERE Nombre = ?")) {
-                    ps.setString(1, receta.getNombre()); ResultSet rs = ps.executeQuery();
+                    ps.setString(1, receta.nombre()); ResultSet rs = ps.executeQuery();
                     if(rs.next()) idIntermedio = rs.getInt(1);
                     else {
                         try(PreparedStatement psIn = conn.prepareStatement("INSERT INTO productos_intermedios (Nombre, Unidad_de_medida) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                            psIn.setString(1, receta.getNombre()); psIn.setString(2, receta.getUnidad()); psIn.executeUpdate();
+                            psIn.setString(1, receta.nombre()); psIn.setString(2, receta.unidad()); psIn.executeUpdate();
                             ResultSet rsk = psIn.getGeneratedKeys(); if(rsk.next()) idIntermedio = rsk.getInt(1);
                         }
                     }
@@ -361,17 +357,26 @@ public class Almacen2Page extends BorderPane {
     private void mostrarAlerta(String t, String m) { Alert a=new Alert(Alert.AlertType.INFORMATION); if(t.startsWith("Error")) a.setAlertType(Alert.AlertType.ERROR); a.setTitle(t); a.setContentText(m); a.showAndWait(); }
 
     // CLASES INTERNAS
-    private static class RecetaSimple {
-        private final int id, idIntermedio; private final String nombre, unidad; private final double cantidad;
-        public RecetaSimple(int id, String n, double c, String u, int idi) { this.id=id; this.nombre=n; this.cantidad=c; this.unidad=u; this.idIntermedio=idi; }
-        public int getId() { return id; } public String getNombre() { return nombre; } public double getCantidadBase() { return cantidad; } public String getUnidad() { return unidad; } public int getIdProductoIntermedio() { return idIntermedio; }
-        @Override public String toString() { return nombre; }
-    }
-    private static class RecetaProduccionResult {
-        private final RecetaSimple receta; private final int cantidad; private final LocalDate fecha;
-        public RecetaProduccionResult(RecetaSimple r, int c, LocalDate f) { receta=r; cantidad=c; fecha=f; }
-        public RecetaSimple getReceta() { return receta; } public int getCantidad() { return cantidad; } public LocalDate getFechaVencimiento() { return fecha; }
-    }
+        private record RecetaSimple(int id, String nombre, double cantidad, String unidad, int idIntermedio) {
+        public double getCantidadBase() {
+            return cantidad;
+        }
+
+        public int getIdProductoIntermedio() {
+            return idIntermedio;
+        }
+
+        @Override
+        public String toString() {
+            return nombre;
+        }
+        }
+
+    private record RecetaProduccionResult(RecetaSimple receta, int cantidad, LocalDate fecha) {
+        public LocalDate getFechaVencimiento() {
+            return fecha;
+        }
+        }
     public static class ProductoIntermedioAlmacen {
         private final int id, stock, stockMin; private final String nombre, unidad; private final double costo;
         public ProductoIntermedioAlmacen(int id, String n, int s, int sm, String u, double c) { this.id=id; this.nombre=n; this.stock=s; this.stockMin=sm; this.unidad=u; this.costo=c; }

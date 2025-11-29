@@ -22,8 +22,8 @@ public class CreationRecipePage extends BorderPane {
     private static final String BORDER_LIGHT = "#CCCCCC";
 
     private final ObservableList<Receta> recetas = FXCollections.observableArrayList();
-    private VBox mainContent;
-    private com.inventario.dao.RecetaDAO recetaDAO;
+    private final VBox mainContent;
+    private final com.inventario.dao.RecetaDAO recetaDAO;
 
     public CreationRecipePage() {
         // Fondo blanco para integrarse con el dashboard
@@ -118,7 +118,7 @@ public class CreationRecipePage extends BorderPane {
         ComboBox<String> recetaCombo = new ComboBox<>();
         recetaCombo.setPromptText("Seleccionar Receta");
         for (Receta r : recetas) {
-            recetaCombo.getItems().add(r.getNombre());
+            recetaCombo.getItems().add(r.nombre());
         }
         recetaCombo.setPrefWidth(250);
 
@@ -186,11 +186,11 @@ public class CreationRecipePage extends BorderPane {
                 BorderStrokeStyle.SOLID, new CornerRadii(5), BorderWidths.DEFAULT)));
 
         VBox info = new VBox(5);
-        Label nombreLabel = new Label(receta.getNombre());
+        Label nombreLabel = new Label(receta.nombre());
         nombreLabel.setFont(Font.font("Segoe UI", 16));
         nombreLabel.setTextFill(Color.web(TEXT_LIGHT));
 
-        Label rendimientoLabel = new Label("Rinde: " + receta.getCantidadProducida() + " " + receta.getUnidadProducida());
+        Label rendimientoLabel = new Label("Rinde: " + receta.cantidadProducida() + " " + receta.unidadProducida());
         rendimientoLabel.setFont(Font.font("Segoe UI", 13));
         rendimientoLabel.setTextFill(Color.GRAY);
 
@@ -205,7 +205,7 @@ public class CreationRecipePage extends BorderPane {
         eliminarBtn.setStyle("-fx-background-color: transparent; -fx-font-size: 16; -fx-text-fill: #EF4444;");
         eliminarBtn.setOnAction(e -> {
             // Eliminar de la base de datos
-            if (recetaDAO.eliminarReceta(receta.getNombre())) {
+            if (recetaDAO.eliminarReceta(receta.nombre())) {
                 recetas.remove(receta);
                 mostrarVistaInicial();
             } else {
@@ -395,17 +395,17 @@ public class CreationRecipePage extends BorderPane {
     private void mostrarDetalleReceta(Receta receta) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Detalles de Receta");
-        alert.setHeaderText(receta.getNombre());
+        alert.setHeaderText(receta.nombre());
 
         StringBuilder contenido = new StringBuilder();
-        contenido.append("Rinde: ").append(receta.getCantidadProducida())
-                .append(" ").append(receta.getUnidadProducida()).append("\n\n");
+        contenido.append("Rinde: ").append(receta.cantidadProducida())
+                .append(" ").append(receta.unidadProducida()).append("\n\n");
         contenido.append("Ingredientes:\n");
 
-        for (Ingrediente ing : receta.getIngredientes()) {
-            contenido.append("• ").append(ing.getNombre())
-                    .append(": ").append(ing.getCantidad())
-                    .append(" ").append(ing.getUnidad()).append("\n");
+        for (Ingrediente ing : receta.ingredientes()) {
+            contenido.append("• ").append(ing.nombre())
+                    .append(": ").append(ing.cantidad())
+                    .append(" ").append(ing.unidad()).append("\n");
         }
 
         alert.setContentText(contenido.toString());
@@ -417,25 +417,25 @@ public class CreationRecipePage extends BorderPane {
             double cantidadDeseada = Double.parseDouble(cantidadStr);
 
             Receta receta = recetas.stream()
-                    .filter(r -> r.getNombre().equals(recetaNombre))
+                    .filter(r -> r.nombre().equals(recetaNombre))
                     .findFirst()
                     .orElse(null);
 
             if (receta == null) return;
 
             // Calcular factor de escala
-            double factor = cantidadDeseada / receta.getCantidadProducida();
+            double factor = cantidadDeseada / receta.cantidadProducida();
 
             StringBuilder resultado = new StringBuilder();
             resultado.append("Para producir ").append(cantidadDeseada).append(" ")
-                    .append(unidadDeseada).append(" de ").append(receta.getNombre())
+                    .append(unidadDeseada).append(" de ").append(receta.nombre())
                     .append(":\n\n");
 
-            for (Ingrediente ing : receta.getIngredientes()) {
-                double cantidadNecesaria = ing.getCantidad() * factor;
-                resultado.append("• ").append(ing.getNombre()).append(": ")
+            for (Ingrediente ing : receta.ingredientes()) {
+                double cantidadNecesaria = ing.cantidad() * factor;
+                resultado.append("• ").append(ing.nombre()).append(": ")
                         .append(String.format("%.2f", cantidadNecesaria))
-                        .append(" ").append(ing.getUnidad()).append("\n");
+                        .append(" ").append(ing.unidad()).append("\n");
             }
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -458,39 +458,11 @@ public class CreationRecipePage extends BorderPane {
     }
 
     // Clases auxiliares
-    public static class Receta {
-        private final String nombre;
-        private final double cantidadProducida;
-        private final String unidadProducida;
-        private final List<Ingrediente> ingredientes;
-
-        public Receta(String nombre, double cantidadProducida, String unidadProducida, List<Ingrediente> ingredientes) {
-            this.nombre = nombre;
-            this.cantidadProducida = cantidadProducida;
-            this.unidadProducida = unidadProducida;
-            this.ingredientes = ingredientes;
-        }
-
-        public String getNombre() { return nombre; }
-        public double getCantidadProducida() { return cantidadProducida; }
-        public String getUnidadProducida() { return unidadProducida; }
-        public List<Ingrediente> getIngredientes() { return ingredientes; }
+        public record Receta(String nombre, double cantidadProducida, String unidadProducida,
+                             List<Ingrediente> ingredientes) {
     }
 
-    public static class Ingrediente {
-        private final String nombre;
-        private final double cantidad;
-        private final String unidad;
-
-        public Ingrediente(String nombre, double cantidad, String unidad) {
-            this.nombre = nombre;
-            this.cantidad = cantidad;
-            this.unidad = unidad;
-        }
-
-        public String getNombre() { return nombre; }
-        public double getCantidad() { return cantidad; }
-        public String getUnidad() { return unidad; }
+    public record Ingrediente(String nombre, double cantidad, String unidad) {
     }
 
     // Test local (opcional - para probar la página de forma independiente)

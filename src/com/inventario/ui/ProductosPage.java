@@ -11,8 +11,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
@@ -188,7 +186,7 @@ public class ProductosPage extends BorderPane {
         try (Connection c = ConexionBD.getConnection(); Statement s = c.createStatement(); ResultSet rs = s.executeQuery("SELECT IdProveedor, Nombre_comercial FROM proveedores")) {
             while (rs.next()) {
                 Proveedor p = new Proveedor(rs.getInt("IdProveedor"), rs.getString("Nombre_comercial"));
-                listaProveedores.add(p); mapaProveedores.put(p.getId(), p);
+                listaProveedores.add(p); mapaProveedores.put(p.id(), p);
             }
         } catch (SQLException e) { mostrarAlerta("Error", "Error cargando proveedores."); }
     }
@@ -205,7 +203,7 @@ public class ProductosPage extends BorderPane {
                         rs.getDouble("PrecioUnitario"), rs.getDouble("Contenido")
                 );
                 if (mapaProveedores.containsKey(p.getIdProveedor())) {
-                    p.setProveedorNombre(mapaProveedores.get(p.getIdProveedor()).getNombre());
+                    p.setProveedorNombre(mapaProveedores.get(p.getIdProveedor()).nombre());
                 }
                 listaProductos.add(p);
             }
@@ -241,7 +239,7 @@ public class ProductosPage extends BorderPane {
         }
         try {
             String nombre = nombreField.getText();
-            int idProv = proveedorCombo.getValue().getId();
+            int idProv = proveedorCombo.getValue().id();
             double precio = Double.parseDouble(precioField.getText());
             int min = stockMinField.getText().isEmpty() ? 0 : Integer.parseInt(stockMinField.getText());
             String uni = unidadCombo.getValue();
@@ -278,12 +276,10 @@ public class ProductosPage extends BorderPane {
     private VBox crearCampo(String l, Node c) { VBox v = new VBox(5); Label lbl = new Label(l); lbl.getStyleClass().add("label"); v.getChildren().addAll(lbl, c); return v; }
     private void mostrarAlerta(String t, String m) { Alert a = new Alert(Alert.AlertType.INFORMATION); if(t.startsWith("Error")) a.setAlertType(Alert.AlertType.ERROR); a.setTitle(t); a.setContentText(m); a.showAndWait(); }
 
-    public static class Proveedor {
-        private final int id; private final String nombre; public Proveedor(int id, String n) { this.id=id; this.nombre=n; }
-        public int getId(){return id;} public String getNombre(){return nombre;}
+    public record Proveedor(int id, String nombre) {
     }
     private static class ProveedorStringConverter extends StringConverter<Proveedor> {
-        @Override public String toString(Proveedor p){return p==null?null:p.getNombre();}
+        @Override public String toString(Proveedor p){return p==null?null:p.nombre();}
         @Override public Proveedor fromString(String s){return null;}
     }
 

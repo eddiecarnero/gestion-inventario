@@ -39,9 +39,11 @@ public class Almacen3Page extends BorderPane {
     """;
 
     private final Consumer<String> onNavigate;
-    private TableView<ProductoTerminado> tablaTerminados;
-    private TextField searchField;
-    private Label totalTerminadosLabel, stockBajoLabel, valorEstimadoLabel;
+    private final TableView<ProductoTerminado> tablaTerminados;
+    private final TextField searchField;
+    private final Label totalTerminadosLabel;
+    private final Label stockBajoLabel;
+    private final Label valorEstimadoLabel;
     private final ObservableList<ProductoTerminado> listaTerminados = FXCollections.observableArrayList();
     private FilteredList<ProductoTerminado> filteredTerminados;
 
@@ -275,8 +277,8 @@ public class Almacen3Page extends BorderPane {
         if (r == null) { lbl.setText("-"); return; }
         try {
             double m = Double.parseDouble(multiStr);
-            double total = r.getCantidadBase() * m;
-            lbl.setText("Total a crear: " + total + " " + r.getUnidad());
+            double total = r.cantidadBase() * m;
+            lbl.setText("Total a crear: " + total + " " + r.unidad());
         } catch (Exception e) {
             lbl.setText("Error en número");
         }
@@ -292,7 +294,7 @@ public class Almacen3Page extends BorderPane {
             String sqlIng = "SELECT IdProducto, IdIntermedio, cantidad, unidad, tipo_origen FROM ingredientes WHERE receta_id = ?";
 
             try (PreparedStatement ps = conn.prepareStatement(sqlIng)) {
-                ps.setInt(1, receta.getId());
+                ps.setInt(1, receta.id());
                 ResultSet rs = ps.executeQuery();
 
                 while (rs.next()) {
@@ -315,7 +317,7 @@ public class Almacen3Page extends BorderPane {
             // 2. CREAR O ACTUALIZAR PRODUCTO TERMINADO
             int idTerminado;
             try (PreparedStatement ps = conn.prepareStatement("SELECT IdProductoTerminado FROM productos_terminados WHERE Nombre = ?")) {
-                ps.setString(1, receta.getNombre());
+                ps.setString(1, receta.nombre());
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
                     idTerminado = rs.getInt(1);
@@ -328,7 +330,7 @@ public class Almacen3Page extends BorderPane {
                     }
                 } else {
                     try (PreparedStatement psIns = conn.prepareStatement("INSERT INTO productos_terminados (Nombre, PrecioVenta) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                        psIns.setString(1, receta.getNombre());
+                        psIns.setString(1, receta.nombre());
                         psIns.setDouble(2, precioVenta);
                         psIns.executeUpdate();
                         ResultSet gk = psIns.getGeneratedKeys();
@@ -339,7 +341,7 @@ public class Almacen3Page extends BorderPane {
             }
 
             // 3. INSERTAR LOTE EN ALMACEN 3
-            double cantidadFinal = receta.getCantidadBase() * multiplicador;
+            double cantidadFinal = receta.cantidadBase() * multiplicador;
             int cantFinalInt = (int) Math.ceil(cantidadFinal);
 
             String sqlInsLote = "INSERT INTO lotes_terminados (IdProductoTerminado, CantidadActual, FechaProduccion, FechaVencimiento) VALUES (?, ?, ?, ?)";
@@ -455,7 +457,7 @@ public class Almacen3Page extends BorderPane {
             }
             cb.setItems(lista);
             cb.setConverter(new StringConverter<>() {
-                @Override public String toString(RecetaSimple r){return r!=null ? r.getNombre() : null;}
+                @Override public String toString(RecetaSimple r){return r!=null ? r.nombre() : null;}
                 @Override public RecetaSimple fromString(String s){return null;}
             });
         } catch (Exception e) { e.printStackTrace(); }
