@@ -75,16 +75,20 @@ public class ConversorUnidades {
     private static boolean esLitro(String u) {
         return u.equals("litro") || u.equals("litros") || u.equals("l") || u.equals("lt");
     }
+
     private static boolean esMililitro(String u) {
         return u.equals("ml") || u.equals("mililitro") || u.equals("mililitros");
     }
+
     private static boolean esKilo(String u) {
         return u.equals("kg") || u.equals("kilo") || u.equals("kilogramo") || u.equals("kgs");
     }
+
     private static boolean esGramo(String u) {
         return u.equals("gramo") || u.equals("gramos") || u.equals("g") || u.equals("gr");
     }
-    private static boolean esMiligramo(String u){
+
+    private static boolean esMiligramo(String u) {
         return u.equals("miligramo") || u.equals("mg") || u.equals("mgs");
     }
 }

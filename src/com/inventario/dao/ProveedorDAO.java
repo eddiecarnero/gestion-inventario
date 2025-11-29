@@ -1,6 +1,7 @@
 package com.inventario.dao;
 
 import com.inventario.model.Proveedor;
+
 import java.util.ArrayList;
 import java.util.List;
 

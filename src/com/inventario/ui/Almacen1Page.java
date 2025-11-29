@@ -17,20 +17,20 @@ import java.util.function.Consumer;
 public class Almacen1Page extends BorderPane {
 
     private static final String CSS_STYLES = """
-        .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
-        .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-        .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; }
-        .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
-        .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
-        .stats-card-content { -fx-font-size: 1.8em; -fx-font-weight: bold; -fx-text-fill: #111827; }
-        .stats-card-content-danger { -fx-text-fill: #DC2626; }
-        .badge { -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: white; }
-        .badge-stock-low { -fx-background-color: #EF4444; }
-        .badge-stock-medium { -fx-background-color: #F97316; }
-        .badge-stock-normal { -fx-background-color: #22C55E; }
-        .cell-stock-low { -fx-text-fill: #DC2626; -fx-font-weight: bold; }
-        .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; -fx-font-size: 1.05em; }
-    """;
+                .root { -fx-background-color: #FDF8F0; -fx-font-family: 'Segoe UI'; }
+                .header-title { -fx-font-size: 2.2em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+                .header-description { -fx-font-size: 1.1em; -fx-text-fill: #555555; }
+                .card { -fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 20px; }
+                .card-title { -fx-font-size: 1.4em; -fx-font-weight: bold; -fx-text-fill: #333333; }
+                .stats-card-content { -fx-font-size: 1.8em; -fx-font-weight: bold; -fx-text-fill: #111827; }
+                .stats-card-content-danger { -fx-text-fill: #DC2626; }
+                .badge { -fx-padding: 4 10; -fx-background-radius: 12; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: white; }
+                .badge-stock-low { -fx-background-color: #EF4444; }
+                .badge-stock-medium { -fx-background-color: #F97316; }
+                .badge-stock-normal { -fx-background-color: #22C55E; }
+                .cell-stock-low { -fx-text-fill: #DC2626; -fx-font-weight: bold; }
+                .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; -fx-font-size: 1.05em; }
+            """;
 
     private final Label totalInsumosLabel;
     private final Label stockBajoLabel;
@@ -39,9 +39,9 @@ public class Almacen1Page extends BorderPane {
     private final TableView<InsumoAlmacen> tablaInsumos;
     private final TextField searchField;
     private final ObservableList<InsumoAlmacen> todosLosInsumos = FXCollections.observableArrayList();
+    private final Consumer<String> onNavigate;
     private FilteredList<InsumoAlmacen> filteredInsumos;
     private int lowStockCount = 0;
-    private final Consumer<String> onNavigate;
 
     public Almacen1Page(Consumer<String> onNavigate) {
         this.onNavigate = onNavigate;
@@ -81,7 +81,8 @@ public class Almacen1Page extends BorderPane {
         // Stats
         GridPane statsGrid = new GridPane();
         statsGrid.setHgap(20);
-        ColumnConstraints col = new ColumnConstraints(); col.setPercentWidth(25);
+        ColumnConstraints col = new ColumnConstraints();
+        col.setPercentWidth(25);
         statsGrid.getColumnConstraints().addAll(col, col, col, col);
         statsGrid.add(createStatCard("Total Insumos", totalInsumosLabel, null), 0, 0);
         statsGrid.add(createStatCard("Valor Total", valorTotalLabel, null), 1, 0);
@@ -107,7 +108,8 @@ public class Almacen1Page extends BorderPane {
     private VBox createStatCard(String title, Label value, String style) {
         VBox card = new VBox(5);
         card.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-padding: 15px;");
-        Label lblTitle = new Label(title); lblTitle.setStyle("-fx-text-fill: #333; -fx-font-weight: 500;");
+        Label lblTitle = new Label(title);
+        lblTitle.setStyle("-fx-text-fill: #333; -fx-font-weight: 500;");
         value.getStyleClass().add("stats-card-content");
         if (style != null) value.getStyleClass().add(style);
         card.getChildren().addAll(lblTitle, value);
@@ -123,9 +125,13 @@ public class Almacen1Page extends BorderPane {
         TableColumn<InsumoAlmacen, Integer> stockCol = new TableColumn<>("Cantidad");
         stockCol.setCellValueFactory(new PropertyValueFactory<>("stock"));
         stockCol.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(Integer item, boolean empty) {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); return; }
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
                 setText(item.toString());
                 InsumoAlmacen row = getTableView().getItems().get(getIndex());
                 if (row.esStockBajo()) setStyle("-fx-text-fill: #DC2626; -fx-font-weight: bold;");
@@ -139,7 +145,8 @@ public class Almacen1Page extends BorderPane {
         TableColumn<InsumoAlmacen, Double> precioCol = new TableColumn<>("Precio Unit.");
         precioCol.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
         precioCol.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(Double item, boolean empty) {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) setText(null);
                 else setText(String.format("$%.2f", item));
@@ -156,9 +163,14 @@ public class Almacen1Page extends BorderPane {
         estadoCol.setCellValueFactory(new PropertyValueFactory<>("estado"));
         estadoCol.setCellFactory(col -> new TableCell<>() {
             final Label badge = new Label();
-            @Override protected void updateItem(String item, boolean empty) {
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setGraphic(null); return; }
+                if (empty || item == null) {
+                    setGraphic(null);
+                    return;
+                }
                 badge.setText(item);
                 badge.getStyleClass().clear();
                 badge.getStyleClass().add("badge");
@@ -247,17 +259,11 @@ public class Almacen1Page extends BorderPane {
         ObservableList<LoteInfo> datosLotes = FXCollections.observableArrayList();
         String sql = "SELECT IdLote, CantidadActual, FechaIngreso, FechaVencimiento FROM lotes WHERE IdProducto = ? AND CantidadActual > 0 ORDER BY FechaVencimiento ASC";
 
-        try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = ConexionBD.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, insumo.id());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                datosLotes.add(new LoteInfo(
-                        rs.getInt("IdLote"),
-                        rs.getDouble("CantidadActual"),
-                        rs.getString("FechaIngreso"),
-                        rs.getString("FechaVencimiento")
-                ));
+                datosLotes.add(new LoteInfo(rs.getInt("IdLote"), rs.getDouble("CantidadActual"), rs.getString("FechaIngreso"), rs.getString("FechaVencimiento")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -279,15 +285,11 @@ public class Almacen1Page extends BorderPane {
         int provCount = 0;
 
         // Consulta SIMPLE que NO lee fechas
-        String sql = "SELECT p.IdProducto, p.Tipo_de_Producto, p.Stock, p.Stock_Minimo, p.Unidad_de_medida, p.PrecioUnitario, prov.Nombre_comercial " +
-                "FROM producto p LEFT JOIN proveedores prov ON p.IdProveedor = prov.IdProveedor";
+        String sql = "SELECT p.IdProducto, p.Tipo_de_Producto, p.Stock, p.Stock_Minimo, p.Unidad_de_medida, p.PrecioUnitario, prov.Nombre_comercial " + "FROM producto p LEFT JOIN proveedores prov ON p.IdProveedor = prov.IdProveedor";
 
         try (Connection conn = ConexionBD.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                InsumoAlmacen insumo = new InsumoAlmacen(
-                        rs.getInt("IdProducto"), rs.getString("Tipo_de_Producto"), rs.getInt("Stock"), rs.getInt("Stock_Minimo"),
-                        rs.getString("Unidad_de_medida"), rs.getDouble("PrecioUnitario"), rs.getString("Nombre_comercial")
-                );
+                InsumoAlmacen insumo = new InsumoAlmacen(rs.getInt("IdProducto"), rs.getString("Tipo_de_Producto"), rs.getInt("Stock"), rs.getInt("Stock_Minimo"), rs.getString("Unidad_de_medida"), rs.getDouble("PrecioUnitario"), rs.getString("Nombre_comercial"));
                 todosLosInsumos.add(insumo);
                 valorTotal += insumo.stock() * insumo.precioUnitario();
                 if (insumo.esStockBajo()) lowStockCount++;
@@ -328,15 +330,15 @@ public class Almacen1Page extends BorderPane {
 
     public record InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precioUnitario,
                                 String proveedorNombre) {
-            public InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precioUnitario, String proveedorNombre) {
-                this.id = id;
-                this.nombre = nombre;
-                this.stock = stock;
-                this.stockMinimo = stockMinimo;
-                this.unidad = unidad;
-                this.precioUnitario = precioUnitario;
-                this.proveedorNombre = proveedorNombre != null ? proveedorNombre : "N/A";
-            }
+        public InsumoAlmacen(int id, String nombre, int stock, int stockMinimo, String unidad, double precioUnitario, String proveedorNombre) {
+            this.id = id;
+            this.nombre = nombre;
+            this.stock = stock;
+            this.stockMinimo = stockMinimo;
+            this.unidad = unidad;
+            this.precioUnitario = precioUnitario;
+            this.proveedorNombre = proveedorNombre != null ? proveedorNombre : "N/A";
+        }
 
         public boolean esStockBajo() {
             return stock <= stockMinimo;
@@ -345,7 +347,7 @@ public class Almacen1Page extends BorderPane {
         public String getEstado() {
             return stock <= stockMinimo ? "Bajo Stock" : (stock <= stockMinimo * 1.5 ? "Medio" : "Normal");
         }
-        }
+    }
 
     public static class LoteInfo {
         private final int idLote;
@@ -385,21 +387,23 @@ public class Almacen1Page extends BorderPane {
         public int getIdLote() {
             return idLote;
         }
+
         public double getCantidad() {
             return cantidad;
         }
+
         public String getFechaIngreso() {
             return fechaIngreso;
         }
+
         public String getFechaVencimiento() {
             return fechaVencimiento;
         }
+
         public String getEstado() {
             return estado;
         }
     }
-
-
 
 
 }
