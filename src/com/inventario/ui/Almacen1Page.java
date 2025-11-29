@@ -39,14 +39,13 @@ public class Almacen1Page extends BorderPane {
         .cell-stock-low { -fx-text-fill: #DC2626; -fx-font-weight: bold; }
         .table-view .column-header { -fx-background-color: #F9FAFB; -fx-font-weight: bold; -fx-font-size: 1.05em; }
     """;
-
+    private final Consumer<String> onNavigate;
     private Label totalInsumosLabel, stockBajoLabel, valorTotalLabel, totalProveedoresLabel;
     private TableView<InsumoAlmacen> tablaInsumos;
     private TextField searchField;
     private ObservableList<InsumoAlmacen> todosLosInsumos = FXCollections.observableArrayList();
     private FilteredList<InsumoAlmacen> filteredInsumos;
     private int lowStockCount = 0;
-    private final Consumer<String> onNavigate;
 
     public Almacen1Page(Consumer<String> onNavigate) {
         this.onNavigate = onNavigate;
@@ -283,18 +282,36 @@ public class Almacen1Page extends BorderPane {
         double valorTotal = 0;
         int provCount = 0;
 
-        // Consulta SIMPLE que NO lee fechas
-        String sql = "SELECT p.IdProducto, p.Tipo_de_Producto, p.Stock, p.Stock_Minimo, p.Unidad_de_medida, p.PrecioUnitario, prov.Nombre_comercial " +
+        // 1. CORRECCIÓN: Agregamos 'p.Contenido' a la consulta SQL
+        String sql = "SELECT p.IdProducto, p.Tipo_de_Producto, p.Stock, p.Stock_Minimo, " +
+                "p.Unidad_de_medida, p.PrecioUnitario, p.Contenido, prov.Nombre_comercial " +
                 "FROM producto p LEFT JOIN proveedores prov ON p.IdProveedor = prov.IdProveedor";
 
         try (Connection conn = ConexionBD.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
+                // Obtener el contenido, asegurando que no sea 0 para evitar errores matemáticos
+                double contenido = rs.getDouble("Contenido");
+                if (contenido <= 0) contenido = 1.0;
+
                 InsumoAlmacen insumo = new InsumoAlmacen(
-                        rs.getInt("IdProducto"), rs.getString("Tipo_de_Producto"), rs.getInt("Stock"), rs.getInt("Stock_Minimo"),
-                        rs.getString("Unidad_de_medida"), rs.getDouble("PrecioUnitario"), rs.getString("Nombre_comercial")
+                        rs.getInt("IdProducto"),
+                        rs.getString("Tipo_de_Producto"),
+                        rs.getInt("Stock"),
+                        rs.getInt("Stock_Minimo"),
+                        rs.getString("Unidad_de_medida"),
+                        rs.getDouble("PrecioUnitario"),
+                        rs.getString("Nombre_comercial"),
+                        contenido // Pasamos el contenido al constructor
                 );
+
                 todosLosInsumos.add(insumo);
-                valorTotal += insumo.getStock() * insumo.getPrecioUnitario();
+
+                // 2. CORRECCIÓN: Fórmula del valor total
+                // (Stock Total / Contenido por Paquete) * Precio del Paquete
+                // Ejemplo Harina: (1000 gr / 1000 gr) * $8 = $8
+                double unidadesReales = insumo.getStock() / insumo.getContenido();
+                valorTotal += unidadesReales * insumo.getPrecioUnitario();
+
                 if (insumo.esStockBajo()) lowStockCount++;
             }
             // Contar proveedores
@@ -303,7 +320,6 @@ public class Almacen1Page extends BorderPane {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Mostrar alerta solo si falla la carga
             Alert a = new Alert(Alert.AlertType.ERROR);
             a.setTitle("Error de BD");
             a.setContentText("No se pudo cargar el inventario: " + e.getMessage());
@@ -335,13 +351,29 @@ public class Almacen1Page extends BorderPane {
         private final int id, stock, stockMinimo;
         private final String nombre, unidad, proveedorNombre;
         private final double precioUnitario;
+        private final double contenido; // Nuevo campo
 
-        public InsumoAlmacen(int id, String n, int s, int sm, String u, double p, String prov) {
-            this.id = id; this.nombre = n; this.stock = s; this.stockMinimo = sm; this.unidad = u; this.precioUnitario = p; this.proveedorNombre = prov != null ? prov : "N/A";
+        // Constructor actualizado
+        public InsumoAlmacen(int id, String n, int s, int sm, String u, double p, String prov, double cont) {
+            this.id = id;
+            this.nombre = n;
+            this.stock = s;
+            this.stockMinimo = sm;
+            this.unidad = u;
+            this.precioUnitario = p;
+            this.proveedorNombre = prov != null ? prov : "N/A";
+            this.contenido = cont;
         }
-        public int getId() { return id; } public String getNombre() { return nombre; } public int getStock() { return stock; }
-        public int getStockMinimo() { return stockMinimo; } public String getUnidad() { return unidad; } public double getPrecioUnitario() { return precioUnitario; }
+
+        public int getId() { return id; }
+        public String getNombre() { return nombre; }
+        public int getStock() { return stock; }
+        public int getStockMinimo() { return stockMinimo; }
+        public String getUnidad() { return unidad; }
+        public double getPrecioUnitario() { return precioUnitario; }
         public String getProveedorNombre() { return proveedorNombre; }
+        public double getContenido() { return contenido; } // Nuevo getter
+
         public boolean esStockBajo() { return stock <= stockMinimo; }
         public String getEstado() { return stock <= stockMinimo ? "Bajo Stock" : (stock <= stockMinimo * 1.5 ? "Medio" : "Normal"); }
     }
