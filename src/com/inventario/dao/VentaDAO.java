@@ -3,21 +3,36 @@ package com.inventario.dao;
 import com.inventario.config.ConexionBD;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 public class VentaDAO {
 
-    // Método principal para registrar una venta individual
+    // --- 1. REGISTRAR VENTA ---
+
+    // Método original (Usado por la App)
     public boolean registrarVenta(int idProductoTerminado, int cantidad, double precio, String cliente, LocalDate fecha) {
         Connection conn = null;
         try {
             conn = ConexionBD.getConnection();
-            conn.setAutoCommit(false); // Transacción
+            // Llamamos a la versión flexible
+            return registrarVenta(conn, idProductoTerminado, cantidad, precio, cliente, fecha);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            // AQUÍ sí cerramos la conexión porque la abrió este método
+            if (conn != null) try { conn.close(); } catch (Exception ex) {}
+        }
+    }
 
-            // 1. Verificar Stock Disponible Total
+    // Método para TEST (Recibe conexión y NO la cierra al final)
+    public boolean registrarVenta(Connection conn, int idProductoTerminado, int cantidad, double precio, String cliente, LocalDate fecha) {
+        try {
+            conn.setAutoCommit(false); // Iniciamos transacción
+
+            // 1. Verificar Stock
             if (!hayStockSuficiente(conn, idProductoTerminado, cantidad)) {
-                throw new SQLException("Stock insuficiente para el producto ID: " + idProductoTerminado);
+                conn.rollback(); // Importante hacer rollback si fallamos aquí manual
+                return false; // Retornamos false controlado
             }
 
             // 2. Insertar Venta
@@ -32,10 +47,10 @@ public class VentaDAO {
                 ps.executeUpdate();
             }
 
-            // 3. Descontar de Lotes (FEFO - Primero en vencer, primero en salir)
+            // 3. Descontar de Lotes (FEFO)
             descontarDeLotes(conn, idProductoTerminado, cantidad);
 
-            conn.commit();
+            conn.commit(); // Confirmar cambios
             return true;
 
         } catch (SQLException e) {
@@ -43,10 +58,11 @@ public class VentaDAO {
             e.printStackTrace();
             System.err.println("Error al registrar venta: " + e.getMessage());
             return false;
-        } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (Exception ex) {}
         }
+        // NOTA: No cerramos la conexión aquí para que el Test pueda seguir usándola
     }
+
+    // --- MÉTODOS PRIVADOS (Se quedan igual, solo ajustamos visibilidad si fuera necesario) ---
 
     private boolean hayStockSuficiente(Connection conn, int id, int cantidad) throws SQLException {
         String sql = "SELECT SUM(CantidadActual) FROM lotes_terminados WHERE IdProductoTerminado = ?";
@@ -62,6 +78,7 @@ public class VentaDAO {
 
     private void descontarDeLotes(Connection conn, int idProducto, int cantidadRequerida) throws SQLException {
         int faltante = cantidadRequerida;
+        // Ordenamos por FechaVencimiento ASC para cumplir FEFO
         String sqlLotes = "SELECT IdLoteTerminado, CantidadActual FROM lotes_terminados WHERE IdProductoTerminado = ? AND CantidadActual > 0 ORDER BY FechaVencimiento ASC";
 
         try (PreparedStatement ps = conn.prepareStatement(sqlLotes)) {
@@ -91,14 +108,21 @@ public class VentaDAO {
         }
 
         if (faltante > 0) {
-            throw new SQLException("Inconsistencia: El stock total indicaba suficiente, pero los lotes no alcanzaron.");
+            throw new SQLException("Inconsistencia: Stock insuficiente al momento de descontar lotes.");
         }
     }
 
-    // Método para buscar producto por nombre exacto (útil para el Excel)
+    // --- MÉTODOS DE CONSULTA (Sobrecarga para Test) ---
+
     public Integer obtenerIdPorNombre(String nombre) {
+        try (Connection conn = ConexionBD.getConnection()) {
+            return obtenerIdPorNombre(conn, nombre);
+        } catch (SQLException e) { return null; }
+    }
+
+    public Integer obtenerIdPorNombre(Connection conn, String nombre) {
         String sql = "SELECT IdProductoTerminado FROM productos_terminados WHERE lower(Nombre) = lower(?)";
-        try (Connection conn = ConexionBD.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre.trim());
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt(1);
@@ -106,10 +130,14 @@ public class VentaDAO {
         return null;
     }
 
-    // Obtener precio actual
     public Double obtenerPrecioActual(int id) {
-        try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT PrecioVenta FROM productos_terminados WHERE IdProductoTerminado=?")) {
+        try (Connection conn = ConexionBD.getConnection()) {
+            return obtenerPrecioActual(conn, id);
+        } catch(Exception e){ return 0.0; }
+    }
+
+    public Double obtenerPrecioActual(Connection conn, int id) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT PrecioVenta FROM productos_terminados WHERE IdProductoTerminado=?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if(rs.next()) return rs.getDouble(1);

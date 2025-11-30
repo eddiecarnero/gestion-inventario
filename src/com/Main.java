@@ -1,6 +1,6 @@
 package com;
 
-import com.inventario.ui.LoginPage;
+import com.inventario.ui.login.LoginPage;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
